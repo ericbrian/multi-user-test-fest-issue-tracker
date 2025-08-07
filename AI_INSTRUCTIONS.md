@@ -105,6 +105,9 @@ This document orients future AI/code assistants to continue development efficien
 - To disable SSO in dev: `DISABLE_SSO=true` (optional `DEV_USER_EMAIL`, `DEV_USER_NAME`).
 - Pre-provision DB: `createdb test_fest_tracker || true && psql "$DATABASE_URL" -f db/schema.sql`
 
+### UI/UX Preferences
+- Avoid gradient backgrounds and gradient buttons. Use solid colors instead (already applied in `public/index.html`).
+
 ## Coding Guidelines
 - Prefer clarity and explicit variable names.
 - Keep routes small and error-handling explicit.
