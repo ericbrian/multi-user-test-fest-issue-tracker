@@ -322,7 +322,13 @@ app.post('/api/rooms/:roomId/join', requireAuth, async (req, res) => {
 
 app.get('/api/rooms/:roomId/issues', requireAuth, async (req, res) => {
     const { roomId } = req.params;
-    const { rows } = await pool.query('SELECT * FROM issues WHERE room_id = $1 ORDER BY created_at DESC', [roomId]);
+    const { rows } = await pool.query(
+        `SELECT *
+     FROM issues
+     WHERE room_id = $1
+     ORDER BY (NULLIF(script_id, '')::bigint) ASC NULLS LAST, created_at ASC`,
+        [roomId]
+    );
     res.json(rows);
 });
 
@@ -330,6 +336,12 @@ app.get('/api/rooms/:roomId/issues', requireAuth, async (req, res) => {
 app.post('/api/rooms/:roomId/issues', requireAuth, upload.array('images', 5), async (req, res) => {
     const { roomId } = req.params;
     const { scriptId, description } = req.body;
+    if (!scriptId || !/^\d+$/.test(String(scriptId))) {
+        return res.status(400).json({ error: 'Script ID is required and must be numeric' });
+    }
+    if (!description || String(description).trim().length === 0) {
+        return res.status(400).json({ error: 'Issue Description is required' });
+    }
     const isIssue = req.body.is_issue === 'on' || req.body.is_issue === 'true' || req.body.is_issue === true;
     const isAnnoyance = req.body.is_annoyance === 'on' || req.body.is_annoyance === 'true' || req.body.is_annoyance === true;
     const isExistingUpper = req.body.is_existing_upper_env === 'on' || req.body.is_existing_upper_env === 'true' || req.body.is_existing_upper_env === true;
@@ -351,7 +363,7 @@ app.post('/api/rooms/:roomId/issues', requireAuth, upload.array('images', 5), as
 app.post('/api/issues/:id/status', requireAuth, async (req, res) => {
     const { id } = req.params;
     const { status, roomId } = req.body;
-    if (!TAGS.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+    if (status !== 'open' && !TAGS.includes(status)) return res.status(400).json({ error: 'Invalid status' });
 
     // Check groupier
     const { rows: membership } = await pool.query('SELECT is_groupier FROM room_members WHERE room_id = $1 AND user_id = $2', [roomId, req.user.id]);
@@ -408,6 +420,39 @@ app.post('/api/issues/:id/jira', requireAuth, async (req, res) => {
     const updated = { ...issue, jira_key: jiraKey };
     io.to(roomId).emit('issue:update', updated);
     res.json({ jira_key: jiraKey });
+});
+
+// Delete issue (creator or Groupier)
+app.delete('/api/issues/:id', requireAuth, async (req, res) => {
+    const { id } = req.params;
+    // Fetch issue
+    const { rows: issuesRows } = await pool.query('SELECT * FROM issues WHERE id = $1', [id]);
+    const issue = issuesRows[0];
+    if (!issue) return res.status(404).json({ error: 'Issue not found' });
+
+    // Determine membership and permission
+    const { rows: membership } = await pool.query(
+        'SELECT is_groupier FROM room_members WHERE room_id = $1 AND user_id = $2',
+        [issue.room_id, req.user.id]
+    );
+    const isGroupier = membership.length > 0 && membership[0].is_groupier;
+    const isCreator = issue.created_by === req.user.id;
+    if (!isGroupier && !isCreator) return res.status(403).json({ error: 'Forbidden' });
+
+    // Best-effort: remove uploaded images from disk
+    try {
+        const images = Array.isArray(issue.images) ? issue.images : [];
+        images.forEach((p) => {
+            if (typeof p === 'string' && p.startsWith('/uploads/')) {
+                const abs = path.join(uploadsDir, path.basename(p));
+                fs.unlink(abs, () => { });
+            }
+        });
+    } catch (_) { }
+
+    await pool.query('DELETE FROM issues WHERE id = $1', [id]);
+    io.to(issue.room_id).emit('issue:delete', { id });
+    res.json({ ok: true });
 });
 
 // Socket.io logic
