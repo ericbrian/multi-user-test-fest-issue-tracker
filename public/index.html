@@ -1,0 +1,250 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Test Fest Tracker</title>
+    <style>
+      html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+      .layout { display: flex; height: 100%; }
+      .left { width: 40%; border-right: 1px solid #ddd; padding: 16px; box-sizing: border-box; }
+      .right { flex: 1; padding: 16px; box-sizing: border-box; overflow-y: auto; }
+      .issue { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 12px; transition: opacity 1s ease; }
+      .issue.fade { opacity: 0.4; }
+      .row { display: flex; gap: 8px; }
+      label { display: block; margin-top: 8px; font-weight: 600; }
+      input[type="text"], textarea, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+      button { padding: 8px 12px; border: none; border-radius: 6px; background: #1f6feb; color: white; cursor: pointer; }
+      button:disabled { opacity: .6; cursor: not-allowed; }
+      .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+      .images { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+      .images img { max-height: 80px; border-radius: 6px; border: 1px solid #eee; }
+      .tags { display: inline-flex; gap: 6px; margin-left: 8px; }
+      .tag { padding: 2px 6px; border-radius: 999px; background: #f2f2f2; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <div class="left">
+        <div class="topbar">
+          <strong>Test Fest Tracker</strong>
+          <div>
+            <button id="loginBtn">Login</button>
+            <button id="logoutBtn" style="display:none; background:#d11;">Logout</button>
+          </div>
+        </div>
+        <div>
+          <label>Room</label>
+          <div class="row">
+            <select id="roomSelect"></select>
+            <button id="createRoomBtn" title="Create room">Create</button>
+          </div>
+        </div>
+        <form id="issueForm" style="margin-top: 12px;">
+          <label for="scriptId">Script ID</label>
+          <input id="scriptId" name="scriptId" type="text" required />
+
+          <label for="description">Issue Description</label>
+          <textarea id="description" name="description" rows="4" required></textarea>
+
+          <label>Images</label>
+          <input id="images" name="images" type="file" accept="image/*" multiple />
+
+          <label>Flags</label>
+          <div>
+            <label><input type="checkbox" name="is_issue" /> Issue</label>
+            <label><input type="checkbox" name="is_annoyance" /> Annoyance</label>
+            <label><input type="checkbox" name="is_existing_upper_env" /> Existing in upper env</label>
+          </div>
+
+          <div style="margin-top: 10px;">
+            <button type="submit">Submit</button>
+          </div>
+        </form>
+      </div>
+      <div class="right">
+        <div class="topbar">
+          <div id="userInfo"></div>
+          <div id="tagLegend"></div>
+        </div>
+        <div id="issues"></div>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const loginBtn = document.getElementById('loginBtn');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const userInfo = document.getElementById('userInfo');
+      const issueForm = document.getElementById('issueForm');
+      const issuesEl = document.getElementById('issues');
+      const roomSelect = document.getElementById('roomSelect');
+      const createRoomBtn = document.getElementById('createRoomBtn');
+      const tagLegend = document.getElementById('tagLegend');
+
+      let me = null;
+      let tags = [];
+      let currentRoomId = null;
+      let socket = null;
+      const LS_KEY_LAST_ROOM = 'tft:lastRoomId';
+
+      async function fetchMe() {
+        const res = await fetch('/me');
+        const data = await res.json();
+        me = data.user;
+        tags = data.tags || [];
+        userInfo.textContent = me ? `${me.name || me.email || 'User'}` : 'Not logged in';
+        loginBtn.style.display = me ? 'none' : 'inline-block';
+        logoutBtn.style.display = me ? 'inline-block' : 'none';
+
+        tagLegend.innerHTML = '';
+        tags.forEach(t => {
+          const span = document.createElement('span');
+          span.className = 'tag';
+          span.textContent = t;
+          tagLegend.appendChild(span);
+        });
+      }
+
+      async function loadRooms() {
+        if (!me) return;
+        const res = await fetch('/api/rooms');
+        if (!res.ok) return;
+        const rooms = await res.json();
+        roomSelect.innerHTML = '';
+        rooms.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r.id; opt.textContent = `${r.name}`;
+          roomSelect.appendChild(opt);
+        });
+        if (rooms.length > 0) {
+          if (!currentRoomId) {
+            const fromLS = localStorage.getItem(LS_KEY_LAST_ROOM);
+            const found = rooms.find(r => r.id === fromLS);
+            currentRoomId = found ? found.id : rooms[0].id;
+          }
+          roomSelect.value = currentRoomId;
+          await joinRoom(currentRoomId);
+        }
+      }
+
+      async function createRoom() {
+        const name = prompt('Room name?') || '';
+        const res = await fetch('/api/rooms', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name })
+        });
+        if (res.ok) {
+          await loadRooms();
+        }
+      }
+
+      async function joinRoom(roomId) {
+        currentRoomId = roomId;
+        try { localStorage.setItem(LS_KEY_LAST_ROOM, roomId); } catch (_) {}
+        if (socket) socket.disconnect();
+        socket = io();
+        socket.emit('room:join', roomId);
+        socket.on('issue:new', issue => addOrUpdateIssue(issue));
+        socket.on('issue:update', issue => addOrUpdateIssue(issue));
+        await fetchIssues(roomId);
+        await fetch('/api/rooms/' + roomId + '/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+      }
+
+      async function fetchIssues(roomId) {
+        const res = await fetch(`/api/rooms/${roomId}/issues`);
+        const list = await res.json();
+        issuesEl.innerHTML = '';
+        list.forEach(addOrUpdateIssue);
+      }
+
+      function issueElementId(id) { return `issue-${id}`; }
+
+      function addOrUpdateIssue(issue) {
+        let el = document.getElementById(issueElementId(issue.id));
+        const isFaded = (issue.status === 'duplicate' || issue.status === 'as-designed');
+        if (!el) {
+          el = document.createElement('div');
+          el.className = 'issue';
+          el.id = issueElementId(issue.id);
+          issuesEl.prepend(el);
+        }
+        el.className = 'issue' + (isFaded ? ' fade' : '');
+        const imgs = (issue.images || []).map(src => `<img src="${src}" />`).join('');
+        const statusTag = issue.status && issue.status !== 'open' ? `<span class="tag">${issue.status}</span>` : '';
+        const jiraTag = issue.jira_key ? `<span class="tag">Jira: ${issue.jira_key}</span>` : '';
+        el.innerHTML = `
+          <div style="display:flex; justify-content: space-between; align-items:center;">
+            <div><strong>Script:</strong> ${issue.script_id || ''} ${statusTag} ${jiraTag}</div>
+            <div class="tags">
+              ${me ? `<button data-action="toJira" data-id="${issue.id}">Send to Jira</button>` : ''}
+            </div>
+          </div>
+          <div style="margin-top:6px;">${issue.description || ''}</div>
+          <div class="images">${imgs}</div>
+          ${me ? renderTagButtons(issue) : ''}
+        `;
+        el.querySelectorAll('button').forEach(btn => {
+          btn.addEventListener('click', onIssueButtonClick);
+        });
+      }
+
+      function renderTagButtons(issue) {
+        return `<div style="margin-top:8px; display:flex; gap:6px; flex-wrap: wrap;">
+          ${tags.map(t => `<button data-action="setStatus" data-tag="${t}" data-id="${issue.id}">${t}</button>`).join('')}
+        </div>`;
+      }
+
+      async function onIssueButtonClick(e) {
+        const action = e.target.getAttribute('data-action');
+        const id = e.target.getAttribute('data-id');
+        if (action === 'setStatus') {
+          const status = e.target.getAttribute('data-tag');
+          await fetch(`/api/issues/${id}/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, roomId: currentRoomId }) });
+        }
+        if (action === 'toJira') {
+          const res = await fetch(`/api/issues/${id}/jira`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ roomId: currentRoomId }) });
+          if (res.ok) {
+            const data = await res.json();
+            alert('Created in Jira: ' + data.jira_key);
+          } else {
+            alert('Failed to create Jira issue');
+          }
+        }
+      }
+
+      issueForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentRoomId) return alert('Select a room');
+        const formData = new FormData(issueForm);
+        const res = await fetch(`/api/rooms/${currentRoomId}/issues`, { method: 'POST', body: formData });
+        if (res.ok) {
+          issueForm.reset();
+        } else {
+          alert('Failed to submit');
+        }
+      });
+
+      roomSelect.addEventListener('change', async () => {
+        await joinRoom(roomSelect.value);
+      });
+
+      loginBtn.addEventListener('click', () => {
+        window.location.href = '/auth/login';
+      });
+      logoutBtn.addEventListener('click', async () => {
+        await fetch('/auth/logout', { method: 'POST' });
+        window.location.reload();
+      });
+
+      createRoomBtn.addEventListener('click', createRoom);
+
+      (async function init() {
+        await fetchMe();
+        if (me) {
+          await loadRooms();
+        }
+      })();
+    </script>
+  </body>
+  </html>
+
