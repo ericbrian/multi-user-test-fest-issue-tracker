@@ -128,7 +128,7 @@ This document orients future AI/code assistants to continue development efficien
 - Frontend stays minimal (no framework) unless explicitly requested to expand.
 
 ### Documentation Rules
-- Always update this file (`AI_INSTRUCTIONS.md`) and `README.md` whenever you change user-visible behavior, operational setup, or configuration.
+- Always update this file (`AI_INSTRUCTIONS.md`) and `README.md` whenever you change operational setup or configuration.
 - Also update related sources when applicable:
   - `.env.example` for new/changed env vars (defaults, formats, flags like `DISABLE_SSO`).
   - `db/schema.sql` and any DB notes when schema/tables/columns/indexes or sort rules change.
