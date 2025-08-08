@@ -107,13 +107,14 @@ function issueElementId(id) { return `issue-${id}`; }
 function addOrUpdateIssue(issue, isInitial = false) {
   let el = document.getElementById(issueElementId(issue.id));
   const isFaded = Boolean(issue.status) && issue.status !== 'open';
+  const isMine = me && issue.created_by && issue.created_by === me.id;
   if (!el) {
     el = document.createElement('div');
     el.className = 'issue' + (isInitial ? '' : ' enter');
     el.id = issueElementId(issue.id);
     issuesEl.prepend(el);
   }
-  el.className = 'issue' + (isFaded ? ' fade' : '');
+  el.className = 'issue' + (isFaded ? ' fade' : '') + (isMine ? '' : ' not-mine');
   const imgs = (issue.images || []).map(src => `<img src="${src}" />`).join('');
   const statusTag = issue.status && issue.status !== 'open' ? `<span class="tag">${issue.status}</span>` : '';
   const jiraTag = issue.jira_key ? `<span class="tag">Jira: ${issue.jira_key}</span>` : '';
