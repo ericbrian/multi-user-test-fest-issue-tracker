@@ -127,6 +127,23 @@ This document orients future AI/code assistants to continue development efficien
 - Avoid deep nesting; prefer early returns.
 - Frontend stays minimal (no framework) unless explicitly requested to expand.
 
+### Documentation Rules
+- Always update this file (`AI_INSTRUCTIONS.md`) and `README.md` whenever you change user-visible behavior, operational setup, or configuration.
+- Also update related sources when applicable:
+  - `.env.example` for new/changed env vars (defaults, formats, flags like `DISABLE_SSO`).
+  - `db/schema.sql` and any DB notes when schema/tables/columns/indexes or sort rules change.
+  - `bitbucket-pipelines.yml` and `Dockerfile` sections in docs when CI/CD or container behavior changes (e.g., Snyk, ECR repo, build args).
+  - Frontend docs when UI/UX behavior changes (room gating, Script ID sorting, tag semantics like `clear-status`, fade rules, footer/Jira behavior, lightbox).
+  - Keep UI/UX preferences in sync (no gradients).
+
+PR checklist (copy into description):
+- [ ] Updated `AI_INSTRUCTIONS.md`
+- [ ] Updated `README.md`
+- [ ] Updated `.env.example`
+- [ ] Updated `db/schema.sql` (if schema changed)
+- [ ] Verified public asset paths (`public/styles.css`, `public/app.js`) remain accurate
+- [ ] Jira/SSO docs current (endpoints, env vars)
+
 ## Known Gaps / Backlog
 - Replace local uploads with S3 (signed URL uploads + public read or proxy).
 - Add pagination or lazy-loading for issues.
