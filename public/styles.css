@@ -218,17 +218,17 @@ button:disabled {
 }
 
 /* Distinct shading for the Open status button */
-.btn-tag[data-tag="open"] {
+.btn-tag[data-tag="clear-status"] {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.18);
   color: var(--text);
 }
 
-.btn-tag[data-tag="open"]:hover {
+.btn-tag[data-tag="clear-status"]:hover {
   background: rgba(255, 255, 255, 0.10);
 }
 
-.btn-tag.active[data-tag="open"] {
+.btn-tag.active[data-tag="clear-status"] {
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.24);
 }
@@ -287,6 +287,11 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+}
+
+/* Temporarily hide tag legend */
+#tagLegend {
+  display: none !important;
 }
 
 .images {
