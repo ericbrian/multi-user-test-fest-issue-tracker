@@ -51,64 +51,6 @@ pool.on('connect', (client) => {
     client.query(`SET search_path TO ${SCHEMA}, public`);
 });
 
-async function runMigrations() {
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-        await client.query(`CREATE SCHEMA IF NOT EXISTS ${SCHEMA}`);
-        await client.query(`SET search_path TO ${SCHEMA}, public`);
-        await client.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id UUID PRIMARY KEY,
-        sub TEXT UNIQUE NOT NULL,
-        name TEXT,
-        email TEXT
-      );
-    `);
-        await client.query(`
-      CREATE TABLE IF NOT EXISTS rooms (
-        id UUID PRIMARY KEY,
-        name TEXT NOT NULL,
-        created_by UUID REFERENCES users(id) ON DELETE SET NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-      );
-    `);
-        await client.query(`
-      CREATE TABLE IF NOT EXISTS room_members (
-        room_id UUID REFERENCES rooms(id) ON DELETE CASCADE,
-        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-        is_groupier BOOLEAN DEFAULT false,
-        PRIMARY KEY (room_id, user_id)
-      );
-    `);
-        await client.query(`
-      CREATE TABLE IF NOT EXISTS issues (
-        id UUID PRIMARY KEY,
-        room_id UUID REFERENCES rooms(id) ON DELETE CASCADE,
-        created_by UUID REFERENCES users(id) ON DELETE SET NULL,
-        script_id TEXT,
-        description TEXT,
-        images JSONB DEFAULT '[]'::jsonb,
-        is_issue BOOLEAN DEFAULT false,
-        is_annoyance BOOLEAN DEFAULT false,
-        is_existing_upper_env BOOLEAN DEFAULT false,
-        status TEXT DEFAULT 'open',
-        jira_key TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-      );
-    `);
-        // Safe schema evolution for new reason flag
-        await client.query(`ALTER TABLE issues ADD COLUMN IF NOT EXISTS is_not_sure_how_to_test BOOLEAN DEFAULT false`);
-        await client.query('COMMIT');
-    } catch (e) {
-        await client.query('ROLLBACK');
-        console.error('Migration error:', e);
-        throw e;
-    } finally {
-        client.release();
-    }
-}
-
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -330,10 +272,10 @@ app.get('/api/rooms/:roomId/issues', requireAuth, async (req, res) => {
     const { roomId } = req.params;
     const { rows } = await pool.query(
         `SELECT i.*, u.name AS created_by_name, u.email AS created_by_email
-         FROM issues i
-         LEFT JOIN users u ON u.id = i.created_by
-         WHERE i.room_id = $1
-         ORDER BY (NULLIF(i.script_id, '')::bigint) ASC NULLS LAST, i.created_at ASC`,
+     FROM issues i
+     LEFT JOIN users u ON u.id = i.created_by
+     WHERE i.room_id = $1
+     ORDER BY i.script_id ASC NULLS LAST, i.created_at ASC`,
         [roomId]
     );
     res.json(rows);
@@ -349,6 +291,12 @@ app.post('/api/rooms/:roomId/issues', requireAuth, upload.array('images', 5), as
     if (!description || String(description).trim().length === 0) {
         return res.status(400).json({ error: 'Issue Description is required' });
     }
+    const scriptNum = parseInt(String(scriptId), 10);
+    // Ensure script exists to satisfy FK
+    const { rowCount: scriptExists } = await pool.query('SELECT 1 FROM scripts WHERE script_id = $1', [scriptNum]);
+    if (scriptExists === 0) {
+        return res.status(400).json({ error: 'Script not found' });
+    }
     const isIssue = req.body.is_issue === 'on' || req.body.is_issue === 'true' || req.body.is_issue === true;
     const isAnnoyance = req.body.is_annoyance === 'on' || req.body.is_annoyance === 'true' || req.body.is_annoyance === true;
     const isExistingUpper = req.body.is_existing_upper_env === 'on' || req.body.is_existing_upper_env === 'true' || req.body.is_existing_upper_env === true;
@@ -359,7 +307,7 @@ app.post('/api/rooms/:roomId/issues', requireAuth, upload.array('images', 5), as
     await pool.query(
         `INSERT INTO issues (id, room_id, created_by, script_id, description, images, is_issue, is_annoyance, is_existing_upper_env, is_not_sure_how_to_test)
      VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10)`,
-        [id, roomId, createdBy, scriptId || '', description || '', JSON.stringify(files), isIssue, isAnnoyance, isExistingUpper, isNotSureHowToTest]
+        [id, roomId, createdBy, scriptNum, description || '', JSON.stringify(files), isIssue, isAnnoyance, isExistingUpper, isNotSureHowToTest]
     );
     const { rows: enrichedRows } = await pool.query(
         `SELECT i.*, u.name AS created_by_name, u.email AS created_by_email
@@ -509,7 +457,6 @@ io.on('connection', (socket) => {
 
 // Start server
 (async () => {
-    await runMigrations();
     try {
         await setupOIDC();
     } catch (e) {
@@ -519,4 +466,3 @@ io.on('connection', (socket) => {
         console.log(`Test Fest Tracker running on http://localhost:${PORT}`);
     });
 })();
-
