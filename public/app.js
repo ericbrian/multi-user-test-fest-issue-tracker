@@ -118,6 +118,14 @@ function addOrUpdateIssue(issue, isInitial = false) {
   const imgs = (issue.images || []).map(src => `<img src="${src}" />`).join('');
   const statusTag = issue.status && issue.status !== 'open' ? `<span class="tag">${issue.status}</span>` : '';
   const jiraTag = issue.jira_key ? `<span class="tag">Jira: ${issue.jira_key}</span>` : '';
+  const reasons = [];
+  if (issue.is_issue) reasons.push('Issue');
+  if (issue.is_existing_upper_env) reasons.push('Issue in Production');
+  if (issue.is_annoyance) reasons.push('Annoyance');
+  if (issue.is_not_sure_how_to_test) reasons.push('Not sure how to test');
+  const reasonsHtml = reasons.length
+    ? `<div class="dimmable" style="margin-top:6px;"><span class="footer-label">Reasons:</span> <span class="tags">${reasons.map(r => `<span class=\"tag\">${r}</span>`).join('')}</span></div>`
+    : '';
   el.innerHTML = `
     <div style="display:flex; justify-content: space-between; align-items:center; gap: 10px;">
       <div class="dimmable" style="flex: 1 1 auto;"><strong>Test Script ID:</strong> ${issue.script_id || ''} ${statusTag} ${jiraTag}</div>
@@ -126,6 +134,7 @@ function addOrUpdateIssue(issue, isInitial = false) {
       </div>
     </div>
     <div class="dimmable" style="margin-top:6px;">${issue.description || ''}</div>
+    ${reasonsHtml}
     <div class="images dimmable">${imgs}</div>
     ${me ? renderActionBar(issue) : ''}
   `;

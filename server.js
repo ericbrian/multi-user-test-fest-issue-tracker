@@ -421,12 +421,25 @@ app.post('/api/issues/:id/jira', requireAuth, async (req, res) => {
     const summary = `Script ${issue.script_id || ''} - ${issue.description?.slice(0, 80) || 'Issue'}`.slice(0, 255);
     const description = `Description:\n${issue.description || ''}\n\nFlags: issue=${issue.is_issue}, annoyance=${issue.is_annoyance}, existing_upper_env=${issue.is_existing_upper_env}, not_sure_how_to_test=${issue.is_not_sure_how_to_test}`;
 
+    // Fetch room name for Jira labels
+    const { rows: roomRows } = await pool.query('SELECT name FROM rooms WHERE id = $1', [issue.room_id]);
+    const roomName = (roomRows[0] && roomRows[0].name) || '';
+    const roomLabel = (roomName || '')
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9\-]+/g, '')
+        .replace(/--+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'test-fest-room';
+
     const payload = {
         fields: {
             project: { key: JIRA_PROJECT_KEY },
             summary,
             description,
             issuetype: { name: JIRA_ISSUE_TYPE },
+            labels: [roomLabel],
         },
     };
 
@@ -506,5 +519,4 @@ io.on('connection', (socket) => {
         console.log(`Test Fest Tracker running on http://localhost:${PORT}`);
     });
 })();
-
 
