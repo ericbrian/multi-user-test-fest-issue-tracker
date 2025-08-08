@@ -111,6 +111,22 @@ label {
   color: var(--muted);
 }
 
+.reasons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.reasons>label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  /* prevent extra top margins from stacking */
+  font-weight: 500;
+  color: var(--text);
+}
+
 input[type="text"], input[type="number"], textarea, select {
   width: 100%;
   max-width: 100%;

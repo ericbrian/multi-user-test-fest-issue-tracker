@@ -120,6 +120,9 @@ function addOrUpdateIssue(issue, isInitial = false) {
   el.innerHTML = `
     <div style="display:flex; justify-content: space-between; align-items:center; gap: 10px;">
       <div class="dimmable" style="flex: 1 1 auto;"><strong>Script ID:</strong> ${issue.script_id || ''} ${statusTag} ${jiraTag}</div>
+      <div class="dimmable" style="color: var(--muted); font-size: 12px;">
+        By: ${issue.created_by_name || issue.created_by_email || 'Unknown'}
+      </div>
     </div>
     <div class="dimmable" style="margin-top:6px;">${issue.description || ''}</div>
     <div class="images dimmable">${imgs}</div>
@@ -136,7 +139,7 @@ function addOrUpdateIssue(issue, isInitial = false) {
 function renderTagButtons(issue) {
   return `<div style="margin-top:8px; display:flex; gap:8px; flex-wrap: wrap; align-items: center;">
     <span style="color: var(--muted); font-size: 12px;">Status:</span>
-    ${tags.map(t => `<button class=\"btn-tag ${issue.status===t ? 'active' : ''}\" data-action=\"setStatus\" data-tag=\"${t}\" data-id=\"${issue.id}\">${t}</button>`).join('')}
+    ${tags.map(t => `<button class=\"btn-tag ${issue.status === t ? 'active' : ''}\" data-action=\"setStatus\" data-tag=\"${t}\" data-id=\"${issue.id}\">${t}</button>`).join('')}
   </div>`;
 }
 

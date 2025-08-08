@@ -30,17 +30,17 @@
           <label for="description">Issue Description</label>
           <textarea id="description" name="description" rows="4" required></textarea>
 
-          <label>Images</label>
-          <input id="images" name="images" type="file" accept="image/*" multiple />
-
-          <label>Flags</label>
-          <div>
+          <label>Reason?</label>
+          <div class="reasons">
             <label><input type="checkbox" name="is_issue" /> Issue</label>
+            <label><input type="checkbox" name="is_existing_upper_env" /> Issue in Production</label>
             <label><input type="checkbox" name="is_annoyance" /> Annoyance</label>
-            <label><input type="checkbox" name="is_existing_upper_env" /> Existing in Production</label>
+            <label><input type="checkbox" name="is_not_sure_how_to_test" /> Not sure how to test</label>
           </div>
 
-          <div style="margin-top: 10px;">
+          <label>Images</label>
+          <input id="images" name="images" type="file" accept="image/*" multiple />
+          <div style="margin-top: 20px;">
             <button type="submit">Submit</button>
           </div>
         </form>

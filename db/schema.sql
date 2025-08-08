@@ -39,10 +39,24 @@ CREATE TABLE IF NOT EXISTS issues (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+-- Schema evolution: Add new reason flag without changing the original table definition
+ALTER TABLE issues
+  ADD COLUMN IF NOT EXISTS is_not_sure_how_to_test BOOLEAN DEFAULT false;
+
 -- Session table for connect-pg-simple
 CREATE TABLE IF NOT EXISTS session (
   sid varchar NOT NULL COLLATE "default",
   sess json NOT NULL,
   expire timestamp(6) NOT NULL
 ) WITH (OIDS=FALSE);
-ALTER TABLE session ADD CONSTRAINT session_pkey PRIMARY KEY (sid) NOT DEFERRABLE INITIALLY IMMEDIATE;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    WHERE c.conname = 'session_pkey' AND t.relname = 'session'
+  ) THEN
+    ALTER TABLE session ADD CONSTRAINT session_pkey PRIMARY KEY (sid) NOT DEFERRABLE INITIALLY IMMEDIATE;
+  END IF;
+END $$;

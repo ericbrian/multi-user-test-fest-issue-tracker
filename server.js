@@ -97,6 +97,8 @@ async function runMigrations() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
       );
     `);
+        // Safe schema evolution for new reason flag
+        await client.query(`ALTER TABLE issues ADD COLUMN IF NOT EXISTS is_not_sure_how_to_test BOOLEAN DEFAULT false`);
         await client.query('COMMIT');
     } catch (e) {
         await client.query('ROLLBACK');
@@ -327,10 +329,11 @@ app.post('/api/rooms/:roomId/join', requireAuth, async (req, res) => {
 app.get('/api/rooms/:roomId/issues', requireAuth, async (req, res) => {
     const { roomId } = req.params;
     const { rows } = await pool.query(
-        `SELECT *
-     FROM issues
-     WHERE room_id = $1
-     ORDER BY (NULLIF(script_id, '')::bigint) ASC NULLS LAST, created_at ASC`,
+        `SELECT i.*, u.name AS created_by_name, u.email AS created_by_email
+         FROM issues i
+         LEFT JOIN users u ON u.id = i.created_by
+         WHERE i.room_id = $1
+         ORDER BY (NULLIF(i.script_id, '')::bigint) ASC NULLS LAST, i.created_at ASC`,
         [roomId]
     );
     res.json(rows);
@@ -349,16 +352,23 @@ app.post('/api/rooms/:roomId/issues', requireAuth, upload.array('images', 5), as
     const isIssue = req.body.is_issue === 'on' || req.body.is_issue === 'true' || req.body.is_issue === true;
     const isAnnoyance = req.body.is_annoyance === 'on' || req.body.is_annoyance === 'true' || req.body.is_annoyance === true;
     const isExistingUpper = req.body.is_existing_upper_env === 'on' || req.body.is_existing_upper_env === 'true' || req.body.is_existing_upper_env === true;
+    const isNotSureHowToTest = req.body.is_not_sure_how_to_test === 'on' || req.body.is_not_sure_how_to_test === 'true' || req.body.is_not_sure_how_to_test === true;
     const files = (req.files || []).map((f) => `/uploads/${path.basename(f.path)}`);
     const id = uuidv4();
     const createdBy = req.user.id;
-    const { rows } = await pool.query(
-        `INSERT INTO issues (id, room_id, created_by, script_id, description, images, is_issue, is_annoyance, is_existing_upper_env)
-     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9)
-     RETURNING *`,
-        [id, roomId, createdBy, scriptId || '', description || '', JSON.stringify(files), isIssue, isAnnoyance, isExistingUpper]
+    await pool.query(
+        `INSERT INTO issues (id, room_id, created_by, script_id, description, images, is_issue, is_annoyance, is_existing_upper_env, is_not_sure_how_to_test)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10)`,
+        [id, roomId, createdBy, scriptId || '', description || '', JSON.stringify(files), isIssue, isAnnoyance, isExistingUpper, isNotSureHowToTest]
     );
-    const issue = rows[0];
+    const { rows: enrichedRows } = await pool.query(
+        `SELECT i.*, u.name AS created_by_name, u.email AS created_by_email
+         FROM issues i
+         LEFT JOIN users u ON u.id = i.created_by
+         WHERE i.id = $1`,
+        [id]
+    );
+    const issue = enrichedRows[0];
     io.to(roomId).emit('issue:new', issue);
     res.json(issue);
 });
@@ -376,7 +386,14 @@ app.post('/api/issues/:id/status', requireAuth, async (req, res) => {
     const { rows: membership } = await pool.query('SELECT is_groupier FROM room_members WHERE room_id = $1 AND user_id = $2', [roomId, req.user.id]);
     if (membership.length === 0 || !membership[0].is_groupier) return res.status(403).json({ error: 'Forbidden' });
 
-    const { rows } = await pool.query('UPDATE issues SET status = $1 WHERE id = $2 RETURNING *', [normalizedStatus, id]);
+    await pool.query('UPDATE issues SET status = $1 WHERE id = $2', [normalizedStatus, id]);
+    const { rows } = await pool.query(
+        `SELECT i.*, u.name AS created_by_name, u.email AS created_by_email
+         FROM issues i
+         LEFT JOIN users u ON u.id = i.created_by
+         WHERE i.id = $1`,
+        [id]
+    );
     const issue = rows[0];
     io.to(roomId).emit('issue:update', issue);
     res.json(issue);
@@ -402,7 +419,7 @@ app.post('/api/issues/:id/jira', requireAuth, async (req, res) => {
     }
 
     const summary = `Script ${issue.script_id || ''} - ${issue.description?.slice(0, 80) || 'Issue'}`.slice(0, 255);
-    const description = `Description:\n${issue.description || ''}\n\nFlags: issue=${issue.is_issue}, annoyance=${issue.is_annoyance}, existing_upper_env=${issue.is_existing_upper_env}`;
+    const description = `Description:\n${issue.description || ''}\n\nFlags: issue=${issue.is_issue}, annoyance=${issue.is_annoyance}, existing_upper_env=${issue.is_existing_upper_env}, not_sure_how_to_test=${issue.is_not_sure_how_to_test}`;
 
     const payload = {
         fields: {
@@ -424,7 +441,14 @@ app.post('/api/issues/:id/jira', requireAuth, async (req, res) => {
     });
     const jiraKey = resp.data && resp.data.key;
     await pool.query('UPDATE issues SET jira_key = $1 WHERE id = $2', [jiraKey, id]);
-    const updated = { ...issue, jira_key: jiraKey };
+    const { rows: enrichedRows2 } = await pool.query(
+        `SELECT i.*, u.name AS created_by_name, u.email AS created_by_email
+         FROM issues i
+         LEFT JOIN users u ON u.id = i.created_by
+         WHERE i.id = $1`,
+        [id]
+    );
+    const updated = enrichedRows2[0];
     io.to(roomId).emit('issue:update', updated);
     res.json({ jira_key: jiraKey });
 });
