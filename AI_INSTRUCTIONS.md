@@ -5,7 +5,9 @@ This document orients future AI/code assistants to continue development efficien
 ## Overview
 - Purpose: Multi-user, real-time bug/issue tracker for Test Fests.
 - Stack: Node.js (Express), Socket.IO, Postgres, Multer (uploads), Passport + openid-client (Entra ID), Axios (Jira), Docker, Bitbucket Pipelines (ECR), Snyk scans.
-- Frontend: Simple HTML (no framework) served from `public/index.html`.
+- Frontend: Simple HTML (no framework) served from `public/index.html` with assets:
+  - Styles in `public/styles.css`
+  - Client logic in `public/app.js`
 - Realtime: Socket.IO emits on new issues and updates.
 
 ## Key Files
@@ -77,10 +79,21 @@ This document orients future AI/code assistants to continue development efficien
   - `GET /health` → `{ status: 'ok' }`
 
 ## Frontend Behavior
-- Left panel: login/logout, room selector + create, issue form.
-- Right panel: real-time issue list. Issues tagged `duplicate` or `as-designed` fade.
-- Local persistence: last room stored in `localStorage` and auto-joined.
-- Each issue has a `Send to Jira` button (enabled when Jira config present and user is Groupier).
+- Left panel: login/logout, room selector + "Create a new Room", issue form. Form is hidden until a room is selected/created.
+- Right panel: real-time issue list. Items are ordered by numeric Script ID (ascending), then by created time.
+- Local persistence: last room stored in `localStorage` and auto-joined (user must explicitly choose after login per current UI gating).
+- Each issue has a footer with status tags (left) and actions (right). If an issue has a `jira_key`, the footer hides actions and shows a Jira link instead.
+- Clicking an image opens a lightbox (full-size view).
+
+### Tags / Status logic (very important)
+- Tags available are configured via `TAGS` env var.
+- Applying ANY tag causes the issue to fade; clearing the status removes the fade.
+- Clearing the status is done by posting `status: "clear-status"` to the server, which normalizes to `open`.
+- The currently applied tag is rendered with an `active` style in the UI.
+- The client refreshes the issue list on `issue:new`, `issue:update`, and `issue:delete` socket events to preserve Script ID ordering and reflect tag changes immediately.
+
+### Delete permissions
+- Delete allowed for the issue creator or a Groupier. Deletion emits `issue:delete` and attempts to remove uploaded files from disk.
 
 ## File Uploads
 - Uses Multer to save images under `uploads/` and serves via `/uploads/...`.
@@ -122,7 +135,6 @@ This document orients future AI/code assistants to continue development efficien
 - Rate limiting on write endpoints.
 - Automated tests (unit/integration) and a simple test dataset/seed script.
 - Observability: structured logging and metrics.
-- Better Groupier management (UI to promote/demote users within a room).
 
 ## Quick References
 - Entry points: `GET /` serves `public/index.html`.

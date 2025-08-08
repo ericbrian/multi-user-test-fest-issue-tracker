@@ -280,7 +280,11 @@ app.post('/auth/logout', (req, res) => {
 });
 
 app.get('/me', (req, res) => {
-    res.json({ user: req.user || null, tags: TAGS });
+    res.json({
+        user: req.user || null,
+        tags: TAGS,
+        jiraBaseUrl: JIRA_BASE_URL ? JIRA_BASE_URL.replace(/\/$/, '') : null,
+    });
 });
 
 function requireAuth(req, res, next) {
@@ -362,14 +366,17 @@ app.post('/api/rooms/:roomId/issues', requireAuth, upload.array('images', 5), as
 // Update issue status (Groupier only)
 app.post('/api/issues/:id/status', requireAuth, async (req, res) => {
     const { id } = req.params;
-    const { status, roomId } = req.body;
-    if (status !== 'open' && !TAGS.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+    const { status: requestedStatus, roomId } = req.body;
+    const normalizedStatus = requestedStatus === 'clear-status' ? 'open' : requestedStatus;
+    if (normalizedStatus !== 'open' && !TAGS.includes(normalizedStatus)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
 
     // Check groupier
     const { rows: membership } = await pool.query('SELECT is_groupier FROM room_members WHERE room_id = $1 AND user_id = $2', [roomId, req.user.id]);
     if (membership.length === 0 || !membership[0].is_groupier) return res.status(403).json({ error: 'Forbidden' });
 
-    const { rows } = await pool.query('UPDATE issues SET status = $1 WHERE id = $2 RETURNING *', [status, id]);
+    const { rows } = await pool.query('UPDATE issues SET status = $1 WHERE id = $2 RETURNING *', [normalizedStatus, id]);
     const issue = rows[0];
     io.to(roomId).emit('issue:update', issue);
     res.json(issue);

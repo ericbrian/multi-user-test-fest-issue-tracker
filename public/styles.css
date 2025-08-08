@@ -285,6 +285,20 @@ button:disabled {
   gap: 8px;
 }
 
+.issue-footer .jira-note {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.issue-footer .jira-note a {
+  color: #2684ff;
+  text-decoration: none;
+}
+
+.issue-footer .jira-note a:hover {
+  text-decoration: underline;
+}
+
 .footer-label {
   color: var(--muted);
   font-size: 12px;
@@ -320,6 +334,6 @@ button:disabled {
   max-width: 100%;
   max-height: 100%;
   border-radius: 10px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
   cursor: zoom-out;
 }

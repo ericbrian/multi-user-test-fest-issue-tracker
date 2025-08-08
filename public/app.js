@@ -28,6 +28,9 @@ async function fetchMe() {
   const data = await res.json();
   me = data.user;
   tags = data.tags || [];
+  if (data.jiraBaseUrl) {
+    window.__jiraBaseUrl = data.jiraBaseUrl;
+  }
   userInfo.textContent = me ? `${me.name || me.email || 'User'}` : 'Not logged in';
   loginBtn.style.display = me ? 'none' : 'inline-block';
   logoutBtn.style.display = me ? 'inline-block' : 'none';
@@ -103,7 +106,7 @@ function issueElementId(id) { return `issue-${id}`; }
 
 function addOrUpdateIssue(issue, isInitial = false) {
   let el = document.getElementById(issueElementId(issue.id));
-  const isFaded = (issue.status === 'duplicate' || issue.status === 'as-designed');
+  const isFaded = Boolean(issue.status) && issue.status !== 'open';
   if (!el) {
     el = document.createElement('div');
     el.className = 'issue' + (isInitial ? '' : ' enter');
@@ -133,7 +136,7 @@ function addOrUpdateIssue(issue, isInitial = false) {
 function renderTagButtons(issue) {
   return `<div style="margin-top:8px; display:flex; gap:8px; flex-wrap: wrap; align-items: center;">
     <span style="color: var(--muted); font-size: 12px;">Status:</span>
-    ${tags.map(t => `<button class="btn-tag" data-action="setStatus" data-tag="${t}" data-id="${issue.id}">${t}</button>`).join('')}
+    ${tags.map(t => `<button class=\"btn-tag ${issue.status===t ? 'active' : ''}\" data-action=\"setStatus\" data-tag=\"${t}\" data-id=\"${issue.id}\">${t}</button>`).join('')}
   </div>`;
 }
 
@@ -145,6 +148,15 @@ function renderTagButtonsInline(issue) {
 }
 
 function renderActionBar(issue) {
+  if (issue.jira_key) {
+    const base = (window.__jiraBaseUrl || '').replace(/\/$/, '');
+    const url = base && issue.jira_key ? `${base}/browse/${issue.jira_key}` : '#';
+    return `
+      <div class="issue-footer">
+        <div class="jira-note">Issue is in Jira: <a href="${url}" target="_blank" rel="noopener noreferrer">${issue.jira_key}</a></div>
+      </div>
+    `;
+  }
   return `
     <div class="issue-footer">
       <div class="issue-footer-left">
@@ -183,7 +195,7 @@ async function onIssueButtonClick(e) {
     }
   }
   if (action === 'clearStatus') {
-    await fetch(`/api/issues/${id}/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'open', roomId: currentRoomId }) });
+    await fetch(`/api/issues/${id}/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'clear-status', roomId: currentRoomId }) });
   }
 }
 
