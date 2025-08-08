@@ -120,7 +120,7 @@ function addOrUpdateIssue(issue, isInitial = false) {
   const jiraTag = issue.jira_key ? `<span class="tag">Jira: ${issue.jira_key}</span>` : '';
   el.innerHTML = `
     <div style="display:flex; justify-content: space-between; align-items:center; gap: 10px;">
-      <div class="dimmable" style="flex: 1 1 auto;"><strong>Script ID:</strong> ${issue.script_id || ''} ${statusTag} ${jiraTag}</div>
+      <div class="dimmable" style="flex: 1 1 auto;"><strong>Test Script ID:</strong> ${issue.script_id || ''} ${statusTag} ${jiraTag}</div>
       <div class="dimmable" style="color: var(--muted); font-size: 12px;">
         By: ${issue.created_by_name || issue.created_by_email || 'Unknown'}
       </div>
@@ -208,7 +208,7 @@ issueForm.addEventListener('submit', async (e) => {
   if (!currentRoomId) return alert('Select a room');
   const scriptVal = (document.getElementById('scriptId').value || '').trim();
   if (!/^\d+$/.test(scriptVal)) {
-    alert('Script ID must be a numeric value');
+    alert('Test Script ID must be a numeric value');
     return;
   }
   const descVal = (document.getElementById('description').value || '').trim();
