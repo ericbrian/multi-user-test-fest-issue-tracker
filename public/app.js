@@ -84,13 +84,9 @@ async function joinRoom(roomId) {
   if (socket) socket.disconnect();
   socket = io();
   socket.emit('room:join', roomId);
-  socket.on('issue:new', issue => addOrUpdateIssue(issue));
-  socket.on('issue:update', issue => addOrUpdateIssue(issue));
-  socket.on('issue:delete', payload => {
-    const { id } = payload || {};
-    const el = document.getElementById(issueElementId(id));
-    if (el) el.remove();
-  });
+  socket.on('issue:new', () => fetchIssues(currentRoomId));
+  socket.on('issue:update', () => fetchIssues(currentRoomId));
+  socket.on('issue:delete', () => fetchIssues(currentRoomId));
   await fetchIssues(roomId);
   await fetch('/api/rooms/' + roomId + '/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
   updateVisibility();
