@@ -89,7 +89,16 @@ async function joinRoom(roomId) {
   socket.emit('room:join', roomId);
   socket.on('issue:new', () => fetchIssues(currentRoomId));
   socket.on('issue:update', () => fetchIssues(currentRoomId));
-  socket.on('issue:delete', () => fetchIssues(currentRoomId));
+  socket.on('issue:delete', (payload) => {
+    if (payload && payload.id) {
+      const el = document.getElementById(issueElementId(payload.id));
+      if (el && el.parentElement) {
+        el.parentElement.removeChild(el);
+      }
+    } else {
+      fetchIssues(currentRoomId);
+    }
+  });
   await fetchIssues(roomId);
   await fetch('/api/rooms/' + roomId + '/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
   updateVisibility();
