@@ -22,6 +22,11 @@ html, body {
 
 body {
   background: var(--bg1);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow: hidden;
+  /* prevent whole-page scroll */
 }
 
 .groupier-banner {
@@ -39,10 +44,15 @@ body {
 
 .layout {
   display: flex;
-  height: 100%;
+  flex: 1 1 auto;
+  /* fill remaining space under header/banner */
+  min-height: 0;
+  /* allow children to manage their own overflow */
   gap: 16px;
   padding: 16px;
   box-sizing: border-box;
+  overflow: hidden;
+  /* contain panel scrolling to children */
 }
 
 .site-header {
@@ -79,6 +89,8 @@ body {
   width: 40%;
   padding: 16px;
   box-sizing: border-box;
+  overflow: hidden;
+  /* left panel doesn't scroll */
 }
 
 .left-section {
@@ -107,6 +119,7 @@ body {
   padding: 16px;
   box-sizing: border-box;
   overflow-y: auto;
+  /* only right panel scrolls */
 }
 
 .hidden {

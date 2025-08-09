@@ -224,7 +224,15 @@ async function onIssueButtonClick(e) {
   const id = e.target.getAttribute('data-id');
   if (action === 'setStatus') {
     const status = e.target.getAttribute('data-tag');
-    await fetch(`/api/issues/${id}/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, roomId: currentRoomId }) });
+    const res = await fetch(`/api/issues/${id}/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, roomId: currentRoomId }) });
+    if (!res.ok) {
+      try {
+        const data = await res.json();
+        alert(data && data.error ? `Failed to set status: ${data.error}` : 'Failed to set status');
+      } catch (_) {
+        alert('Failed to set status');
+      }
+    }
   }
   if (action === 'toJira') {
 
