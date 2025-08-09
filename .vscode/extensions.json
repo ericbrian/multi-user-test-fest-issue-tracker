@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "ms-ossdata.vscode-postgresql"
+    ],
+    "unwantedRecommendations": [
+        "ms-mssql.mssql"
+    ]
+}

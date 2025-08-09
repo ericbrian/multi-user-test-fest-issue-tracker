@@ -1,4 +1,7 @@
 {
+    "files.associations": {
+        "*.sql": "pgsql"
+    },
     "cSpell.words": [
         "Groupier",
         "testfest"
