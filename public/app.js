@@ -3,6 +3,8 @@ const logoutBtn = document.getElementById('logoutBtn');
 const userInfo = document.getElementById('userInfo');
 const issueForm = document.getElementById('issueForm');
 const issuesEl = document.getElementById('issues');
+const roomStatsPanel = document.getElementById('roomStatsPanel');
+const roomStatsEl = document.getElementById('roomStats');
 const roomSelect = document.getElementById('roomSelect');
 const createRoomBtn = document.getElementById('createRoomBtn');
 const tagLegend = document.getElementById('tagLegend');
@@ -19,6 +21,7 @@ function updateVisibility() {
   issueForm.classList.toggle('hidden', !shouldShow);
   issuesEl.classList.toggle('hidden', !shouldShow);
   tagLegend.classList.toggle('hidden', !shouldShow);
+  if (roomStatsPanel) roomStatsPanel.classList.toggle('hidden', !shouldShow);
   if (createRoomBtn) {
     createRoomBtn.style.display = shouldShow ? 'none' : 'inline-block';
   }
@@ -120,6 +123,19 @@ async function fetchIssues(roomId) {
   const list = await res.json();
   issuesEl.innerHTML = '';
   list.forEach(i => addOrUpdateIssue(i, true));
+  // Basic stats
+  if (roomStatsEl) {
+    const total = list.length;
+    const withImages = list.filter(i => Array.isArray(i.images) && i.images.length > 0).length;
+    const inJira = list.filter(i => !!i.jira_key).length;
+    const nonOpen = list.filter(i => i.status && i.status !== 'open').length;
+    roomStatsEl.innerHTML = `
+      <div><strong>Total issues</strong><br/>${total}</div>
+      <div><strong>With images</strong><br/>${withImages}</div>
+      <div><strong>In Jira</strong><br/>${inJira}</div>
+      <div><strong>Tagged</strong><br/>${nonOpen}</div>
+    `;
+  }
 }
 
 function issueElementId(id) { return `issue-${id}`; }
