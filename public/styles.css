@@ -24,6 +24,19 @@ body {
   background: var(--bg1);
 }
 
+.groupier-banner {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(90deg, #0ea5e9, #22c55e);
+  color: #0b1a2a;
+  text-align: center;
+  padding: 8px 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 .layout {
   display: flex;
   height: 100%;

@@ -47,6 +47,7 @@ ALTER TABLE issues
 CREATE TABLE IF NOT EXISTS test_script (
   id UUID PRIMARY KEY,
   -- Sequential numeric ID starting at 1 and incrementing by 1, distinct from the PK
+  script_id INTEGER GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1) UNIQUE NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
@@ -62,18 +63,18 @@ CREATE TABLE IF NOT EXISTS test_script_line (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Add FK from issues.script_id -> scripts.script_id if missing
+-- Ensure FK from test_script_line.script_id to test_script.script_id exists
 DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1
     FROM pg_constraint c
     JOIN pg_class t ON t.oid = c.conrelid
-    WHERE c.conname = 'issues_script_fk' AND t.relname = 'issues'
+    WHERE c.conname = 'test_script_line_script_fk' AND t.relname = 'test_script_line'
   ) THEN
-    ALTER TABLE issues
-      ADD CONSTRAINT issues_script_fk FOREIGN KEY (script_id)
-      REFERENCES scripts (script_id)
+    ALTER TABLE test_script_line
+      ADD CONSTRAINT test_script_line_script_fk FOREIGN KEY (script_id)
+      REFERENCES test_script (script_id)
       ON UPDATE RESTRICT ON DELETE RESTRICT;
   END IF;
 END $$;

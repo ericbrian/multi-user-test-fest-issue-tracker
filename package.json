@@ -6,7 +6,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "dev": "nodemon --watch server.js --watch public --ignore uploads --ext js,css,html server.js"
+    "dev": "nodemon --watch server.js --watch public --ignore uploads --ext js,css,html server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:migrate": "prisma migrate dev --name init",
+    "prisma:studio": "prisma studio"
   },
   "repository": {
     "type": "git",
@@ -21,6 +25,7 @@
   },
   "homepage": "https://github.com/ericbrian/multi-user-test-fest-issue-tracker#readme",
   "dependencies": {
+    "@prisma/client": "^6.13.0",
     "axios": "^1.11.0",
     "connect-pg-simple": "^10.0.0",
     "cookie-parser": "^1.4.7",
@@ -36,6 +41,7 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "prisma": "^6.13.0"
   }
 }

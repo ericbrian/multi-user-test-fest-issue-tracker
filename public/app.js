@@ -6,6 +6,7 @@ const issuesEl = document.getElementById('issues');
 const roomSelect = document.getElementById('roomSelect');
 const createRoomBtn = document.getElementById('createRoomBtn');
 const tagLegend = document.getElementById('tagLegend');
+const groupierBanner = document.getElementById('groupierBanner');
 
 let me = null;
 let tags = [];
@@ -20,6 +21,9 @@ function updateVisibility() {
   tagLegend.classList.toggle('hidden', !shouldShow);
   if (createRoomBtn) {
     createRoomBtn.style.display = shouldShow ? 'none' : 'inline-block';
+  }
+  if (!shouldShow && groupierBanner) {
+    groupierBanner.classList.add('hidden');
   }
 }
 
@@ -100,7 +104,14 @@ async function joinRoom(roomId) {
     }
   });
   await fetchIssues(roomId);
-  await fetch('/api/rooms/' + roomId + '/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+  const joinRes = await fetch('/api/rooms/' + roomId + '/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+  try {
+    const joinData = await joinRes.json();
+    const isGroupier = !!(joinData && joinData.isGroupier);
+    if (groupierBanner) {
+      groupierBanner.classList.toggle('hidden', !isGroupier);
+    }
+  } catch (_) { }
   updateVisibility();
 }
 
