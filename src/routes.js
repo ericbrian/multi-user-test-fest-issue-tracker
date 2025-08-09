@@ -75,40 +75,54 @@ function registerRoutes(app, deps) {
     });
 
     app.post('/api/rooms', requireAuth, async (req, res) => {
+        const prisma = getPrisma();
         const name = (req.body.name || '').trim() || `Room ${new Date().toLocaleString()}`;
         const roomId = uuidv4();
         const userId = req.user.id;
-        await pool.query('INSERT INTO rooms (id, name, created_by) VALUES ($1, $2, $3)', [roomId, name, userId]);
+        await prisma.room.create({ data: { id: roomId, name, created_by: userId } });
         const GROUPIER_EMAILS = (process.env.GROUPIER_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
         const isGroupier = GROUPIER_EMAILS.includes((req.user.email || '').toLowerCase()) || true; // creator is groupier
-        await pool.query('INSERT INTO room_members (room_id, user_id, is_groupier) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [roomId, userId, isGroupier]);
+        // creator joins as member
+        await prisma.roomMember.create({ data: { room_id: roomId, user_id: userId, is_groupier: isGroupier } }).catch(() => { });
         res.json({ id: roomId, name, created_by: userId });
     });
 
     app.post('/api/rooms/:roomId/join', requireAuth, async (req, res) => {
         const { roomId } = req.params;
+        const prisma = getPrisma();
         const GROUPIER_EMAILS = (process.env.GROUPIER_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
         const isGroupier = GROUPIER_EMAILS.includes((req.user.email || '').toLowerCase()) || false;
-        await pool.query('INSERT INTO room_members (room_id, user_id, is_groupier) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', [roomId, req.user.id, isGroupier]);
+        await prisma.roomMember.upsert({
+            where: { room_id_user_id: { room_id: roomId, user_id: req.user.id } },
+            update: {},
+            create: { room_id: roomId, user_id: req.user.id, is_groupier: isGroupier },
+        });
         res.json({ ok: true, isGroupier });
     });
 
     app.get('/api/rooms/:roomId/issues', requireAuth, async (req, res) => {
         const { roomId } = req.params;
-        const { rows } = await pool.query(
-            `SELECT i.*, u.name AS created_by_name, u.email AS created_by_email
-       FROM issues i
-       LEFT JOIN users u ON u.id = i.created_by
-       WHERE i.room_id = $1
-       ORDER BY i.script_id ASC NULLS LAST, i.created_at ASC`,
-            [roomId]
-        );
+        const prisma = getPrisma();
+        const list = await prisma.issue.findMany({
+            where: { room_id: roomId },
+            include: { createdBy: { select: { name: true, email: true } } },
+            orderBy: [{ script_id: 'asc' }, { created_at: 'asc' }],
+        });
+        const rows = list.map((i) => {
+            const { createdBy, ...rest } = i;
+            return {
+                ...rest,
+                created_by_name: createdBy?.name || null,
+                created_by_email: createdBy?.email || null,
+            };
+        });
         res.json(rows);
     });
 
     // Issues create with uploads
     app.post('/api/rooms/:roomId/issues', requireAuth, upload.array('images', 5), async (req, res) => {
         const { roomId } = req.params;
+        const prisma = getPrisma();
         const { scriptId, description } = req.body;
         if (!scriptId || !/^\d+$/.test(String(scriptId))) {
             return res.status(400).json({ error: 'Script ID is required and must be numeric' });
@@ -117,9 +131,8 @@ function registerRoutes(app, deps) {
             return res.status(400).json({ error: 'Issue Description is required' });
         }
         const scriptNum = parseInt(String(scriptId), 10);
-        // Ensure script exists to satisfy FK
-        const { rowCount: scriptExists } = await pool.query('SELECT 1 FROM test_script WHERE script_id = $1', [scriptNum]);
-        if (scriptExists === 0) {
+        const script = await prisma.testScript.findUnique({ where: { script_id: scriptNum } });
+        if (!script) {
             return res.status(400).json({ error: 'Script not found' });
         }
         const isIssue = req.body.is_issue === 'on' || req.body.is_issue === 'true' || req.body.is_issue === true;
@@ -129,21 +142,32 @@ function registerRoutes(app, deps) {
         const files = (req.files || []).map((f) => `/uploads/${path.basename(f.path)}`);
         const id = uuidv4();
         const createdBy = req.user.id;
-        await pool.query(
-            `INSERT INTO issues (id, room_id, created_by, script_id, description, images, is_issue, is_annoyance, is_existing_upper_env, is_not_sure_how_to_test)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10)`,
-            [id, roomId, createdBy, scriptNum, description || '', JSON.stringify(files), isIssue, isAnnoyance, isExistingUpper, isNotSureHowToTest]
-        );
-        const { rows: enrichedRows } = await pool.query(
-            `SELECT i.*, u.name AS created_by_name, u.email AS created_by_email
-         FROM issues i
-         LEFT JOIN users u ON u.id = i.created_by
-         WHERE i.id = $1`,
-            [id]
-        );
-        const issue = enrichedRows[0];
-        io.to(roomId).emit('issue:new', issue);
-        res.json(issue);
+        await prisma.issue.create({
+            data: {
+                id,
+                room_id: roomId,
+                created_by: createdBy,
+                script_id: scriptNum,
+                description: description || '',
+                images: files,
+                is_issue: isIssue,
+                is_annoyance: isAnnoyance,
+                is_existing_upper_env: isExistingUpper,
+                is_not_sure_how_to_test: isNotSureHowToTest,
+            },
+        });
+        const issue = await prisma.issue.findUnique({
+            where: { id },
+            include: { createdBy: { select: { name: true, email: true } } },
+        });
+        const issueOut = {
+            ...issue,
+            created_by_name: issue?.createdBy?.name || null,
+            created_by_email: issue?.createdBy?.email || null,
+        };
+        delete issueOut.createdBy;
+        io.to(roomId).emit('issue:new', issueOut);
+        res.json(issueOut);
     });
 
     // Update issue status (Groupier only)
@@ -154,37 +178,33 @@ function registerRoutes(app, deps) {
         if (normalizedStatus !== 'open' && !TAGS.includes(normalizedStatus)) {
             return res.status(400).json({ error: 'Invalid status' });
         }
-
-        // Check groupier
-        const { rows: membership } = await pool.query('SELECT is_groupier FROM room_members WHERE room_id = $1 AND user_id = $2', [roomId, req.user.id]);
-        if (membership.length === 0 || !membership[0].is_groupier) return res.status(403).json({ error: 'Forbidden' });
-
-        await pool.query('UPDATE issues SET status = $1 WHERE id = $2', [normalizedStatus, id]);
-        const { rows } = await pool.query(
-            `SELECT i.*, u.name AS created_by_name, u.email AS created_by_email
-         FROM issues i
-         LEFT JOIN users u ON u.id = i.created_by
-         WHERE i.id = $1`,
-            [id]
-        );
-        const issue = rows[0];
-        io.to(roomId).emit('issue:update', issue);
-        res.json(issue);
+        const prisma = getPrisma();
+        const membership = await prisma.roomMember.findUnique({ where: { room_id_user_id: { room_id: roomId, user_id: req.user.id } } });
+        if (!membership || !membership.is_groupier) return res.status(403).json({ error: 'Forbidden' });
+        await prisma.issue.update({ where: { id }, data: { status: normalizedStatus } });
+        const issue = await prisma.issue.findUnique({
+            where: { id },
+            include: { createdBy: { select: { name: true, email: true } } },
+        });
+        const out = { ...issue, created_by_name: issue?.createdBy?.name || null, created_by_email: issue?.createdBy?.email || null };
+        delete out.createdBy;
+        io.to(roomId).emit('issue:update', out);
+        res.json(out);
     });
 
     // Send to Jira (Groupier only)
     app.post('/api/issues/:id/jira', requireAuth, async (req, res) => {
         const { id } = req.params;
         const { roomId } = req.body;
-        const { rows: membership } = await pool.query('SELECT is_groupier FROM room_members WHERE room_id = $1 AND user_id = $2', [roomId, req.user.id]);
-        if (membership.length === 0 || !membership[0].is_groupier) return res.status(403).json({ error: 'Forbidden' });
+        const prisma = getPrisma();
+        const membership = await prisma.roomMember.findUnique({ where: { room_id_user_id: { room_id: roomId, user_id: req.user.id } } });
+        if (!membership || !membership.is_groupier) return res.status(403).json({ error: 'Forbidden' });
 
         if (!JIRA_BASE_URL || !JIRA_EMAIL || !JIRA_API_TOKEN || !JIRA_PROJECT_KEY) {
             return res.status(500).json({ error: 'Jira not configured' });
         }
 
-        const { rows: issuesRows } = await pool.query('SELECT * FROM issues WHERE id = $1', [id]);
-        const issue = issuesRows[0];
+        const issue = await prisma.issue.findUnique({ where: { id } });
         if (!issue) return res.status(404).json({ error: 'Issue not found' });
 
         if (issue.jira_key) {
@@ -195,8 +215,8 @@ function registerRoutes(app, deps) {
         const description = `Description:\n${issue.description || ''}\n\nFlags: issue=${issue.is_issue}, annoyance=${issue.is_annoyance}, existing_upper_env=${issue.is_existing_upper_env}, not_sure_how_to_test=${issue.is_not_sure_how_to_test}`;
 
         // Fetch room name for Jira labels
-        const { rows: roomRows } = await pool.query('SELECT name FROM rooms WHERE id = $1', [issue.room_id]);
-        const roomName = (roomRows[0] && roomRows[0].name) || '';
+        const room = await prisma.room.findUnique({ where: { id: issue.room_id } });
+        const roomName = room?.name || '';
         const roomLabel = (roomName || '')
             .toString()
             .toLowerCase()
@@ -226,15 +246,10 @@ function registerRoutes(app, deps) {
             },
         });
         const jiraKey = resp.data && resp.data.key;
-        await pool.query('UPDATE issues SET jira_key = $1 WHERE id = $2', [jiraKey, id]);
-        const { rows: enrichedRows2 } = await pool.query(
-            `SELECT i.*, u.name AS created_by_name, u.email AS created_by_email
-         FROM issues i
-         LEFT JOIN users u ON u.id = i.created_by
-         WHERE i.id = $1`,
-            [id]
-        );
-        const updated = enrichedRows2[0];
+        await prisma.issue.update({ where: { id }, data: { jira_key: jiraKey } });
+        const updatedIssue = await prisma.issue.findUnique({ where: { id }, include: { createdBy: { select: { name: true, email: true } } } });
+        const updated = { ...updatedIssue, created_by_name: updatedIssue?.createdBy?.name || null, created_by_email: updatedIssue?.createdBy?.email || null };
+        delete updated.createdBy;
         io.to(roomId).emit('issue:update', updated);
         res.json({ jira_key: jiraKey });
     });
@@ -242,17 +257,12 @@ function registerRoutes(app, deps) {
     // Delete issue (creator or Groupier)
     app.delete('/api/issues/:id', requireAuth, async (req, res) => {
         const { id } = req.params;
-        // Fetch issue
-        const { rows: issuesRows } = await pool.query('SELECT * FROM issues WHERE id = $1', [id]);
-        const issue = issuesRows[0];
+        const prisma = getPrisma();
+        const issue = await prisma.issue.findUnique({ where: { id } });
         if (!issue) return res.status(404).json({ error: 'Issue not found' });
 
-        // Determine membership and permission
-        const { rows: membership } = await pool.query(
-            'SELECT is_groupier FROM room_members WHERE room_id = $1 AND user_id = $2',
-            [issue.room_id, req.user.id]
-        );
-        const isGroupier = membership.length > 0 && membership[0].is_groupier;
+        const membership = await prisma.roomMember.findUnique({ where: { room_id_user_id: { room_id: issue.room_id, user_id: req.user.id } } });
+        const isGroupier = Boolean(membership && membership.is_groupier);
         const isCreator = issue.created_by === req.user.id;
         if (!isGroupier && !isCreator) return res.status(403).json({ error: 'Forbidden' });
 
@@ -267,12 +277,11 @@ function registerRoutes(app, deps) {
             });
         } catch (_) { }
 
-        await pool.query('DELETE FROM issues WHERE id = $1', [id]);
+        await prisma.issue.delete({ where: { id } });
         io.to(issue.room_id).emit('issue:delete', { id });
         res.json({ ok: true });
     });
 }
 
 module.exports = { registerRoutes };
-
 

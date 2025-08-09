@@ -178,41 +178,7 @@ app.use(passport.session());
 const { createDevAutoAuthMiddleware } = require('./src/middleware');
 app.use(createDevAutoAuthMiddleware({ DISABLE_SSO, DEV_USER_EMAIL, DEV_USER_NAME }));
 
-// Auth routes
-app.get('/auth/login', async (req, res, next) => {
-    if (DISABLE_SSO) return res.redirect('/');
-    if (!oidcClient) return res.status(500).send('OIDC not configured');
-    passport.authenticate('oidc')(req, res, next);
-});
-
-app.get('/auth/callback', (req, res, next) => {
-    passport.authenticate('oidc', {
-        successRedirect: '/',
-        failureRedirect: '/?login=failed',
-    })(req, res, next);
-});
-
-app.post('/auth/logout', (req, res) => {
-    req.logout(() => {
-        req.session.destroy(() => {
-            res.clearCookie('connect.sid');
-            res.status(200).json({ ok: true });
-        });
-    });
-});
-
-app.get('/me', (req, res) => {
-    res.json({
-        user: req.user || null,
-        tags: TAGS,
-        jiraBaseUrl: JIRA_BASE_URL ? JIRA_BASE_URL.replace(/\/$/, '') : null,
-    });
-});
-
-function requireAuth(req, res, next) {
-    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-    next();
-}
+// Auth routes moved to src/routes.js
 
 // Register routes
 registerRoutes(app, {
