@@ -68,10 +68,52 @@ body {
   backdrop-filter: blur(8px);
 }
 
+.site-title {
+  font-size: 18px;
+  letter-spacing: 0.2px;
+}
+
 .site-header .room-controls {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.site-header .user-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.site-header .user-controls .user-info {
+  color: var(--text);
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+@media (max-width: 720px) {
+  .site-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .site-header .room-controls {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .site-title {
+    order: 1;
+  }
+
+  .site-header .user-controls {
+    order: 2;
+    margin-left: auto;
+  }
 }
 
 .site-header .room-controls label {
@@ -249,6 +291,11 @@ button {
   cursor: pointer;
   transition: transform 0.12s ease, box-shadow 0.2s ease, opacity .2s ease;
   box-shadow: 0 6px 18px rgba(124, 58, 237, 0.25);
+}
+
+/* Make the Create Room button wider */
+#createRoomBtn {
+  min-width: 180px;
 }
 
 button:hover {

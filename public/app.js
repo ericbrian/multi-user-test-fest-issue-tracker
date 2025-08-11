@@ -1,12 +1,14 @@
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
-const userInfo = document.getElementById('userInfo');
+const userInfoHeader = document.getElementById('userInfoHeader');
 const issueForm = document.getElementById('issueForm');
 const issuesEl = document.getElementById('issues');
 const roomStatsPanel = document.getElementById('roomStatsPanel');
 const roomStatsEl = document.getElementById('roomStats');
 const roomSelect = document.getElementById('roomSelect');
 const createRoomBtn = document.getElementById('createRoomBtn');
+const changeRoomBtn = document.getElementById('changeRoomBtn');
+const roomLabel = document.getElementById('roomLabel');
 const tagLegend = document.getElementById('tagLegend');
 const groupierBanner = document.getElementById('groupierBanner');
 
@@ -22,9 +24,14 @@ function updateVisibility() {
   issuesEl.classList.toggle('hidden', !shouldShow);
   tagLegend.classList.toggle('hidden', !shouldShow);
   if (roomStatsPanel) roomStatsPanel.classList.toggle('hidden', !shouldShow);
-  if (createRoomBtn) {
-    createRoomBtn.style.display = shouldShow ? 'none' : 'inline-block';
-  }
+  // Hide/show all left sections until a room is chosen
+  document.querySelectorAll('.left-section').forEach((el) => {
+    el.classList.toggle('hidden', !shouldShow);
+  });
+  if (createRoomBtn) createRoomBtn.style.display = shouldShow ? 'none' : 'inline-block';
+  if (roomSelect) roomSelect.style.display = shouldShow ? 'none' : 'inline-block';
+  if (roomLabel) roomLabel.style.display = shouldShow ? 'none' : 'inline-block';
+  if (changeRoomBtn) changeRoomBtn.style.display = shouldShow ? 'inline-block' : 'none';
   if (!shouldShow && groupierBanner) {
     groupierBanner.classList.add('hidden');
   }
@@ -38,7 +45,9 @@ async function fetchMe() {
   if (data.jiraBaseUrl) {
     window.__jiraBaseUrl = data.jiraBaseUrl;
   }
-  userInfo.textContent = me ? `${me.name || me.email || 'User'}` : 'Not logged in';
+  if (userInfoHeader) {
+    userInfoHeader.textContent = me ? `${me.name || me.email || 'User'}` : '';
+  }
   loginBtn.style.display = me ? 'none' : 'inline-block';
   logoutBtn.style.display = me ? 'inline-block' : 'none';
 
@@ -274,7 +283,14 @@ issueForm.addEventListener('submit', async (e) => {
   if (res.ok) {
     issueForm.reset();
   } else {
-    alert('Failed to submit');
+    try {
+      const data = await res.json();
+      const details = data && (data.error || data.message);
+      alert(`Failed to submit${details ? `: ${details}` : ''}`);
+    } catch (_) {
+      const text = await res.text().catch(() => '');
+      alert(`Failed to submit${text ? `: ${text}` : ''}`);
+    }
   }
 });
 
@@ -293,6 +309,18 @@ logoutBtn.addEventListener('click', async () => {
 });
 
 createRoomBtn.addEventListener('click', createRoom);
+
+changeRoomBtn.addEventListener('click', async () => {
+  // Leave current room and show controls again
+  currentRoomId = null;
+  try { localStorage.removeItem(LS_KEY_LAST_ROOM); } catch (_) { }
+  if (socket) {
+    try { socket.disconnect(); } catch (_) { }
+    socket = null;
+  }
+  await loadRooms();
+  updateVisibility();
+});
 
 (async function init() {
   await fetchMe();

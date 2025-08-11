@@ -9,23 +9,24 @@
   <body>
     <div id="groupierBanner" class="groupier-banner hidden">You are Groupier in this room</div>
     <div class="site-header">
-      <strong>Test Fest Issue Tracker</strong>
+      <strong class="site-title">Test Fest Issue Tracker</strong>
       <div class="room-controls">
-        <label for="roomSelect">Room</label>
+        <label id="roomLabel" for="roomSelect">Room</label>
         <div class="row">
           <select id="roomSelect"></select>
           <button id="createRoomBtn" title="Create a new Room">Create a new Room</button>
+          <button id="changeRoomBtn" style="display:none;">Change room</button>
         </div>
       </div>
-      <button id="logoutBtn" class="btn-danger" style="display:none;">Logout</button>
+      <div class="user-controls">
+        <div id="userInfoHeader" class="user-info"></div>
+        <button id="loginBtn" style="display:none;">Login</button>
+        <button id="logoutBtn" class="btn-danger" style="display:none;">Logout</button>
+      </div>
     </div>
     <div class="layout">
       <div class="left">
-        <div class="topbar">
-          <div style="margin-left:auto;">
-            <button id="loginBtn">Login</button>
-          </div>
-        </div>
+        <div class="topbar"></div>
 
         <div class="left-section">
           <form id="issueForm" class="hidden" style="margin-top: 12px;">
@@ -58,7 +59,6 @@
       </div>
       <div class="right">
         <div class="topbar">
-          <div id="userInfo"></div>
           <div id="tagLegend" class="hidden"></div>
         </div>
         <div id="issues" class="hidden"></div>
