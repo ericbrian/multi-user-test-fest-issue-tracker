@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -7,44 +7,77 @@
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <div id="groupierBanner" class="groupier-banner hidden">You are Groupier in this room</div>
+    <div id="groupierBanner" class="groupier-banner hidden">
+      You are Groupier in this room
+    </div>
     <div class="site-header">
       <strong>Test Fest Issue Tracker</strong>
       <div class="room-controls">
         <label for="roomSelect">Room</label>
         <div class="row">
           <select id="roomSelect"></select>
-          <button id="createRoomBtn" title="Create a new Room">Create a new Room</button>
+          <button id="createRoomBtn" title="Create a new Room">
+            Create a new Room
+          </button>
         </div>
       </div>
-      <button id="logoutBtn" class="btn-danger" style="display:none;">Logout</button>
+      <button id="logoutBtn" class="btn-danger" style="display: none">
+        Logout
+      </button>
     </div>
     <div class="layout">
       <div class="left">
         <div class="topbar">
-          <div style="margin-left:auto;">
+          <div style="margin-left: auto">
             <button id="loginBtn">Login</button>
           </div>
         </div>
 
         <div class="left-section">
-          <form id="issueForm" class="hidden" style="margin-top: 12px;">
+          <form id="issueForm" class="hidden" style="margin-top: 12px">
             <label for="scriptId">Test Script ID</label>
-            <input id="scriptId" name="scriptId" type="number" inputmode="numeric" step="1" min="0" required />
+            <input
+              id="scriptId"
+              name="scriptId"
+              type="number"
+              inputmode="numeric"
+              step="1"
+              min="0"
+              required
+            />
 
             <label for="description">Issue Description</label>
-            <textarea id="description" name="description" rows="4" required></textarea>
+            <textarea
+              id="description"
+              name="description"
+              rows="4"
+              required
+            ></textarea>
 
             <label>Reason?</label>
             <div class="reasons">
               <label><input type="checkbox" name="is_issue" /> Issue</label>
-              <label><input type="checkbox" name="is_existing_upper_env" /> Issue in Production</label>
-              <label><input type="checkbox" name="is_annoyance" /> Annoyance</label>
-              <label><input type="checkbox" name="is_not_sure_how_to_test" /> Not sure how to test</label>
+              <label
+                ><input type="checkbox" name="is_existing_upper_env" /> Issue in
+                Production</label
+              >
+              <label
+                ><input type="checkbox" name="is_annoyance" /> Annoyance</label
+              >
+              <label
+                ><input type="checkbox" name="is_not_sure_how_to_test" /> Not
+                sure how to test</label
+              >
             </div>
 
             <label>Images</label>
-            <input id="images" name="images" type="file" accept="image/*" multiple />
+            <input
+              id="images"
+              name="images"
+              type="file"
+              accept="image/*"
+              multiple
+            />
             <div class="form-actions">
               <button type="submit">Save Issue</button>
             </div>
@@ -68,4 +101,4 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="/static/app.js"></script>
   </body>
-  </html>
+</html>
