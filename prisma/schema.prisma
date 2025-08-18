@@ -102,6 +102,7 @@ model TestScriptLine {
   test_script_id String   @db.Uuid
   name           String
   description    String?
+  notes          String?
   created_at     DateTime @default(now())
 
   testScript TestScript @relation(fields: [test_script_id], references: [id], onDelete: Cascade)
