@@ -171,15 +171,15 @@ function registerRoutes(app, deps) {
             }
 
             const scriptNum = parseInt(String(scriptId), 10);
+            // Optional: Check if test script exists, but don't require it
             const script = await prisma.testScript.findFirst({
                 where: {
                     room_id: roomId,
                     script_id: scriptNum
                 }
             });
-            if (!script) {
-                return res.status(400).json({ error: 'Script not found in this room' });
-            }
+            // We'll allow issues to be created even if the specific script doesn't exist
+            // This gives users flexibility to organize their issues with different script IDs
 
             const isIssue = req.body.is_issue === 'on' || req.body.is_issue === 'true' || req.body.is_issue === true;
             const isAnnoyance = req.body.is_annoyance === 'on' || req.body.is_annoyance === 'true' || req.body.is_annoyance === true;

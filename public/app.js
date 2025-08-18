@@ -362,6 +362,12 @@ issueForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!currentRoomId) return alert("Select a room");
 
+  const scriptVal = (document.getElementById("scriptId").value || "").trim();
+  if (!/^\d+$/.test(scriptVal)) {
+    alert("Test Script ID must be a numeric value");
+    return;
+  }
+
   const descVal = (document.getElementById("description").value || "").trim();
   if (!descVal) {
     alert("Issue Description is required");

@@ -14,10 +14,9 @@ When you click "Create New Test Fest", you'll be prompted to:
 
 ## How Issues Work
 
-- Each Test Fest has exactly one test script with the same name as the room
-- The test script automatically gets ID = 1
-- When creating an issue, you simply describe the problem - no need to select a script
-- All issues in a room are automatically associated with that room's test script
+- When creating a test fest, the test fest room and the test fest script are created at the same time and a script ID is created automatically.
+- When creating an issue, you must enter the ID of the item under test. This is taken from the actual test script.
+- If you reference a Script ID that doesn't exist as a formal test script, the issue will still be created
 
 ## Sample Test Fest Ideas
 
