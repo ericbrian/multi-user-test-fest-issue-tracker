@@ -11,7 +11,6 @@ const changeRoomBtn = document.getElementById("changeRoomBtn");
 const roomLabel = document.getElementById("roomLabel");
 const currentRoomName = document.getElementById("currentRoomName");
 const tagLegend = document.getElementById("tagLegend");
-const groupierBanner = document.getElementById("groupierBanner");
 const roomControls = document.querySelector(".room-controls");
 const loginNote = document.getElementById("loginNote");
 
@@ -55,9 +54,6 @@ function updateVisibility() {
       roomNameText.textContent = currentRoomNameValue || "";
     }
   }
-  if (!shouldShow && groupierBanner) {
-    groupierBanner.classList.add("hidden");
-  }
 }
 
 async function fetchMe() {
@@ -68,9 +64,7 @@ async function fetchMe() {
   if (data.jiraBaseUrl) {
     window.__jiraBaseUrl = data.jiraBaseUrl;
   }
-  if (userInfoHeader) {
-    userInfoHeader.textContent = me ? `${me.name || me.email || "User"}` : "";
-  }
+  updateUserInfoDisplay();
   loginBtn.style.display = me ? "none" : "inline-block";
   logoutBtn.style.display = me ? "inline-block" : "none";
 
@@ -82,6 +76,23 @@ async function fetchMe() {
     tagLegend.appendChild(span);
   });
   updateVisibility();
+}
+
+function updateUserInfoDisplay() {
+  if (!userInfoHeader) return;
+
+  if (!me) {
+    userInfoHeader.textContent = "";
+    return;
+  }
+
+  const userName = me.name || me.email || "User";
+
+  if (isGroupier) {
+    userInfoHeader.innerHTML = `<span class="groupier-bubble">You are the Groupier</span> &nbsp; ${userName}`;
+  } else {
+    userInfoHeader.textContent = userName;
+  }
 }
 
 async function loadRooms() {
@@ -168,9 +179,7 @@ async function createRoom() {
   try {
     const joinData = await joinRes.json();
     isGroupier = !!(joinData && joinData.isGroupier);
-    if (groupierBanner) {
-      groupierBanner.classList.toggle("hidden", !isGroupier);
-    }
+    updateUserInfoDisplay();
   } catch (_) { }
   updateVisibility();
 }
@@ -431,6 +440,7 @@ changeRoomBtn.addEventListener("click", async () => {
   currentRoomId = null;
   currentRoomNameValue = null;
   isGroupier = false;
+  updateUserInfoDisplay();
   try {
     localStorage.removeItem(LS_KEY_LAST_ROOM);
   } catch (_) { }

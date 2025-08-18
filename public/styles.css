@@ -32,19 +32,6 @@ body {
   /* prevent whole-page scroll */
 }
 
-.groupier-banner {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: linear-gradient(90deg, #0ea5e9, #22c55e);
-  color: #0b1a2a;
-  text-align: center;
-  padding: 8px 12px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
 .layout {
   display: flex;
   flex: 1 1 auto;
@@ -128,10 +115,21 @@ body {
 .site-header .user-controls .user-info {
   color: var(--text);
   font-size: 13px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--border);
-  padding: 6px 10px;
-  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.groupier-bubble {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
 }
 
 @media (max-width: 720px) {

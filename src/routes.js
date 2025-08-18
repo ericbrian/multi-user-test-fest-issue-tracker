@@ -118,11 +118,17 @@ function registerRoutes(app, deps) {
         try {
             const { roomId } = req.params;
             const prisma = getPrisma();
+
+            // Check if this user created the room
+            const room = await prisma.room.findUnique({ where: { id: roomId } });
+            const isRoomCreator = room && room.created_by === req.user.id;
+
             const GROUPIER_EMAILS = (process.env.GROUPIER_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-            const isGroupier = GROUPIER_EMAILS.includes((req.user.email || '').toLowerCase()) || false;
+            const isGroupier = GROUPIER_EMAILS.includes((req.user.email || '').toLowerCase()) || isRoomCreator;
+
             await prisma.roomMember.upsert({
                 where: { room_id_user_id: { room_id: roomId, user_id: req.user.id } },
-                update: {},
+                update: { is_groupier: isGroupier },
                 create: { room_id: roomId, user_id: req.user.id, is_groupier: isGroupier },
             });
             res.json({ ok: true, isGroupier });
