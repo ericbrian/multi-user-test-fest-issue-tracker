@@ -47,8 +47,14 @@ if (!DATABASE_URL) {
 const { Pool } = pg;
 const pool = new Pool({ connectionString: DATABASE_URL });
 
-// Ensure all new connections default to testfest schema
+// Handle database connection errors
+pool.on('error', (err, client) => {
+  console.error('Unexpected error on idle database client:', err);
+});
+
+// Ensure all new connections default to testfest schema and log connection
 pool.on('connect', (client) => {
+  console.log('Database connected successfully');
   client.query(`SET search_path TO ${SCHEMA}, public`);
 });
 
@@ -204,6 +210,36 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => { });
 });
 
+// Global process error handlers
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Perform cleanup if needed
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Promise Rejection at:', promise, 'reason:', reason);
+  // Handle the rejection gracefully or exit
+  process.exit(1);
+});
+
+// Graceful shutdown handlers
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed.');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed.');
+    process.exit(0);
+  });
+});
+
 // Start server
 (async () => {
   try {
@@ -211,6 +247,21 @@ io.on('connection', (socket) => {
   } catch (e) {
     console.error('OIDC setup error:', e);
   }
+  
+  // Handle server startup errors
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Port ${PORT} is already in use. Please stop the existing process or set a different PORT environment variable.`);
+      process.exit(1);
+    } else if (err.code === 'EACCES') {
+      console.error(`Permission denied to bind to port ${PORT}. Try using a port number above 1024 or run with elevated privileges.`);
+      process.exit(1);
+    } else {
+      console.error('Server error:', err);
+      process.exit(1);
+    }
+  });
+
   server.listen(PORT, () => {
     console.log(`Test Fest Tracker running on http://localhost:${PORT}`);
   });
