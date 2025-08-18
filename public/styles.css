@@ -88,6 +88,15 @@ body {
   gap: 12px;
 }
 
+.login-note {
+  color: var(--muted);
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px dashed var(--border);
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
 .site-header .user-controls .user-info {
   color: var(--text);
   font-size: 13px;
@@ -259,7 +268,7 @@ label {
   flex-wrap: wrap;
 }
 
-.reasons > label {
+.reasons>label {
   display: inline-flex;
   align-items: center;
   gap: 6px;

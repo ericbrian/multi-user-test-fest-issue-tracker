@@ -14,31 +14,31 @@ model User {
   name  String?
   email String?
 
-  rooms        Room[]        @relation("RoomCreatedBy")
-  roomMembers  RoomMember[]
-  issues       Issue[]       @relation("IssueCreatedBy")
+  rooms       Room[]       @relation("RoomCreatedBy")
+  roomMembers RoomMember[]
+  issues      Issue[]      @relation("IssueCreatedBy")
 
   @@map("users")
   @@schema("testfest")
 }
 
 model Room {
-  id         String       @id @db.Uuid
+  id         String   @id @db.Uuid
   name       String
-  created_by String?      @db.Uuid
-  created_at DateTime     @default(now())
+  created_by String?  @db.Uuid
+  created_at DateTime @default(now())
 
-  createdBy  User?        @relation("RoomCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
-  members    RoomMember[]
-  issues     Issue[]
+  createdBy User?        @relation("RoomCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
+  members   RoomMember[]
+  issues    Issue[]
 
   @@map("rooms")
   @@schema("testfest")
 }
 
 model RoomMember {
-  room_id     String @db.Uuid
-  user_id     String @db.Uuid
+  room_id     String  @db.Uuid
+  user_id     String  @db.Uuid
   is_groupier Boolean @default(false)
 
   room Room @relation(fields: [room_id], references: [id], onDelete: Cascade)
@@ -50,19 +50,19 @@ model RoomMember {
 }
 
 model Issue {
-  id                         String   @id @db.Uuid
-  room_id                    String   @db.Uuid
-  created_by                 String?  @db.Uuid
-  script_id                  Int?
-  description                String?
-  images                     Json?
-  is_issue                   Boolean  @default(false)
-  is_annoyance               Boolean  @default(false)
-  is_existing_upper_env      Boolean  @default(false)
-  status                     String?  @default("open")
-  jira_key                   String?
-  is_not_sure_how_to_test    Boolean  @default(false)
-  created_at                 DateTime @default(now())
+  id                      String   @id @db.Uuid
+  room_id                 String   @db.Uuid
+  created_by              String?  @db.Uuid
+  script_id               Int?
+  description             String?
+  images                  Json?
+  is_issue                Boolean  @default(false)
+  is_annoyance            Boolean  @default(false)
+  is_existing_upper_env   Boolean  @default(false)
+  status                  String?  @default("open")
+  jira_key                String?
+  is_not_sure_how_to_test Boolean  @default(false)
+  created_at              DateTime @default(now())
 
   room      Room  @relation(fields: [room_id], references: [id], onDelete: Cascade)
   createdBy User? @relation("IssueCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
@@ -81,29 +81,29 @@ model Session {
 }
 
 model TestScript {
-  id          String           @id @db.Uuid
-  script_id   Int              @unique
+  id          String   @id @db.Uuid
+  script_id   Int      @unique
   name        String
   description String?
-  created_at  DateTime         @default(now())
+  created_at  DateTime @default(now())
 
-  lines       TestScriptLine[]
-  linesById   TestScriptLine[] @relation("LineByScriptId")
+  lines     TestScriptLine[]
+  linesById TestScriptLine[] @relation("LineByScriptId")
 
   @@map("test_script")
   @@schema("testfest")
 }
 
 model TestScriptLine {
-  id             String     @id @db.Uuid
+  id             String   @id @db.Uuid
   script_id      Int
   name           String
   description    String?
-  test_script_id String?    @db.Uuid
-  created_at     DateTime   @default(now())
+  test_script_id String?  @db.Uuid
+  created_at     DateTime @default(now())
 
-  testScript     TestScript? @relation(fields: [test_script_id], references: [id], onDelete: Cascade)
-  script         TestScript   @relation("LineByScriptId", fields: [script_id], references: [script_id])
+  testScript TestScript? @relation(fields: [test_script_id], references: [id], onDelete: Cascade)
+  script     TestScript  @relation("LineByScriptId", fields: [script_id], references: [script_id])
 
   @@map("test_script_line")
   @@schema("testfest")

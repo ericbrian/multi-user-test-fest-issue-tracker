@@ -11,6 +11,8 @@ const changeRoomBtn = document.getElementById("changeRoomBtn");
 const roomLabel = document.getElementById("roomLabel");
 const tagLegend = document.getElementById("tagLegend");
 const groupierBanner = document.getElementById("groupierBanner");
+const roomControls = document.querySelector(".room-controls");
+const loginNote = document.getElementById("loginNote");
 
 let me = null;
 let tags = [];
@@ -19,7 +21,15 @@ let socket = null;
 const LS_KEY_LAST_ROOM = "tft:lastRoomId";
 
 function updateVisibility() {
+  const isLoggedIn = Boolean(me);
   const shouldShow = Boolean(currentRoomId);
+  // Hide the room controls entirely until the user logs in
+  if (roomControls) roomControls.style.display = isLoggedIn ? "block" : "none";
+  // Hide user info header until logged in
+  if (userInfoHeader)
+    userInfoHeader.style.display = isLoggedIn ? "inline-block" : "none";
+  // Show login note only when logged out
+  if (loginNote) loginNote.style.display = isLoggedIn ? "none" : "inline-block";
   issueForm.classList.toggle("hidden", !shouldShow);
   issuesEl.classList.toggle("hidden", !shouldShow);
   tagLegend.classList.toggle("hidden", !shouldShow);
@@ -107,7 +117,7 @@ async function joinRoom(roomId) {
   currentRoomId = roomId;
   try {
     localStorage.setItem(LS_KEY_LAST_ROOM, roomId);
-  } catch (_) {}
+  } catch (_) { }
   if (socket) socket.disconnect();
   socket = io();
   socket.emit("room:join", roomId);
@@ -135,7 +145,7 @@ async function joinRoom(roomId) {
     if (groupierBanner) {
       groupierBanner.classList.toggle("hidden", !isGroupier);
     }
-  } catch (_) {}
+  } catch (_) { }
   updateVisibility();
 }
 
@@ -194,20 +204,18 @@ function addOrUpdateIssue(issue, isInitial = false) {
   if (issue.is_not_sure_how_to_test) reasons.push("Not sure how to test");
   const reasonsHtml = reasons.length
     ? `<div class="dimmable" style="margin-top:6px;"><span class="footer-label">Reasons:</span> <span class="tags">${reasons
-        .map((r) => `<span class=\"tag\">${r}</span>`)
-        .join("")}</span></div>`
+      .map((r) => `<span class=\"tag\">${r}</span>`)
+      .join("")}</span></div>`
     : "";
   el.innerHTML = `
     <div style="display:flex; justify-content: space-between; align-items:center; gap: 10px;">
-      <div class="dimmable" style="flex: 1 1 auto;"><strong>Test Script ID:</strong> ${
-        issue.script_id || ""
-      } ${statusTag} ${jiraTag}</div>
+      <div class="dimmable" style="flex: 1 1 auto;"><strong>Test Script ID:</strong> ${issue.script_id || ""
+    } ${statusTag} ${jiraTag}</div>
       <div class="dimmable" style="color: var(--muted); font-size: 12px;">
         By: ${issue.created_by_name || issue.created_by_email || "Unknown"}
       </div>
     </div>
-    <div class="dimmable" style="margin-top:6px;">${
-      issue.description || ""
+    <div class="dimmable" style="margin-top:6px;">${issue.description || ""
     }</div>
     ${reasonsHtml}
     <div class="images dimmable">${imgs}</div>
@@ -227,10 +235,8 @@ function renderTagButtons(issue) {
     ${tags
       .map(
         (t) =>
-          `<button class=\"btn-tag ${
-            issue.status === t ? "active" : ""
-          }\" data-action=\"setStatus\" data-tag=\"${t}\" data-id=\"${
-            issue.id
+          `<button class=\"btn-tag ${issue.status === t ? "active" : ""
+          }\" data-action=\"setStatus\" data-tag=\"${t}\" data-id=\"${issue.id
           }\">${t}</button>`
       )
       .join("")}
@@ -266,12 +272,10 @@ function renderActionBar(issue) {
         ${renderTagButtonsInline(issue)}
       </div>
       <div class="issue-footer-right">
-        <button class="btn-danger" data-action="delete" data-id="${
-          issue.id
-        }">Delete</button>
-        <button class="btn-jira" data-action="toJira" data-id="${
-          issue.id
-        }">Send to Jira</button>
+        <button class="btn-danger" data-action="delete" data-id="${issue.id
+    }">Delete</button>
+        <button class="btn-jira" data-action="toJira" data-id="${issue.id
+    }">Send to Jira</button>
       </div>
     </div>
   `;
@@ -382,11 +386,11 @@ changeRoomBtn.addEventListener("click", async () => {
   currentRoomId = null;
   try {
     localStorage.removeItem(LS_KEY_LAST_ROOM);
-  } catch (_) {}
+  } catch (_) { }
   if (socket) {
     try {
       socket.disconnect();
-    } catch (_) {}
+    } catch (_) { }
     socket = null;
   }
   await loadRooms();
