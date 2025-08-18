@@ -98,12 +98,13 @@ model TestScript {
 }
 
 model TestScriptLine {
-  id             String   @id @db.Uuid
-  test_script_id String   @db.Uuid
-  name           String
-  description    String?
-  notes          String?
-  created_at     DateTime @default(now())
+  id                  String   @id @db.Uuid
+  test_script_id      String   @db.Uuid
+  test_script_line_id Int
+  name                String
+  description         String?
+  notes               String?
+  created_at          DateTime @default(now())
 
   testScript TestScript @relation(fields: [test_script_id], references: [id], onDelete: Cascade)
 

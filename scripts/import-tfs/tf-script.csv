@@ -1,0 +1,157 @@
+﻿Section,Item under Test,Description
+Header,Header,NOTE: With the release of the REST API the 'Quick Links' button/feature should no longer be included in the header.
+Footer,Footer,
+Left Hand Navigation Bar,Left Hand Navigation Bar,
+Landing Page/Homepage,Metric Details Pages (MDP),Includes MDP Related Strategies
+Landing Page/Homepage,Learn More about 2030 Goals,
+Landing Page/Homepage,Additional Homepage Links,
+Notifications,Manage Notifications and Emails Page,"Icon, Notifications Window"
+Your Work,Your Favorites,Includes 'Change User' Button
+Your Work,Your Collections,
+Your Work,Your Work Bulk Edit,
+Search Portfolio,Search Portfolio > Map View,Includes 'Show Cards' Button|Includes 'Hide Record Details' Button|Includes 'Hide Financials' Button|Ensure general search functionality works
+Search Portfolio,Search Portfolio > Filter Panel,Includes 'Your Filters' button|Includes 'Save Filters' button|Includes Basic Search|Includes Advanced Search
+Create New Record Wizard,Create New Record Wizard,"Includes entire wizard (Conservation Record Type, Conservation Record Name, Additional Data)|Ensure all 4 record types can be created||Note for future: UI/UX is messy and confusing on this feature - Confusing how you are supposed to 'search' a Record Name when you are naming a new record. Also for the future, can we capitalize the 'n' in 'new'?"
+Collections,Create New Collection Pop-Up,Includes Search and Filter functionality|Includes Paging
+Collections,Individual Collection,Includes deleting the collection
+Collections,Edit Collection Pop-Up,
+Dashboards,Dashboards,Ensure all links to dashboards work - see screenshot for all dashboards (as of Nov/21/2023)|Includes Hub Dashboard Guidance button
+Administration,Edit User Role Pop-Up,Includes Landing Page: System Permissions Tab
+Administration,Add Non-TNC User Pop-Up,
+Administration,User Bulk Editing,
+Administration,NCS Calculator Default Pool Values,
+Project Record,Project Team Panel,Includes Email Link Button|Includes Add/Remove Favorite Button|Includes Add to Collection Button|Includes Section Links Panel
+Project Record,View Project Mode: Summary,
+Project Record,View Project Mode: Outcomes,Includes Outcome Details Checkbox
+Project Record,View Project Mode: Intermediate Results,Includes IR 'Show Details' Checkbox
+Project Record,View Project Mode: Outputs,Includes Active and Archived Outputs|Includes 'Show Details' checkbox for both Active and Archived Outputs
+Project Record,View Project Mode: Financials,
+Project Record,View Project Mode: Partnerships,
+Project Record,View Project Mode: Location,
+Project Record,View Project Mode: Associated Files,
+Project Record,View Project Mode: Audit Log,
+Project Record,Edit Project Mode: Summary,Includes Deleting the record|Includes Editing Record Status
+Project Record,Edit Project Mode: Team,Includes adding/editing/deleting a Team Member
+Project Record,Edit Project Mode: Partners,Includes adding/editing/deleting a Partner
+Project Record,Edit Project Mode: Location,
+Project Record,Edit Project Mode: Relations,
+Project Record,Edit Project Mode: Financials,"Includes Financials Tab|Includes Notes Tab|Includes Insight Records Tab"
+Project Record,Edit Project Mode: Anchor Record Selection,Includes Requesting a new Insight Anchor Record|Includes selecting an existing Insight Record
+Project Record,Edit Project Mode: Additional Information,Donor Keywords
+Project Record,Edit Project Mode: Associated Files,"Includes adding, editing, and deleting a file link"
+Project Record,Edit Project Mode: Outcomes,Includes deleting an outcome
+Project Record,Create Project Outcome Wizard,"Includes both options on the Outcome Type page|Includes all functionality on the Outcome Details Page (including rolling up to a strategy)|Includes all NCS Calculator functionality (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)|Includes all functionality on the Target Data Page"
+Project Record,Edit Project Outcome Wizard,"Includes all functionality on the 20230 Goals Metrics Page|Includes all functionality on the Outcome Statement Page|Includes all NCS Calculator Functionality (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)"
+Project Record,Add Project Outcome Target Value,"Includes all functionalities for creating an Outcome Target Value|Includes all NCS Calculator Functionality (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)"
+Project Record,Edit or Delete Project Outcome Target Value,"Includes all functionalities for editing or deleting an Outcome Target Value|Includes all NCS Calculator Functionality (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)"
+Project Record,Add Project Outcome Progress Value,"Includes all functionalities for adding an Outcome Progress Value|Includes all NCS Calculator Functionality (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)"
+Project Record,Edit or Delete Project Outcome Progress Value,"Includes all functionalities for editing or deleting an Outcome Progress Value|Includes all NCS Calculator Functionality (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)"
+Project Record,Add Project Outcome Start Value,"Includes all functionalities for adding an Outcome Start Value|Includes all NCS Calculator Functionality (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)"
+Project Record,Edit or Delete Project Outcome Start Value,"Includes all functionalities for editing or deleting an Start Value|Includes all NCS Calculator Functionality (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)"
+Project Record,Edit Project Mode: Intermediate Results,Includes deleting an intermediate result
+Project Record,Create Project Intermediate Result Wizard,Includes all functionality of the IR Type page|Includes all functionality of the IR Details page|Includes all functionality of the IR Statement page
+Project Record,Edit Project Intermediate Result Wizard,Includes all functionality of the IR Type page|Includes all functionality of the IR Details page|Includes all functionality of the IR Statement page
+Project Record,Add Project Intermediate Result Target Value,
+Project Record,Edit Project Intermediate Result Target Value,
+Project Record,Add Project Intermediate Result Progress Value,
+Project Record,Edit Project Intermediate Result Progress Value,
+Project Record,Add Project Intermediate Result Start Value,
+Project Record,Edit Project Intermediate Result Start Value,
+Project Record,Edit Project Mode: Outputs,Includes deleting an Active or Archived Output
+Project Record,Create Project Output,
+Project Record,Edit Project Output,"Note for the future: Edit Output box still says 'Create', should say 'Edit'"
+Project Record,Archived Project Outputs,
+Project Record,Create Project Output Progress Report,
+Project Record,Update Project Output Progress Report,
+Project Record,Create Project Output File Links,Includes updating and deleting file links
+Project Record,Strategy Record,Includes Email Link Button|Includes Add/Remove Favorite Button|Includes Add to Collection Button|Includes Section Links Panel
+Project Record,Strategy Team Panel,
+Project Record,View Strategy Mode: Summary,
+Project Record,View Strategy Mode: Strategic Pillars,Note for future: Bug? Green circle image next to SP is a link and directs user back to Hub homepage. Should either not be a link or it should direct user to a specific record.
+Project Record,View Strategy Mode: Outcomes,Includes 'Show Details' checkbox
+Project Record,View Strategy Mode: Intermediate Results,Includes 'Show Details' checkbox
+Project Record,View Strategy Mode: Outputs,Includes Active and Archived Outputs|Includes 'Show Details' checkbox for both Active and Archived Outputs
+Project Record,View Strategy Mode: Financials,
+Project Record,View Strategy Mode: Partnerships,
+Project Record,View Strategy Mode: Locations,
+Project Record,View Strategy Mode: Additional Information,
+Project Record,View Strategy Mode: Associated Files,"Add a File Link font is different, and this option disappears on hover"
+Project Record,View Strategy Mode: Audit Log,
+Project Record,Edit Strategy Mode: Summary,Includes Deleting the record|Includes Editing Record Status
+Project Record,Edit Strategy Mode: Team,Includes adding/editing/deleting a Team member
+Project Record,Edit Strategy Mode: Partners,Includes adding/editing/deleting a Partner
+Project Record,Edit Strategy Mode: Location,
+Project Record,Edit Strategy Mode: Relations,
+Project Record,Edit Strategy Mode: Financials,Includes Financials Tab|Includes Notes Tab|Includes Insight Records Tab
+Project Record,Edit Strategy Mode: Anchor Record Selection,Includes Requesting a new Insight Anchor Record|Includes selecting an existing Insight Record
+Project Record,Edit Strategy Mode: Additional Information,Edit Mode: Donor Keywords
+Project Record,Edit Strategy Mode: Associated Files,"Includes adding, editing, and deleting a file link"
+Project Record,Edit Strategy Mode: Strategic Pillars,Includes deleting a Strategic Pillar|Includes Strategic Pillar Details functionality
+Project Record,Create Strategy Pillar,
+Project Record,Edit Strategy Mode: Outcomes,Includes deleting an Outcome
+Project Record,Create Strategy Outcome Wizard,"Includes both options on the Outcome Type page|Includes all functionality on the Outcome Details Page (including rolling up to a strategy)|Includes all NCS Calculator functionality (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)|Includes all functionality on the Target Data Page"
+Project Record,Edit Strategy Outcome,
+Project Record,Add Strategy Outcome Target Value,"Includes all functionalities for creating an Outcome Target Value|Includes all NCS Calculator Functionality (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)"
+Project Record,Edit or Delete Strategy Outcome Target Value,"Includes all functionalities for editing or deleting an Outcome Target Value|Includes all NCS Calculator Functionality (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)"
+Project Record,Edit Strategy Mode: Intermediate Results,Includes deleting an intermediate result
+Project Record,Create Strategy Intermediate Result,
+Project Record,Edit Strategy Intermediate Result,
+Project Record,Add Strategy Intermediate Result Target Value,
+Project Record,Edit Strategy Intermediate Result Target Value,
+Project Record,Edit Strategy Mode: Outputs,Includes deleting an Active or Archived Output
+Project Record,Create Strategy Output,
+Project Record,Edit Strategy Output,"Note for the future: Edit Output box still says 'Create', should say 'Edit'"
+Project Record,Archived Strategy Outputs,
+Project Record,Create Strategy Output Progress Report,
+Project Record,Update Strategy Output Progress Report,
+Project Record,Create Strategy Output File Links,Includes updating and deleting file links
+Project Record,Program Management Record (PM),
+Project Record,Program Management Team Panel,
+Project Record,View PM Mode: Summary,
+Project Record,View PM Mode: Outputs,Includes Active and Archived Outputs|Includes 'Show Details' checkbox for both Active and Archived Outputs
+Project Record,View PM Mode: Financials,
+Project Record,View PM Mode: Partnerships,
+Project Record,View PM Mode: Location,
+Project Record,View PM Mode: Associated Files,
+Project Record,View PM Mode: Audit Log,
+Project Record,Edit PM Mode: Summary,Includes Deleting the record|Includes Editing Record Status
+Project Record,Edit PM Mode: Team,Includes adding/editing/deleting a Team member
+Project Record,Edit PM Mode: Partners,Includes adding/editing/deleting a Partner
+Project Record,Edit PM Mode: Location,
+Project Record,Edit PM Mode: Relations,
+Project Record,Edit PM Mode: Financials,Includes Financials Tab|Includes Notes Tab|Includes Insight Records Tab
+Project Record,Edit PM Mode: Associated Files,"Includes adding, editing, and deleting a file link"
+Project Record,Edit Program Management Mode: Outputs,Includes deleting an Active or Archived Output|Note for future - Icon next to Progress Reports links to Hub Home Page - BUG
+Project Record,Create PM Output,
+Project Record,Edit PM Output,Note for the future: Edit Output box still says 'Create', should say 'Edit'
+Project Record,Archived PM Outputs,
+Project Record,Create PM Output Progress Report,
+Project Record,Update PM Output Progress Report,
+Project Record,Create PM Output File Links,Includes updating and deleting file links
+Project Record,Whole System Record (WS),Includes Email Link Button|Includes Add/Remove Favorite Button|Includes Add to Collection Button|Includes Section Links Panel
+Project Record,Whole System Team Panel,
+Project Record,View WS Mode: Summary,
+Project Record,View WS Mode: Outputs,Includes Active and Archived Outputs|Includes 'Show Details' checkbox for both Active and Archived Outputs
+Project Record,View WS Mode: Financials,
+Project Record,View WS Mode: Partnerships,
+Project Record,View WS Mode: Location,
+Project Record,View WS Mode: Associated Files,
+Project Record,View WS Mode: Audit Log,
+Project Record,Edit WS Mode: Summary,Includes Deleting the record|Includes Editing Record Status
+Project Record,Edit WS Mode: Team,Includes adding/editing/deleting a Team member
+Project Record,Edit WS Mode: Partners,Includes adding/editing/deleting a Partner
+Project Record,Edit WS Mode: Location,
+Project Record,Edit WS Mode: Relations,
+Project Record,Edit WS Mode: Financials,"Includes Financials Tab|Includes Notes Tab|Includes Insight Records Tab"
+Project Record,Edit WS Mode: Anchor Record Selection,Includes Requesting a new Insight Anchor Record|Includes selecting an existing Insight Record
+Project Record,Edit WS Mode: Additional Information,Donor Keywords
+Project Record,Edit WS Mode: Associated Files,"Includes adding, editing, and deleting a file link"
+Project Record,Edit Whole System Mode: Outputs,Includes deleting an Active or Archived Output|Note for future - Icon next to Progress Reports links to Hub Home Page - BUG
+Project Record,Create WS Output,
+Project Record,Edit WS Output,Note for the future: Edit Output box still says 'Create', should say 'Edit'
+Project Record,Archived WS Outputs,
+Project Record,Create WS Output Progress Report,
+Project Record,Update WS Output Progress Report,
+Project Record,Create WS Output File Links,Includes updating and deleting file links
+
+
