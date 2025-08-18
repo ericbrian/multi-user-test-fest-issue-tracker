@@ -20,6 +20,7 @@ let tags = [];
 let currentRoomId = null;
 let currentRoomNameValue = null;
 let socket = null;
+let isGroupier = false;
 const LS_KEY_LAST_ROOM = "tft:lastRoomId";
 
 function updateVisibility() {
@@ -166,7 +167,7 @@ async function createRoom() {
   });
   try {
     const joinData = await joinRes.json();
-    const isGroupier = !!(joinData && joinData.isGroupier);
+    isGroupier = !!(joinData && joinData.isGroupier);
     if (groupierBanner) {
       groupierBanner.classList.toggle("hidden", !isGroupier);
     }
@@ -291,14 +292,18 @@ function renderActionBar(issue) {
       </div>
     `;
   }
+
+  // Check if current user can delete this issue (creator or Groupier)
+  const isMine = me && issue.created_by && issue.created_by === me.id;
+  const canDelete = isMine || isGroupier;
+
   return `
     <div class="issue-footer">
       <div class="issue-footer-left">
         ${renderTagButtonsInline(issue)}
       </div>
       <div class="issue-footer-right">
-        <button class="btn-danger" data-action="delete" data-id="${issue.id
-    }">Delete</button>
+        ${canDelete ? `<button class="btn-danger" data-action="delete" data-id="${issue.id}">Delete</button>` : ''}
         <button class="btn-jira" data-action="toJira" data-id="${issue.id
     }">Send to Jira</button>
       </div>
@@ -343,7 +348,8 @@ async function onIssueButtonClick(e) {
     }
   }
   if (action === "delete") {
-    if (!confirm("Delete this issue?")) return;
+    const confirmMessage = "Are you sure you want to delete this issue? This action cannot be undone.";
+    if (!confirm(confirmMessage)) return;
     const res = await fetch(`/api/issues/${id}`, { method: "DELETE" });
     if (!res.ok) {
       alert("Failed to delete");
@@ -413,6 +419,7 @@ changeRoomBtn.addEventListener("click", async () => {
   // Leave current room and show controls again
   currentRoomId = null;
   currentRoomNameValue = null;
+  isGroupier = false;
   try {
     localStorage.removeItem(LS_KEY_LAST_ROOM);
   } catch (_) { }
