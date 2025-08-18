@@ -9,6 +9,7 @@ const roomSelect = document.getElementById("roomSelect");
 const createRoomBtn = document.getElementById("createRoomBtn");
 const changeRoomBtn = document.getElementById("changeRoomBtn");
 const roomLabel = document.getElementById("roomLabel");
+const currentRoomName = document.getElementById("currentRoomName");
 const tagLegend = document.getElementById("tagLegend");
 const groupierBanner = document.getElementById("groupierBanner");
 const roomControls = document.querySelector(".room-controls");
@@ -17,6 +18,7 @@ const loginNote = document.getElementById("loginNote");
 let me = null;
 let tags = [];
 let currentRoomId = null;
+let currentRoomNameValue = null;
 let socket = null;
 const LS_KEY_LAST_ROOM = "tft:lastRoomId";
 
@@ -45,6 +47,13 @@ function updateVisibility() {
   if (roomLabel) roomLabel.style.display = shouldShow ? "none" : "inline-block";
   if (changeRoomBtn)
     changeRoomBtn.style.display = shouldShow ? "inline-block" : "none";
+  if (currentRoomName) {
+    currentRoomName.style.display = shouldShow ? "inline-block" : "none";
+    const roomNameText = currentRoomName.querySelector('.room-name-text');
+    if (roomNameText) {
+      roomNameText.textContent = currentRoomNameValue || "";
+    }
+  }
   if (!shouldShow && groupierBanner) {
     groupierBanner.classList.add("hidden");
   }
@@ -93,6 +102,7 @@ async function loadRooms() {
     roomSelect.appendChild(opt);
   });
   currentRoomId = null;
+  currentRoomNameValue = null;
   updateVisibility();
 }
 
@@ -115,6 +125,9 @@ async function createRoom() {
 
 async function joinRoom(roomId) {
   currentRoomId = roomId;
+  // Get the room name from the select option
+  const selectedOption = Array.from(roomSelect.options).find(opt => opt.value === roomId);
+  currentRoomNameValue = selectedOption ? selectedOption.textContent : "Unknown Room";
   try {
     localStorage.setItem(LS_KEY_LAST_ROOM, roomId);
   } catch (_) { }
@@ -384,6 +397,7 @@ createRoomBtn.addEventListener("click", createRoom);
 changeRoomBtn.addEventListener("click", async () => {
   // Leave current room and show controls again
   currentRoomId = null;
+  currentRoomNameValue = null;
   try {
     localStorage.removeItem(LS_KEY_LAST_ROOM);
   } catch (_) { }

@@ -1,105 +1,87 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Test Fest Tracker</title>
-    <link rel="stylesheet" href="/static/styles.css" />
-  </head>
-  <body>
-    <div id="groupierBanner" class="groupier-banner hidden">
-      You are Groupier in this room
-    </div>
-    <div class="site-header">
-      <strong class="site-title">Test Fest Issue Tracker</strong>
-      <div class="room-controls">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Test Fest Tracker</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+
+<body>
+  <div id="groupierBanner" class="groupier-banner hidden">
+    You are Groupier in this room
+  </div>
+  <div class="site-header">
+    <strong class="site-title">Test Fest Issue Tracker</strong>
+    <div class="room-controls">
+      <div class="room-selection-area">
+        <div id="currentRoomName" class="current-room-name" style="display: none">
+          <span class="room-icon">🏠</span>
+          <span class="room-name-text"></span>
+        </div>
         <label id="roomLabel" for="roomSelect">Room</label>
-        <div class="row">
-          <select id="roomSelect"></select>
-          <button id="createRoomBtn" title="Create a new Room">
-            Create a new Room
-          </button>
-          <button id="changeRoomBtn" style="display: none">Change room</button>
-        </div>
-      </div>
-      <div class="user-controls">
-        <div id="loginNote" class="login-note">Log in to start!</div>
-        <div id="userInfoHeader" class="user-info"></div>
-        <button id="loginBtn" style="display: none">Login</button>
-        <button id="logoutBtn" class="btn-danger" style="display: none">
-          Logout
+        <select id="roomSelect"></select>
+        <button id="createRoomBtn" title="Create a new Room">
+          Create a new Room
         </button>
+        <button id="changeRoomBtn" style="display: none">Change room</button>
       </div>
     </div>
-    <div class="layout">
-      <div class="left">
-        <div class="topbar"></div>
+    <div class="user-controls">
+      <div id="loginNote" class="login-note">Log in to start!</div>
+      <div id="userInfoHeader" class="user-info"></div>
+      <button id="loginBtn" style="display: none">Login</button>
+      <button id="logoutBtn" class="btn-danger" style="display: none">
+        Logout
+      </button>
+    </div>
+  </div>
+  <div class="layout">
+    <div class="left">
+      <div class="topbar"></div>
 
-        <div class="left-section">
-          <form id="issueForm" class="hidden" style="margin-top: 12px">
-            <label for="scriptId">Test Script ID</label>
-            <input
-              id="scriptId"
-              name="scriptId"
-              type="number"
-              inputmode="numeric"
-              step="1"
-              min="0"
-              required
-            />
+      <div class="left-section">
+        <form id="issueForm" class="hidden" style="margin-top: 12px">
+          <label for="scriptId">Test Script ID</label>
+          <input id="scriptId" name="scriptId" type="number" inputmode="numeric" step="1" min="0" required />
 
-            <label for="description">Issue Description</label>
-            <textarea
-              id="description"
-              name="description"
-              rows="4"
-              required
-            ></textarea>
+          <label for="description">Issue Description</label>
+          <textarea id="description" name="description" rows="4" required></textarea>
 
-            <label>Reason?</label>
-            <div class="reasons">
-              <label><input type="checkbox" name="is_issue" /> Issue</label>
-              <label
-                ><input type="checkbox" name="is_existing_upper_env" /> Issue in
-                Production</label
-              >
-              <label
-                ><input type="checkbox" name="is_annoyance" /> Annoyance</label
-              >
-              <label
-                ><input type="checkbox" name="is_not_sure_how_to_test" /> Not
-                sure how to test</label
-              >
-            </div>
+          <label>Reason?</label>
+          <div class="reasons">
+            <label><input type="checkbox" name="is_issue" /> Issue</label>
+            <label><input type="checkbox" name="is_existing_upper_env" /> Issue in
+              Production</label>
+            <label><input type="checkbox" name="is_annoyance" /> Annoyance</label>
+            <label><input type="checkbox" name="is_not_sure_how_to_test" /> Not
+              sure how to test</label>
+          </div>
 
-            <label>Images</label>
-            <input
-              id="images"
-              name="images"
-              type="file"
-              accept="image/*"
-              multiple
-            />
-            <div class="form-actions">
-              <button type="submit">Save Issue</button>
-            </div>
-          </form>
-        </div>
-
-        <div id="roomStatsPanel" class="left-section hidden">
-          <div class="section-title">Room stats</div>
-          <div id="roomStats" class="room-stats"></div>
-        </div>
+          <label>Images</label>
+          <input id="images" name="images" type="file" accept="image/*" multiple />
+          <div class="form-actions">
+            <button type="submit">Save Issue</button>
+          </div>
+        </form>
       </div>
-      <div class="right">
-        <div class="topbar">
-          <div id="tagLegend" class="hidden"></div>
-        </div>
-        <div id="issues" class="hidden"></div>
+
+      <div id="roomStatsPanel" class="left-section hidden">
+        <div class="section-title">Room stats</div>
+        <div id="roomStats" class="room-stats"></div>
       </div>
     </div>
+    <div class="right">
+      <div class="topbar">
+        <div id="tagLegend" class="hidden"></div>
+      </div>
+      <div id="issues" class="hidden"></div>
+    </div>
+  </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/static/app.js"></script>
-  </body>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+
 </html>
