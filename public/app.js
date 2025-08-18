@@ -256,6 +256,10 @@ function addOrUpdateIssue(issue, isInitial = false) {
 }
 
 function renderTagButtons(issue) {
+  const clearButton = issue.status && issue.status !== "open"
+    ? `<button class="btn-tag" data-action="clearStatus" data-id="${issue.id}" title="Clear status">Clear</button>`
+    : "";
+
   return `<div style="margin-top:8px; display:flex; gap:8px; flex-wrap: wrap; align-items: center;">
     <span style="color: var(--muted); font-size: 12px;">Status:</span>
     ${tags
@@ -266,10 +270,15 @@ function renderTagButtons(issue) {
           }\">${t}</button>`
       )
       .join("")}
+    ${clearButton}
   </div>`;
 }
 
 function renderTagButtonsInline(issue) {
+  const clearButton = issue.status && issue.status !== "open"
+    ? `<button class="btn-tag" data-action="clearStatus" data-id="${issue.id}" title="Clear status">Clear</button>`
+    : "";
+
   return `<div style=\"display:flex; gap:6px; align-items:center;\">
     <span style=\"color: var(--muted); font-size: 12px;\">Status:</span>
     ${tags
@@ -278,6 +287,7 @@ function renderTagButtonsInline(issue) {
           `<button class=\"btn-tag\" data-action=\"setStatus\" data-tag=\"${t}\" data-id=\"${issue.id}\">${t}</button>`
       )
       .join("")}
+    ${clearButton}
   </div>`;
 }
 

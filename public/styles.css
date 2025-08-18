@@ -408,6 +408,18 @@ button:disabled {
   border-color: rgba(255, 255, 255, 0.24);
 }
 
+/* Clear button styling */
+.btn-tag[data-action="clearStatus"] {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #f59e0b;
+}
+
+.btn-tag[data-action="clearStatus"]:hover {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: rgba(245, 158, 11, 0.6);
+}
+
 .btn-jira {
   background: #0052cc;
   box-shadow: 0 6px 18px rgba(38, 132, 255, 0.25);
