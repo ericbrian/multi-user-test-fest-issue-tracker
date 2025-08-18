@@ -83,13 +83,39 @@ function registerRoutes(app, deps) {
         try {
             const prisma = getPrisma();
             const name = (req.body.name || '').trim() || `Room ${new Date().toLocaleString()}`;
+            const testScripts = req.body.testScripts || [];
+            
+            if (!Array.isArray(testScripts) || testScripts.length === 0) {
+                return res.status(400).json({ error: 'At least one test script is required' });
+            }
+            
             const roomId = uuidv4();
             const userId = req.user.id;
+            
+            // Create the room
             await prisma.room.create({ data: { id: roomId, name, created_by: userId } });
+            
+            // Create test scripts for this room
+            for (let i = 0; i < testScripts.length; i++) {
+                const script = testScripts[i];
+                if (script.name && script.name.trim()) {
+                    await prisma.testScript.create({
+                        data: {
+                            id: uuidv4(),
+                            room_id: roomId,
+                            script_id: i + 1, // Sequential numbering starting from 1
+                            name: script.name.trim(),
+                            description: script.description || null,
+                        }
+                    });
+                }
+            }
+            
             const GROUPIER_EMAILS = (process.env.GROUPIER_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
             const isGroupier = GROUPIER_EMAILS.includes((req.user.email || '').toLowerCase()) || true; // creator is groupier
             // creator joins as member
             await prisma.roomMember.create({ data: { room_id: roomId, user_id: userId, is_groupier: isGroupier } }).catch(() => { });
+            
             res.json({ id: roomId, name, created_by: userId });
         } catch (error) {
             console.error('Error creating room:', error);
@@ -112,6 +138,23 @@ function registerRoutes(app, deps) {
         } catch (error) {
             console.error('Error joining room:', error);
             res.status(500).json({ error: 'Failed to join room' });
+        }
+    });
+
+    // Get available test scripts for a room
+    app.get('/api/rooms/:roomId/test-scripts', requireAuth, async (req, res) => {
+        try {
+            const { roomId } = req.params;
+            const prisma = getPrisma();
+            const scripts = await prisma.testScript.findMany({
+                where: { room_id: roomId },
+                select: { script_id: true, name: true, description: true },
+                orderBy: { script_id: 'asc' },
+            });
+            res.json(scripts);
+        } catch (error) {
+            console.error('Error fetching test scripts:', error);
+            res.status(500).json({ error: 'Failed to fetch test scripts' });
         }
     });
 
@@ -154,9 +197,14 @@ function registerRoutes(app, deps) {
             }
             
             const scriptNum = parseInt(String(scriptId), 10);
-            const script = await prisma.testScript.findUnique({ where: { script_id: scriptNum } });
+            const script = await prisma.testScript.findFirst({ 
+                where: { 
+                    room_id: roomId, 
+                    script_id: scriptNum 
+                } 
+            });
             if (!script) {
-                return res.status(400).json({ error: 'Script not found' });
+                return res.status(400).json({ error: 'Script not found in this room' });
             }
             
             const isIssue = req.body.is_issue === 'on' || req.body.is_issue === 'true' || req.body.is_issue === true;

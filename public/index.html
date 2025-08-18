@@ -22,8 +22,8 @@
         </div>
         <label id="roomLabel" for="roomSelect">Room</label>
         <select id="roomSelect"></select>
-        <button id="createRoomBtn" title="Create a new Room">
-          Create a new Room
+        <button id="createRoomBtn" title="Create a new Test Fest">
+          Create New Test Fest
         </button>
         <button id="changeRoomBtn" style="display: none">Change room</button>
       </div>
@@ -43,8 +43,10 @@
 
       <div class="left-section">
         <form id="issueForm" class="hidden" style="margin-top: 12px">
-          <label for="scriptId">Test Script ID</label>
-          <input id="scriptId" name="scriptId" type="number" inputmode="numeric" step="1" min="0" required />
+          <label for="scriptId">Test Script</label>
+          <select id="scriptId" name="scriptId" required>
+            <option value="">Loading test scripts...</option>
+          </select>
 
           <label for="description">Issue Description</label>
           <textarea id="description" name="description" rows="4" required></textarea>

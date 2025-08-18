@@ -106,13 +106,94 @@ async function loadRooms() {
   updateVisibility();
 }
 
+async function loadTestScripts(roomId = null) {
+  if (!me || !roomId) {
+    const scriptSelect = document.getElementById("scriptId");
+    if (scriptSelect) {
+      scriptSelect.innerHTML = '<option value="">No room selected</option>';
+    }
+    return;
+  }
+  
+  const scriptSelect = document.getElementById("scriptId");
+  if (!scriptSelect) return;
+  
+  try {
+    const res = await fetch(`/api/rooms/${roomId}/test-scripts`);
+    if (!res.ok) {
+      scriptSelect.innerHTML = '<option value="">Error loading scripts</option>';
+      return;
+    }
+    
+    const scripts = await res.json();
+    scriptSelect.innerHTML = "";
+    
+    if (scripts.length === 0) {
+      const noScripts = document.createElement("option");
+      noScripts.value = "";
+      noScripts.textContent = "No test scripts available";
+      noScripts.disabled = true;
+      noScripts.selected = true;
+      scriptSelect.appendChild(noScripts);
+      return;
+    }
+    
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "— Select a test script —";
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    scriptSelect.appendChild(placeholder);
+    
+    scripts.forEach((script) => {
+      const opt = document.createElement("option");
+      opt.value = script.script_id;
+      opt.textContent = `${script.script_id}: ${script.name}`;
+      if (script.description) {
+        opt.title = script.description;
+      }
+      scriptSelect.appendChild(opt);
+    });
+  } catch (error) {
+    console.error('Error loading test scripts:', error);
+    scriptSelect.innerHTML = '<option value="">Error loading scripts</option>';
+  }
+}
+
 async function createRoom() {
-  const name = prompt("Room name?") || "";
+  const name = prompt("Test Fest Name (e.g., 'Mobile App Testing', 'Website Redesign'):") || "";
+  if (!name.trim()) {
+    alert("Test Fest Name is required");
+    return;
+  }
+  
+  const testScriptsInput = prompt(`List the test scripts for "${name}" (one per line):\n\nExample:\nLogin Functionality\nSearch Features\nPayment Process`) || "";
+  if (!testScriptsInput.trim()) {
+    alert("At least one test script is required");
+    return;
+  }
+  
+  // Parse test scripts from input
+  const testScripts = testScriptsInput
+    .split('\n')
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+    .map(script => ({ name: script, description: '' }));
+    
+  if (testScripts.length === 0) {
+    alert("At least one test script is required");
+    return;
+  }
+  
   const res = await fetch("/api/rooms", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ 
+      name,
+      testScripts 
+    }),
   });
+  
   if (res.ok) {
     const created = await res.json();
     await loadRooms();
@@ -120,6 +201,9 @@ async function createRoom() {
       roomSelect.value = created.id;
       await joinRoom(created.id);
     }
+  } else {
+    const error = await res.text().catch(() => "Unknown error");
+    alert(`Failed to create room: ${error}`);
   }
 }
 
@@ -147,6 +231,7 @@ async function joinRoom(roomId) {
     }
   });
   await fetchIssues(roomId);
+  await loadTestScripts(roomId);
   const joinRes = await fetch("/api/rooms/" + roomId + "/join", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

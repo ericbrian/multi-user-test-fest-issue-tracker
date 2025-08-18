@@ -28,9 +28,10 @@ model Room {
   created_by String?  @db.Uuid
   created_at DateTime @default(now())
 
-  createdBy User?        @relation("RoomCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
-  members   RoomMember[]
-  issues    Issue[]
+  createdBy     User?        @relation("RoomCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
+  members       RoomMember[]
+  issues        Issue[]
+  testScripts   TestScript[]
 
   @@map("rooms")
   @@schema("testfest")
@@ -82,28 +83,28 @@ model Session {
 
 model TestScript {
   id          String   @id @db.Uuid
-  script_id   Int      @unique
+  room_id     String   @db.Uuid
+  script_id   Int
   name        String
   description String?
   created_at  DateTime @default(now())
 
-  lines     TestScriptLine[]
-  linesById TestScriptLine[] @relation("LineByScriptId")
+  room  Room               @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  lines TestScriptLine[]
 
+  @@unique([room_id, script_id])
   @@map("test_script")
   @@schema("testfest")
 }
 
 model TestScriptLine {
   id             String   @id @db.Uuid
-  script_id      Int
+  test_script_id String   @db.Uuid
   name           String
   description    String?
-  test_script_id String?  @db.Uuid
   created_at     DateTime @default(now())
 
-  testScript TestScript? @relation(fields: [test_script_id], references: [id], onDelete: Cascade)
-  script     TestScript  @relation("LineByScriptId", fields: [script_id], references: [script_id])
+  testScript TestScript @relation(fields: [test_script_id], references: [id], onDelete: Cascade)
 
   @@map("test_script_line")
   @@schema("testfest")
