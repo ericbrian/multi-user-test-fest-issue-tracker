@@ -228,8 +228,9 @@ function addOrUpdateIssue(issue, isInitial = false) {
   if (issue.is_existing_upper_env) reasons.push("Issue in Production");
   if (issue.is_annoyance) reasons.push("Annoyance");
   if (issue.is_not_sure_how_to_test) reasons.push("Not sure how to test");
+  const label = reasons.length > 1 ? "Reasons for logging:" : "Reason for logging:";
   const reasonsHtml = reasons.length
-    ? `<div class="dimmable" style="margin-top:6px;"><span class="footer-label">Reasons:</span> <span class="tags">${reasons
+    ? `<div class="dimmable" style="margin-top:6px;"><span class="footer-label">${label}</span> <span class="tags">${reasons
       .map((r) => `<span class=\"tag\">${r}</span>`)
       .join("")}</span></div>`
     : "";
