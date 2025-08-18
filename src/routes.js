@@ -84,17 +84,17 @@ function registerRoutes(app, deps) {
             const prisma = getPrisma();
             const name = (req.body.name || '').trim() || `Room ${new Date().toLocaleString()}`;
             const testScripts = req.body.testScripts || [];
-            
+
             if (!Array.isArray(testScripts) || testScripts.length === 0) {
                 return res.status(400).json({ error: 'At least one test script is required' });
             }
-            
+
             const roomId = uuidv4();
             const userId = req.user.id;
-            
+
             // Create the room
             await prisma.room.create({ data: { id: roomId, name, created_by: userId } });
-            
+
             // Create test scripts for this room
             for (let i = 0; i < testScripts.length; i++) {
                 const script = testScripts[i];
@@ -110,12 +110,12 @@ function registerRoutes(app, deps) {
                     });
                 }
             }
-            
+
             const GROUPIER_EMAILS = (process.env.GROUPIER_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
             const isGroupier = GROUPIER_EMAILS.includes((req.user.email || '').toLowerCase()) || true; // creator is groupier
             // creator joins as member
             await prisma.roomMember.create({ data: { room_id: roomId, user_id: userId, is_groupier: isGroupier } }).catch(() => { });
-            
+
             res.json({ id: roomId, name, created_by: userId });
         } catch (error) {
             console.error('Error creating room:', error);
@@ -188,25 +188,25 @@ function registerRoutes(app, deps) {
             const { roomId } = req.params;
             const prisma = getPrisma();
             const { scriptId, description } = req.body;
-            
+
             if (!scriptId || !/^\d+$/.test(String(scriptId))) {
                 return res.status(400).json({ error: 'Script ID is required and must be numeric' });
             }
             if (!description || String(description).trim().length === 0) {
                 return res.status(400).json({ error: 'Issue Description is required' });
             }
-            
+
             const scriptNum = parseInt(String(scriptId), 10);
-            const script = await prisma.testScript.findFirst({ 
-                where: { 
-                    room_id: roomId, 
-                    script_id: scriptNum 
-                } 
+            const script = await prisma.testScript.findFirst({
+                where: {
+                    room_id: roomId,
+                    script_id: scriptNum
+                }
             });
             if (!script) {
                 return res.status(400).json({ error: 'Script not found in this room' });
             }
-            
+
             const isIssue = req.body.is_issue === 'on' || req.body.is_issue === 'true' || req.body.is_issue === true;
             const isAnnoyance = req.body.is_annoyance === 'on' || req.body.is_annoyance === 'true' || req.body.is_annoyance === true;
             const isExistingUpper = req.body.is_existing_upper_env === 'on' || req.body.is_existing_upper_env === 'true' || req.body.is_existing_upper_env === true;
@@ -214,7 +214,7 @@ function registerRoutes(app, deps) {
             const files = (req.files || []).map((f) => `/uploads/${path.basename(f.path)}`);
             const id = uuidv4();
             const createdBy = req.user.id;
-            
+
             await prisma.issue.create({
                 data: {
                     id,
@@ -229,12 +229,12 @@ function registerRoutes(app, deps) {
                     is_not_sure_how_to_test: isNotSureHowToTest,
                 },
             });
-            
+
             const issue = await prisma.issue.findUnique({
                 where: { id },
                 include: { createdBy: { select: { name: true, email: true } } },
             });
-            
+
             const issueOut = {
                 ...issue,
                 created_by_name: issue?.createdBy?.name || null,
@@ -245,7 +245,7 @@ function registerRoutes(app, deps) {
             res.json(issueOut);
         } catch (error) {
             console.error('Error creating issue:', error);
-            
+
             // Clean up any uploaded files if database operation failed
             try {
                 if (req.files && req.files.length > 0) {
@@ -258,7 +258,7 @@ function registerRoutes(app, deps) {
             } catch (cleanupError) {
                 console.error('Error during file cleanup:', cleanupError);
             }
-            
+
             res.status(500).json({ error: 'Failed to create issue' });
         }
     });
@@ -269,25 +269,25 @@ function registerRoutes(app, deps) {
             const { id } = req.params;
             const { status: requestedStatus, roomId } = req.body;
             const normalizedStatus = requestedStatus === 'clear-status' ? 'open' : requestedStatus;
-            
+
             if (normalizedStatus !== 'open' && !TAGS.includes(normalizedStatus)) {
                 return res.status(400).json({ error: 'Invalid status' });
             }
-            
+
             const prisma = getPrisma();
             const membership = await prisma.roomMember.findUnique({ where: { room_id_user_id: { room_id: roomId, user_id: req.user.id } } });
             if (!membership || !membership.is_groupier) return res.status(403).json({ error: 'Forbidden' });
-            
+
             await prisma.issue.update({ where: { id }, data: { status: normalizedStatus } });
             const issue = await prisma.issue.findUnique({
                 where: { id },
                 include: { createdBy: { select: { name: true, email: true } } },
             });
-            
+
             if (!issue) {
                 return res.status(404).json({ error: 'Issue not found' });
             }
-            
+
             const out = { ...issue, created_by_name: issue?.createdBy?.name || null, created_by_email: issue?.createdBy?.email || null };
             delete out.createdBy;
             io.to(roomId).emit('issue:update', out);
@@ -345,7 +345,7 @@ function registerRoutes(app, deps) {
 
             const auth = Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString('base64');
             const url = `${JIRA_BASE_URL.replace(/\/$/, '')}/rest/api/3/issue`;
-            
+
             try {
                 const resp = await axios.post(url, payload, {
                     headers: {
@@ -355,12 +355,12 @@ function registerRoutes(app, deps) {
                     },
                     timeout: 30000, // 30 second timeout
                 });
-                
+
                 const jiraKey = resp.data && resp.data.key;
                 if (!jiraKey) {
                     throw new Error('No Jira key returned from API');
                 }
-                
+
                 await prisma.issue.update({ where: { id }, data: { jira_key: jiraKey } });
                 const updatedIssue = await prisma.issue.findUnique({ where: { id }, include: { createdBy: { select: { name: true, email: true } } } });
                 const updated = { ...updatedIssue, created_by_name: updatedIssue?.createdBy?.name || null, created_by_email: updatedIssue?.createdBy?.email || null };
@@ -372,7 +372,7 @@ function registerRoutes(app, deps) {
                 if (jiraError.response) {
                     console.error('Jira response status:', jiraError.response.status);
                     console.error('Jira response data:', jiraError.response.data);
-                    
+
                     if (jiraError.response.status === 401) {
                         return res.status(500).json({ error: 'Jira authentication failed. Please check credentials.' });
                     } else if (jiraError.response.status === 403) {
@@ -432,12 +432,12 @@ function registerRoutes(app, deps) {
     // Global error handling middleware
     app.use((error, req, res, next) => {
         console.error('Unhandled error:', error);
-        
+
         // Don't leak internal error details to clients in production
         if (process.env.NODE_ENV === 'production') {
             res.status(500).json({ error: 'Internal server error' });
         } else {
-            res.status(500).json({ 
+            res.status(500).json({
                 error: 'Internal server error',
                 details: error.message,
                 stack: error.stack

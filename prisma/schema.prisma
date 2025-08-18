@@ -28,10 +28,10 @@ model Room {
   created_by String?  @db.Uuid
   created_at DateTime @default(now())
 
-  createdBy     User?        @relation("RoomCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
-  members       RoomMember[]
-  issues        Issue[]
-  testScripts   TestScript[]
+  createdBy   User?        @relation("RoomCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
+  members     RoomMember[]
+  issues      Issue[]
+  testScripts TestScript[]
 
   @@map("rooms")
   @@schema("testfest")
@@ -89,7 +89,7 @@ model TestScript {
   description String?
   created_at  DateTime @default(now())
 
-  room  Room               @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  room  Room             @relation(fields: [room_id], references: [id], onDelete: Cascade)
   lines TestScriptLine[]
 
   @@unique([room_id, script_id])

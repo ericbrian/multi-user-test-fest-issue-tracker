@@ -114,20 +114,20 @@ async function loadTestScripts(roomId = null) {
     }
     return;
   }
-  
+
   const scriptSelect = document.getElementById("scriptId");
   if (!scriptSelect) return;
-  
+
   try {
     const res = await fetch(`/api/rooms/${roomId}/test-scripts`);
     if (!res.ok) {
       scriptSelect.innerHTML = '<option value="">Error loading scripts</option>';
       return;
     }
-    
+
     const scripts = await res.json();
     scriptSelect.innerHTML = "";
-    
+
     if (scripts.length === 0) {
       const noScripts = document.createElement("option");
       noScripts.value = "";
@@ -137,14 +137,14 @@ async function loadTestScripts(roomId = null) {
       scriptSelect.appendChild(noScripts);
       return;
     }
-    
+
     const placeholder = document.createElement("option");
     placeholder.value = "";
     placeholder.textContent = "— Select a test script —";
     placeholder.disabled = true;
     placeholder.selected = true;
     scriptSelect.appendChild(placeholder);
-    
+
     scripts.forEach((script) => {
       const opt = document.createElement("option");
       opt.value = script.script_id;
@@ -166,34 +166,34 @@ async function createRoom() {
     alert("Test Fest Name is required");
     return;
   }
-  
+
   const testScriptsInput = prompt(`List the test scripts for "${name}" (one per line):\n\nExample:\nLogin Functionality\nSearch Features\nPayment Process`) || "";
   if (!testScriptsInput.trim()) {
     alert("At least one test script is required");
     return;
   }
-  
+
   // Parse test scripts from input
   const testScripts = testScriptsInput
     .split('\n')
     .map(s => s.trim())
     .filter(s => s.length > 0)
     .map(script => ({ name: script, description: '' }));
-    
+
   if (testScripts.length === 0) {
     alert("At least one test script is required");
     return;
   }
-  
+
   const res = await fetch("/api/rooms", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ 
+    body: JSON.stringify({
       name,
-      testScripts 
+      testScripts
     }),
   });
-  
+
   if (res.ok) {
     const created = await res.json();
     await loadRooms();
@@ -245,6 +245,9 @@ async function joinRoom(roomId) {
     }
   } catch (_) { }
   updateVisibility();
+
+  // Load test scripts for this room
+  await loadTestScripts(roomId);
 }
 
 async function fetchIssues(roomId) {
