@@ -7,48 +7,36 @@ When you click "Create New Test Fest", you'll be prompted to:
 1. **Test Fest Name**: Give your test fest a descriptive name
 
    - Examples: "Mobile App Testing", "Website Redesign", "Payment System Testing"
+   - This name will also be used as the test script name
 
-2. **Test Scripts**: List the test scripts for this fest (one per line)
-   - Examples:
-     ```
-     Login Functionality
-     Search Features
-     Payment Process
-     User Profile Management
-     Data Export
-     ```
+2. **Description** (Optional): Provide additional details about what you're testing
+   - Example: "Testing the new mobile app features including login, navigation, and core functionality"
 
 ## How Issues Work
 
-- Each Test Fest has its own set of test scripts with IDs starting from 1
-- When creating an issue, you select from the test scripts specific to that room
-- Test scripts are automatically numbered (1, 2, 3, etc.) based on the order you provided
+- Each Test Fest has exactly one test script with the same name as the room
+- The test script automatically gets ID = 1
+- When creating an issue, you simply describe the problem - no need to select a script
+- All issues in a room are automatically associated with that room's test script
 
 ## Sample Test Fest Ideas
 
 ### E-commerce Website Testing
 
-- User Registration
-- Product Search
-- Shopping Cart
-- Checkout Process
-- Payment Integration
-- Order Tracking
+Description: "Complete testing of the new e-commerce platform focusing on user journey and payment processing"
 
 ### Mobile App Testing
 
-- App Launch
-- User Login
-- Core Features
-- Push Notifications
-- Offline Mode
-- Performance Testing
+Description: "Beta testing of the mobile app across different devices and operating systems"
 
 ### API Testing
 
-- Authentication
-- Data Retrieval
-- Data Creation
-- Error Handling
-- Rate Limiting
-- Documentation Accuracy
+Description: "Comprehensive testing of REST API endpoints for reliability and performance"
+
+### Website Redesign
+
+Description: "User acceptance testing for the new website design and navigation"
+
+### Payment System Integration
+
+Description: "Testing the new payment gateway integration across all platforms"
