@@ -409,6 +409,115 @@ function registerRoutes(app, deps) {
         }
     });
 
+    // Test Script Lines
+    app.get('/api/rooms/:roomId/test-script-lines', requireAuth, async (req, res) => {
+        try {
+            const { roomId } = req.params;
+            const prisma = getPrisma();
+            const userId = req.user.id;
+
+            const testScriptLines = await prisma.testScriptLine.findMany({
+                where: {
+                    testScript: {
+                        room_id: roomId
+                    }
+                },
+                include: {
+                    testScript: true,
+                    progress: {
+                        where: {
+                            user_id: userId
+                        }
+                    }
+                },
+                orderBy: [
+                    { testScript: { script_id: 'asc' } },
+                    { test_script_line_id: 'asc' }
+                ]
+            });
+
+            const result = testScriptLines.map(line => ({
+                ...line,
+                is_checked: line.progress.length > 0 ? line.progress[0].is_checked : false,
+                checked_at: line.progress.length > 0 ? line.progress[0].checked_at : null,
+                progress_notes: line.progress.length > 0 ? line.progress[0].notes : null
+            }));
+
+            res.json(result);
+        } catch (error) {
+            console.error('Error fetching test script lines:', error);
+            res.status(500).json({ error: 'Failed to fetch test script lines' });
+        }
+    });
+
+    app.post('/api/test-script-lines/:lineId/progress', requireAuth, async (req, res) => {
+        try {
+            const { lineId } = req.params;
+            const { is_checked, notes } = req.body;
+            const prisma = getPrisma();
+            const userId = req.user.id;
+
+            const progressData = {
+                is_checked: Boolean(is_checked),
+                checked_at: is_checked ? new Date() : null,
+                notes: notes || null,
+                updated_at: new Date()
+            };
+
+            const existingProgress = await prisma.testScriptLineProgress.findUnique({
+                where: {
+                    user_id_test_script_line_id: {
+                        user_id: userId,
+                        test_script_line_id: lineId
+                    }
+                }
+            });
+
+            let progress;
+            if (existingProgress) {
+                progress = await prisma.testScriptLineProgress.update({
+                    where: {
+                        user_id_test_script_line_id: {
+                            user_id: userId,
+                            test_script_line_id: lineId
+                        }
+                    },
+                    data: progressData
+                });
+            } else {
+                progress = await prisma.testScriptLineProgress.create({
+                    data: {
+                        id: uuidv4(),
+                        user_id: userId,
+                        test_script_line_id: lineId,
+                        ...progressData
+                    }
+                });
+            }
+
+            // Fetch the test script line to get the room_id for socket notification
+            const testScriptLine = await prisma.testScriptLine.findUnique({
+                where: { id: lineId },
+                include: { testScript: true }
+            });
+
+            if (testScriptLine) {
+                io.to(testScriptLine.testScript.room_id).emit('testScriptLine:progress', {
+                    lineId,
+                    userId,
+                    is_checked: progress.is_checked,
+                    checked_at: progress.checked_at,
+                    notes: progress.notes
+                });
+            }
+
+            res.json(progress);
+        } catch (error) {
+            console.error('Error updating test script line progress:', error);
+            res.status(500).json({ error: 'Failed to update progress' });
+        }
+    });
+
     // Global error handling middleware
     app.use((error, req, res, next) => {
         console.error('Unhandled error:', error);

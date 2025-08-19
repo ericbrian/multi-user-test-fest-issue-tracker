@@ -20,6 +20,7 @@ let currentRoomId = null;
 let currentRoomNameValue = null;
 let socket = null;
 let isGroupier = false;
+let testScriptLines = [];
 const LS_KEY_LAST_ROOM = "tft:lastRoomId";
 
 function updateVisibility() {
@@ -36,6 +37,13 @@ function updateVisibility() {
   issuesEl.classList.toggle("hidden", !shouldShow);
   tagLegend.classList.toggle("hidden", !shouldShow);
   if (roomStatsPanel) roomStatsPanel.classList.toggle("hidden", !shouldShow);
+
+  // Hide/show test script lines container
+  const testScriptLinesContainer = document.getElementById('testScriptLinesContainer');
+  if (testScriptLinesContainer) {
+    testScriptLinesContainer.classList.toggle("hidden", !shouldShow);
+  }
+
   // Hide/show all left sections until a room is chosen
   document.querySelectorAll(".left-section").forEach((el) => {
     el.classList.toggle("hidden", !shouldShow);
@@ -160,6 +168,16 @@ async function createRoom() {
   socket.emit("room:join", roomId);
   socket.on("issue:new", () => fetchIssues(currentRoomId));
   socket.on("issue:update", () => fetchIssues(currentRoomId));
+  socket.on("testScriptLine:progress", (payload) => {
+    // Update the test script line progress in real-time
+    const line = testScriptLines.find(l => l.id === payload.lineId);
+    if (line) {
+      line.is_checked = payload.is_checked;
+      line.checked_at = payload.checked_at;
+      line.progress_notes = payload.notes;
+      renderTestScriptLines();
+    }
+  });
   socket.on("issue:delete", (payload) => {
     if (payload && payload.id) {
       const el = document.getElementById(issueElementId(payload.id));
@@ -171,6 +189,7 @@ async function createRoom() {
     }
   });
   await fetchIssues(roomId);
+  await fetchTestScriptLines(roomId);
   const joinRes = await fetch("/api/rooms/" + roomId + "/join", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -203,6 +222,155 @@ async function fetchIssues(roomId) {
       <div><strong>In Jira</strong><br/>${inJira}</div>
       <div><strong>Tagged</strong><br/>${nonOpen}</div>
     `;
+  }
+}
+
+async function fetchTestScriptLines(roomId) {
+  try {
+    const res = await fetch(`/api/rooms/${roomId}/test-script-lines`);
+    if (!res.ok) {
+      console.error('Failed to fetch test script lines');
+      testScriptLines = [];
+      renderTestScriptLines();
+      return;
+    }
+    testScriptLines = await res.json();
+    renderTestScriptLines();
+  } catch (error) {
+    console.error('Error fetching test script lines:', error);
+    testScriptLines = [];
+    renderTestScriptLines();
+  }
+}
+
+function renderTestScriptLines() {
+  // Find or create the test script lines container
+  let container = document.getElementById('testScriptLinesContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'testScriptLinesContainer';
+    container.className = 'test-script-lines left-section';
+
+    // Insert after the issue form section in the left panel
+    const issueFormSection = document.querySelector('.left-section');
+    if (issueFormSection && issueFormSection.nextSibling) {
+      issueFormSection.parentNode.insertBefore(container, issueFormSection.nextSibling);
+    } else if (issueFormSection) {
+      issueFormSection.parentNode.appendChild(container);
+    } else {
+      // Fallback: add to left panel
+      const leftPanel = document.querySelector('.left');
+      if (leftPanel) {
+        leftPanel.appendChild(container);
+      }
+    }
+  }
+
+  if (!testScriptLines || testScriptLines.length === 0) {
+    container.innerHTML = `
+      <div class="test-script-lines-title">Test Scripts</div>
+      <div class="test-script-lines-empty">No test scripts available for this room.</div>
+    `;
+    return;
+  }
+
+  const linesHtml = testScriptLines.map(line => {
+    const isChecked = line.is_checked;
+    const checkedClass = isChecked ? 'checked' : '';
+    const notesHtml = line.progress_notes ?
+      `<div class="test-script-line-notes">${escapeHtml(line.progress_notes)}</div>` : '';
+
+    return `
+      <div class="test-script-line ${checkedClass}" data-line-id="${line.id}" data-script-line-id="${line.test_script_line_id}">
+        <input type="checkbox" class="test-script-line-checkbox" ${isChecked ? 'checked' : ''} />
+        <div class="test-script-line-content">
+          <div class="test-script-line-header">
+            <span class="test-script-line-script-id">ID: ${line.test_script_line_id}</span>
+            <span class="test-script-line-name">${escapeHtml(line.name)}</span>
+          </div>
+          ${line.description ? `<div class="test-script-line-description">${escapeHtml(line.description)}</div>` : ''}
+          ${notesHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="test-script-lines-title">Test Scripts</div>
+    ${linesHtml}
+  `;
+
+  // Add event listeners
+  container.querySelectorAll('.test-script-line').forEach(lineEl => {
+    lineEl.addEventListener('click', onTestScriptLineClick);
+  });
+  container.querySelectorAll('.test-script-line-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('click', onTestScriptLineCheckboxClick);
+  });
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+async function onTestScriptLineClick(e) {
+  if (e.target.type === 'checkbox') return; // Let checkbox handler deal with it
+
+  const lineEl = e.currentTarget;
+  const scriptLineId = lineEl.getAttribute('data-script-line-id');
+
+  // Copy test script line ID to form
+  const scriptIdInput = document.getElementById('scriptId');
+  if (scriptIdInput) {
+    scriptIdInput.value = scriptLineId;
+    scriptIdInput.focus();
+  }
+}
+
+async function onTestScriptLineCheckboxClick(e) {
+  e.stopPropagation(); // Prevent the line click handler
+
+  const checkbox = e.target;
+  const lineEl = checkbox.closest('.test-script-line');
+  const lineId = lineEl.getAttribute('data-line-id');
+  const isChecked = checkbox.checked;
+
+  try {
+    const res = await fetch(`/api/test-script-lines/${lineId}/progress`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_checked: isChecked })
+    });
+
+    if (!res.ok) {
+      // Revert checkbox state on error
+      checkbox.checked = !isChecked;
+      const errorData = await res.json();
+      alert(errorData.error || 'Failed to update progress');
+      return;
+    }
+
+    // Update UI
+    if (isChecked) {
+      lineEl.classList.add('checked');
+    } else {
+      lineEl.classList.remove('checked');
+    }
+
+    // Update local data
+    const line = testScriptLines.find(l => l.id === lineId);
+    if (line) {
+      line.is_checked = isChecked;
+      line.checked_at = isChecked ? new Date().toISOString() : null;
+    }
+
+  } catch (error) {
+    console.error('Error updating test script line progress:', error);
+    checkbox.checked = !isChecked; // Revert on error
+    alert('Failed to update progress');
   }
 }
 
