@@ -36,27 +36,31 @@ If you have an existing test script in CSV format, you can import it into your t
 ### CSV Format Requirements
 
 Your CSV file should have three columns:
+
 - **Section** (Column 1): The section or category name
 - **Item under Test** (Column 2): The specific item being tested
 - **Description** (Column 3): Additional notes or description for the test item
 
 ### How to Import
 
-1. **Get the Room UUID** from your test fest room (you can find this in the browser URL when viewing the room or in the database)
+1. **Get the Room UUID** from your test fest room (you can find this in the browser URL when viewing the room at `/fest/<room-uuid>` or in the database)
 
 2. **Place your CSV file** in the `scripts/import-tfs/` directory and name it `tf-script.csv`
 
 3. **Navigate to the import directory**:
+
    ```bash
    cd scripts/import-tfs
    ```
 
 4. **Run the import script with the room UUID**:
+
    ```bash
    node import.js <room-uuid>
    ```
-   
+
    Example:
+
    ```bash
    node import.js 550e8400-e29b-41d4-a716-446655440000
    ```

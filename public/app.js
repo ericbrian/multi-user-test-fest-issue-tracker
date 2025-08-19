@@ -26,6 +26,19 @@ let isGroupier = false;
 let testScriptLines = [];
 const LS_KEY_LAST_ROOM = "tft:lastRoomId";
 
+// Function to extract room ID from URL
+function getRoomIdFromUrl() {
+  const pathMatch = window.location.pathname.match(/^\/fest\/([a-f0-9-]{36})$/i);
+  return pathMatch ? pathMatch[1] : null;
+}
+
+// Function to clear the URL back to root
+function clearRoomFromUrl() {
+  if (window.location.pathname !== '/') {
+    window.history.pushState({}, '', '/');
+  }
+}
+
 function updateVisibility() {
   const isLoggedIn = Boolean(me);
   const shouldShow = Boolean(currentRoomId);
@@ -183,6 +196,13 @@ async function createRoom() {
   // Get the room name from the select option
   const selectedOption = Array.from(roomSelect.options).find(opt => opt.value === roomId);
   currentRoomNameValue = selectedOption ? selectedOption.textContent : "Unknown Room";
+
+  // Update the URL to include the room UUID
+  const newUrl = `/fest/${roomId}`;
+  if (window.location.pathname !== newUrl) {
+    window.history.pushState({ roomId }, '', newUrl);
+  }
+
   try {
     localStorage.setItem(LS_KEY_LAST_ROOM, roomId);
   } catch (_) { }
@@ -739,6 +759,10 @@ changeRoomBtn.addEventListener("click", async () => {
   currentRoomNameValue = null;
   isGroupier = false;
   updateUserInfoDisplay();
+
+  // Clear the room from URL
+  clearRoomFromUrl();
+
   try {
     localStorage.removeItem(LS_KEY_LAST_ROOM);
   } catch (_) { }
@@ -756,8 +780,51 @@ changeRoomBtn.addEventListener("click", async () => {
   await fetchMe();
   if (me) {
     await loadRooms();
+
+    // Check if there's a room ID in the URL
+    const urlRoomId = getRoomIdFromUrl();
+    if (urlRoomId) {
+      // Verify the room exists in our loaded rooms before joining
+      const roomOption = Array.from(roomSelect.options).find(opt => opt.value === urlRoomId);
+      if (roomOption) {
+        roomSelect.value = urlRoomId;
+        await joinRoom(urlRoomId);
+      } else {
+        // Room not found or user doesn't have access, clear the URL
+        console.warn(`Room ${urlRoomId} not found or not accessible`);
+        clearRoomFromUrl();
+      }
+    }
   }
 })();
+
+// Handle browser back/forward navigation
+window.addEventListener('popstate', async (event) => {
+  if (!me) return;
+
+  const urlRoomId = getRoomIdFromUrl();
+  if (urlRoomId && urlRoomId !== currentRoomId) {
+    // Navigate to a different room
+    const roomOption = Array.from(roomSelect.options).find(opt => opt.value === urlRoomId);
+    if (roomOption) {
+      roomSelect.value = urlRoomId;
+      await joinRoom(urlRoomId);
+    } else {
+      clearRoomFromUrl();
+    }
+  } else if (!urlRoomId && currentRoomId) {
+    // Navigate back to root, leave current room
+    currentRoomId = null;
+    currentRoomNameValue = null;
+    isGroupier = false;
+    if (socket) {
+      socket.disconnect();
+      socket = null;
+    }
+    roomSelect.value = '';
+    updateVisibility();
+  }
+});
 
 function openLightbox(src) {
   const overlay = document.createElement("div");
