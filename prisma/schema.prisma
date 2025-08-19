@@ -14,9 +14,10 @@ model User {
   name  String?
   email String?
 
-  rooms       Room[]       @relation("RoomCreatedBy")
-  roomMembers RoomMember[]
-  issues      Issue[]      @relation("IssueCreatedBy")
+  rooms                  Room[]                   @relation("RoomCreatedBy")
+  roomMembers            RoomMember[]
+  issues                 Issue[]                  @relation("IssueCreatedBy")
+  testScriptLineProgress TestScriptLineProgress[]
 
   @@map("users")
   @@schema("testfest")
@@ -106,8 +107,27 @@ model TestScriptLine {
   notes               String?
   created_at          DateTime @default(now())
 
-  testScript TestScript @relation(fields: [test_script_id], references: [id], onDelete: Cascade)
+  testScript TestScript               @relation(fields: [test_script_id], references: [id], onDelete: Cascade)
+  progress   TestScriptLineProgress[]
 
   @@map("test_script_line")
+  @@schema("testfest")
+}
+
+model TestScriptLineProgress {
+  id                  String    @id @db.Uuid
+  user_id             String    @db.Uuid
+  test_script_line_id String    @db.Uuid
+  is_checked          Boolean   @default(false)
+  checked_at          DateTime?
+  notes               String?
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+
+  user           User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  testScriptLine TestScriptLine @relation(fields: [test_script_line_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, test_script_line_id])
+  @@map("test_script_line_progress")
   @@schema("testfest")
 }
