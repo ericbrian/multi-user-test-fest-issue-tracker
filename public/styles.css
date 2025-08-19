@@ -604,6 +604,33 @@ button:disabled {
 /* Test Script Lines */
 .test-script-lines {
   margin-bottom: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  padding: 12px;
+}
+
+/* Custom scrollbar for test script lines */
+.test-script-lines::-webkit-scrollbar {
+  width: 8px;
+}
+
+.test-script-lines::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.test-script-lines::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 4px;
+  opacity: 0.6;
+}
+
+.test-script-lines::-webkit-scrollbar-thumb:hover {
+  background: var(--text);
+  opacity: 0.8;
 }
 
 .test-script-lines-title {
