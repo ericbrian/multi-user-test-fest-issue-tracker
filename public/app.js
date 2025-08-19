@@ -3,8 +3,6 @@ const logoutBtn = document.getElementById("logoutBtn");
 const userInfoHeader = document.getElementById("userInfoHeader");
 const issueForm = document.getElementById("issueForm");
 const issuesEl = document.getElementById("issues");
-const roomStatsPanel = document.getElementById("roomStatsPanel");
-const roomStatsEl = document.getElementById("roomStats");
 const roomSelect = document.getElementById("roomSelect");
 const createRoomBtn = document.getElementById("createRoomBtn");
 const changeRoomBtn = document.getElementById("changeRoomBtn");
@@ -52,7 +50,6 @@ function updateVisibility() {
   issueForm.classList.toggle("hidden", !shouldShow);
   issuesEl.classList.toggle("hidden", !shouldShow);
   tagLegend.classList.toggle("hidden", !shouldShow);
-  if (roomStatsPanel) roomStatsPanel.classList.toggle("hidden", !shouldShow);
 
   // Hide/show test script lines container
   const testScriptLinesContainer = document.getElementById('testScriptLinesContainer');
@@ -259,22 +256,6 @@ async function fetchIssues(roomId) {
 
   issuesEl.innerHTML = "";
   sortedList.forEach((i) => addOrUpdateIssue(i, true));
-
-  // Basic stats
-  if (roomStatsEl) {
-    const total = sortedList.length;
-    const withImages = sortedList.filter(
-      (i) => Array.isArray(i.images) && i.images.length > 0
-    ).length;
-    const inJira = sortedList.filter((i) => !!i.jira_key).length;
-    const nonOpen = sortedList.filter((i) => i.status && i.status !== "open").length;
-    roomStatsEl.innerHTML = `
-      <div><strong>Total issues</strong><br/>${total}</div>
-      <div><strong>With images</strong><br/>${withImages}</div>
-      <div><strong>In Jira</strong><br/>${inJira}</div>
-      <div><strong>Tagged</strong><br/>${nonOpen}</div>
-    `;
-  }
 }
 
 async function fetchTestScriptLines(roomId) {
@@ -384,13 +365,17 @@ function scrollToFirstUncheckedLine(container) {
     // Find the first unchecked line
     const firstUncheckedLine = container.querySelector('.test-script-line:not(.checked)');
 
-    if (firstUncheckedLine) {
-      // Smooth scroll to the first unchecked line
+    if (firstUncheckedLine && container) {
       setTimeout(() => {
-        firstUncheckedLine.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-          inline: 'nearest'
+        // Calculate the position of the first unchecked line relative to the container
+        const containerRect = container.getBoundingClientRect();
+        const lineRect = firstUncheckedLine.getBoundingClientRect();
+        const relativeTop = lineRect.top - containerRect.top + container.scrollTop;
+
+        // Scroll the container to show the line at the top
+        container.scrollTo({
+          top: relativeTop,
+          behavior: 'smooth'
         });
 
         // Add a subtle highlight effect
