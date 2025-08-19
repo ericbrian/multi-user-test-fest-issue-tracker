@@ -307,6 +307,40 @@ function renderTestScriptLines() {
   container.querySelectorAll('.test-script-line-checkbox').forEach(checkbox => {
     checkbox.addEventListener('click', onTestScriptLineCheckboxClick);
   });
+
+  // Auto-scroll to first unchecked item if user has already started testing
+  scrollToFirstUncheckedLine(container);
+}
+
+function scrollToFirstUncheckedLine(container) {
+  // Check if user has any completed items (indicating they've started testing)
+  const hasCheckedItems = testScriptLines.some(line => line.is_checked);
+  
+  if (hasCheckedItems) {
+    // Find the first unchecked line
+    const firstUncheckedLine = container.querySelector('.test-script-line:not(.checked)');
+    
+    if (firstUncheckedLine) {
+      // Smooth scroll to the first unchecked line
+      setTimeout(() => {
+        firstUncheckedLine.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'nearest'
+        });
+        
+        // Add a subtle highlight effect
+        firstUncheckedLine.style.transform = 'translateX(4px)';
+        firstUncheckedLine.style.boxShadow = '0 2px 12px rgba(124, 58, 237, 0.3)';
+        
+        // Remove the highlight after a short delay
+        setTimeout(() => {
+          firstUncheckedLine.style.transform = '';
+          firstUncheckedLine.style.boxShadow = '';
+        }, 1000);
+      }, 100); // Small delay to ensure DOM is ready
+    }
+  }
 }
 
 function escapeHtml(text) {
