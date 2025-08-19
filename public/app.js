@@ -74,15 +74,15 @@ function updateVisibility() {
 
 function updateTestProgress() {
   if (!testScriptLines || !progressText || !progressFill) return;
-  
+
   const totalTests = testScriptLines.length;
   const completedTests = testScriptLines.filter(line => line.is_checked).length;
   const percentage = totalTests > 0 ? (completedTests / totalTests) * 100 : 0;
-  
+
   // Update text
   const testsWord = totalTests === 1 ? 'test' : 'tests';
   progressText.textContent = `${completedTests} of ${totalTests} ${testsWord} done`;
-  
+
   // Update progress bar
   progressFill.style.width = `${percentage}%`;
 }
@@ -351,7 +351,7 @@ function renderTestScriptLines(shouldAutoScroll = false) {
   if (shouldAutoScroll) {
     scrollToFirstUncheckedLine(container);
   }
-  
+
   // Update progress indicator
   updateTestProgress();
 }
@@ -463,7 +463,7 @@ async function onTestScriptLineCheckboxClick(e) {
       line.is_checked = isChecked;
       line.checked_at = isChecked ? new Date().toISOString() : null;
     }
-    
+
     // Update progress indicator
     updateTestProgress();
 
