@@ -13,6 +13,9 @@ const currentRoomName = document.getElementById("currentRoomName");
 const tagLegend = document.getElementById("tagLegend");
 const roomControls = document.querySelector(".room-controls");
 const loginNote = document.getElementById("loginNote");
+const testProgress = document.getElementById("testProgress");
+const progressText = testProgress ? testProgress.querySelector(".progress-text") : null;
+const progressFill = testProgress ? testProgress.querySelector(".progress-fill") : null;
 
 let me = null;
 let tags = [];
@@ -44,6 +47,11 @@ function updateVisibility() {
     testScriptLinesContainer.classList.toggle("hidden", !shouldShow);
   }
 
+  // Hide/show test progress indicator
+  if (testProgress) {
+    testProgress.classList.toggle("hidden", !shouldShow);
+  }
+
   // Hide/show all left sections until a room is chosen
   document.querySelectorAll(".left-section").forEach((el) => {
     el.classList.toggle("hidden", !shouldShow);
@@ -62,6 +70,21 @@ function updateVisibility() {
       roomNameText.textContent = currentRoomNameValue || "";
     }
   }
+}
+
+function updateTestProgress() {
+  if (!testScriptLines || !progressText || !progressFill) return;
+  
+  const totalTests = testScriptLines.length;
+  const completedTests = testScriptLines.filter(line => line.is_checked).length;
+  const percentage = totalTests > 0 ? (completedTests / totalTests) * 100 : 0;
+  
+  // Update text
+  const testsWord = totalTests === 1 ? 'test' : 'tests';
+  progressText.textContent = `${completedTests} of ${totalTests} ${testsWord} done`;
+  
+  // Update progress bar
+  progressFill.style.width = `${percentage}%`;
 }
 
 async function fetchMe() {
@@ -206,16 +229,25 @@ async function createRoom() {
 async function fetchIssues(roomId) {
   const res = await fetch(`/api/rooms/${roomId}/issues`);
   const list = await res.json();
+
+  // Sort issues by script_id before rendering
+  const sortedList = list.sort((a, b) => {
+    const scriptIdA = parseInt(a.script_id) || 0;
+    const scriptIdB = parseInt(b.script_id) || 0;
+    return scriptIdA - scriptIdB;
+  });
+
   issuesEl.innerHTML = "";
-  list.forEach((i) => addOrUpdateIssue(i, true));
+  sortedList.forEach((i) => addOrUpdateIssue(i, true));
+
   // Basic stats
   if (roomStatsEl) {
-    const total = list.length;
-    const withImages = list.filter(
+    const total = sortedList.length;
+    const withImages = sortedList.filter(
       (i) => Array.isArray(i.images) && i.images.length > 0
     ).length;
-    const inJira = list.filter((i) => !!i.jira_key).length;
-    const nonOpen = list.filter((i) => i.status && i.status !== "open").length;
+    const inJira = sortedList.filter((i) => !!i.jira_key).length;
+    const nonOpen = sortedList.filter((i) => i.status && i.status !== "open").length;
     roomStatsEl.innerHTML = `
       <div><strong>Total issues</strong><br/>${total}</div>
       <div><strong>With images</strong><br/>${withImages}</div>
@@ -235,7 +267,7 @@ async function fetchTestScriptLines(roomId) {
       return;
     }
     testScriptLines = await res.json();
-    renderTestScriptLines();
+    renderTestScriptLines(true); // Enable auto-scroll for initial room entry
   } catch (error) {
     console.error('Error fetching test script lines:', error);
     testScriptLines = [];
@@ -243,7 +275,7 @@ async function fetchTestScriptLines(roomId) {
   }
 }
 
-function renderTestScriptLines() {
+function renderTestScriptLines(shouldAutoScroll = false) {
   // Find or create the test script lines container
   let container = document.getElementById('testScriptLinesContainer');
   if (!container) {
@@ -277,8 +309,14 @@ function renderTestScriptLines() {
   const linesHtml = testScriptLines.map(line => {
     const isChecked = line.is_checked;
     const checkedClass = isChecked ? 'checked' : '';
-    const notesHtml = line.progress_notes ?
-      `<div class="test-script-line-notes">${escapeHtml(line.progress_notes)}</div>` : '';
+
+    // Database notes from the test script line itself
+    const databaseNotesHtml = line.notes ?
+      `<div class="test-script-line-db-notes">${formatNotesWithLineBreaks(line.notes)}</div>` : '';
+
+    // User's progress notes
+    const progressNotesHtml = line.progress_notes ?
+      `<div class="test-script-line-notes">${formatNotesWithLineBreaks(line.progress_notes)}</div>` : '';
 
     return `
       <div class="test-script-line ${checkedClass}" data-line-id="${line.id}" data-script-line-id="${line.test_script_line_id}">
@@ -289,14 +327,15 @@ function renderTestScriptLines() {
             <span class="test-script-line-name">${escapeHtml(line.name)}</span>
           </div>
           ${line.description ? `<div class="test-script-line-description">${escapeHtml(line.description)}</div>` : ''}
-          ${notesHtml}
+          ${databaseNotesHtml}
+          ${progressNotesHtml}
         </div>
       </div>
     `;
   }).join('');
 
   container.innerHTML = `
-    <div class="test-script-lines-title">Test Scripts</div>
+    <div class="test-script-lines-title">Test Script</div>
     ${linesHtml}
   `;
 
@@ -308,18 +347,23 @@ function renderTestScriptLines() {
     checkbox.addEventListener('click', onTestScriptLineCheckboxClick);
   });
 
-  // Auto-scroll to first unchecked item if user has already started testing
-  scrollToFirstUncheckedLine(container);
+  // Auto-scroll to first unchecked item only when specified (room entry)
+  if (shouldAutoScroll) {
+    scrollToFirstUncheckedLine(container);
+  }
+  
+  // Update progress indicator
+  updateTestProgress();
 }
 
 function scrollToFirstUncheckedLine(container) {
   // Check if user has any completed items (indicating they've started testing)
   const hasCheckedItems = testScriptLines.some(line => line.is_checked);
-  
+
   if (hasCheckedItems) {
     // Find the first unchecked line
     const firstUncheckedLine = container.querySelector('.test-script-line:not(.checked)');
-    
+
     if (firstUncheckedLine) {
       // Smooth scroll to the first unchecked line
       setTimeout(() => {
@@ -328,11 +372,11 @@ function scrollToFirstUncheckedLine(container) {
           block: 'nearest',
           inline: 'nearest'
         });
-        
+
         // Add a subtle highlight effect
         firstUncheckedLine.style.transform = 'translateX(4px)';
         firstUncheckedLine.style.boxShadow = '0 2px 12px rgba(124, 58, 237, 0.3)';
-        
+
         // Remove the highlight after a short delay
         setTimeout(() => {
           firstUncheckedLine.style.transform = '';
@@ -348,6 +392,25 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+function formatNotesWithLineBreaks(text) {
+  if (!text) return '';
+
+  // Split by pipe character and process each part
+  return text.split('|').map(part => {
+    const trimmedPart = part.trim();
+
+    // Convert URLs to clickable links
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const formattedPart = escapeHtml(trimmedPart).replace(urlRegex, (url) => {
+      // Remove HTML encoding from the URL for the href attribute
+      const cleanUrl = url.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+      return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+    });
+
+    return formattedPart;
+  }).join('<br>');
 }
 
 async function onTestScriptLineClick(e) {
@@ -400,6 +463,9 @@ async function onTestScriptLineCheckboxClick(e) {
       line.is_checked = isChecked;
       line.checked_at = isChecked ? new Date().toISOString() : null;
     }
+    
+    // Update progress indicator
+    updateTestProgress();
 
   } catch (error) {
     console.error('Error updating test script line progress:', error);
@@ -412,6 +478,30 @@ function issueElementId(id) {
   return `issue-${id}`;
 }
 
+function insertIssueInSortedOrder(issueElement, issue) {
+  const currentIssueScriptId = parseInt(issue.script_id) || 0;
+  const existingIssues = Array.from(issuesEl.children);
+
+  // Find the correct position to insert the issue
+  let insertIndex = existingIssues.length; // Default to end
+
+  for (let i = 0; i < existingIssues.length; i++) {
+    const existingScriptId = parseInt(existingIssues[i].getAttribute('data-script-id')) || 0;
+
+    if (currentIssueScriptId < existingScriptId) {
+      insertIndex = i;
+      break;
+    }
+  }
+
+  // Insert at the correct position
+  if (insertIndex >= existingIssues.length) {
+    issuesEl.appendChild(issueElement);
+  } else {
+    issuesEl.insertBefore(issueElement, existingIssues[insertIndex]);
+  }
+}
+
 function addOrUpdateIssue(issue, isInitial = false) {
   let el = document.getElementById(issueElementId(issue.id));
   const isFaded = Boolean(issue.status) && issue.status !== "open";
@@ -420,10 +510,16 @@ function addOrUpdateIssue(issue, isInitial = false) {
     el = document.createElement("div");
     el.className = "issue" + (isInitial ? "" : " enter");
     el.id = issueElementId(issue.id);
-    issuesEl.prepend(el);
+
+    // Insert in sorted order by script_id
+    insertIssueInSortedOrder(el, issue);
   }
   el.className =
     "issue" + (isFaded ? " fade" : "") + (isMine ? "" : " not-mine");
+
+  // Store script_id as data attribute for sorting
+  el.setAttribute('data-script-id', issue.script_id || 0);
+
   const imgs = (issue.images || [])
     .map((src) => `<img src="${src}" />`)
     .join("");
