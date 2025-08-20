@@ -304,19 +304,36 @@ function registerRoutes(app, deps) {
       }
 
       const summary = `Script ${issue.script_id || ''} - ${issue.description?.slice(0, 80) || 'Issue'}`.slice(0, 255);
-      const description = `Description:\n${issue.description || ''}\n\nFlags: issue=${issue.is_issue}, annoyance=${issue.is_annoyance}, existing_upper_env=${issue.is_existing_upper_env}, not_sure_how_to_test=${issue.is_not_sure_how_to_test}`;
+      const descriptionText = `Description:\n${issue.description || ''}\n\nFlags: issue=${issue.is_issue}, annoyance=${issue.is_annoyance}, existing_upper_env=${issue.is_existing_upper_env}, not_sure_how_to_test=${issue.is_not_sure_how_to_test}`;
+      
+      // Convert to Atlassian Document Format
+      const description = {
+        type: 'doc',
+        version: 1,
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: descriptionText
+              }
+            ]
+          }
+        ]
+      };
 
       // Fetch room name for Jira labels
       const room = await prisma.room.findUnique({ where: { id: issue.room_id } });
       const roomName = room?.name || '';
-      const roomLabel = (roomName || '')
+      const roomLabel = `testfest-${(roomName || '')
         .toString()
         .toLowerCase()
         .trim()
         .replace(/\s+/g, '-')
         .replace(/[^a-z0-9\-]+/g, '')
         .replace(/--+/g, '-')
-        .replace(/^-+|-+$/g, '') || 'test-fest-room';
+        .replace(/^-+|-+$/g, '') || 'room'}`;
 
       const payload = {
         fields: {
@@ -344,6 +361,35 @@ function registerRoutes(app, deps) {
         const jiraKey = resp.data && resp.data.key;
         if (!jiraKey) {
           throw new Error('No Jira key returned from API');
+        }
+
+        // Upload attachments if any
+        if (issue.images && Array.isArray(issue.images) && issue.images.length > 0) {
+          const FormData = require('form-data');
+          for (const imagePath of issue.images) {
+            try {
+              const fullPath = path.join(uploadsDir, path.basename(imagePath));
+              if (fs.existsSync(fullPath)) {
+                const form = new FormData();
+                form.append('file', fs.createReadStream(fullPath));
+                
+                await axios.post(
+                  `${JIRA_BASE_URL.replace(/\/$/, '')}/rest/api/3/issue/${jiraKey}/attachments`,
+                  form,
+                  {
+                    headers: {
+                      Authorization: `Basic ${auth}`,
+                      'X-Atlassian-Token': 'no-check',
+                      ...form.getHeaders()
+                    },
+                    timeout: 30000
+                  }
+                );
+              }
+            } catch (attachError) {
+              console.error(`Failed to upload attachment ${imagePath}:`, attachError.message);
+            }
+          }
         }
 
         await prisma.issue.update({ where: { id }, data: { jira_key: jiraKey } });
