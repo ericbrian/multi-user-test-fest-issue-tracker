@@ -160,33 +160,126 @@ async function loadRooms() {
 }
 
 async function createRoom() {
-  const name = prompt("Test Fest Name (e.g., 'Mobile App Testing', 'Website Redesign'):") || "";
-  if (!name.trim()) {
-    alert("Test Fest Name is required");
-    return;
+  // Show script selection modal
+  showCreateRoomModal();
+}
+
+async function showCreateRoomModal() {
+  // Fetch available scripts from library
+  let scriptLibrary = [];
+  try {
+    const res = await fetch('/api/script-library');
+    if (res.ok) {
+      scriptLibrary = await res.json();
+    }
+  } catch (error) {
+    console.warn('Could not fetch script library:', error);
   }
 
-  const description = prompt(`Optional description for "${name}":\n\n(You can leave this blank)`) || "";
+  // Create modal content
+  const modalHtml = `
+    <div class="room-modal-overlay">
+      <div class="room-modal">
+        <div class="room-modal-header">
+          <h2>Create New Test Fest</h2>
+          <button class="room-modal-close" onclick="closeCreateRoomModal()">&times;</button>
+        </div>
+        <div class="room-modal-body">
+          <form id="createRoomForm">
+            <div class="form-group">
+              <label for="roomName">Test Fest Name *</label>
+              <input type="text" id="roomName" name="roomName" required
+                     placeholder="e.g., Mobile App Testing, Website Redesign" />
+            </div>
 
-  const res = await fetch("/api/rooms", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name,
-      description: description.trim() || null
-    }),
-  });
+            <div class="form-group">
+              <label for="roomDescription">Description (optional)</label>
+              <textarea id="roomDescription" name="roomDescription" rows="3"
+                        placeholder="Optional description of what will be tested"></textarea>
+            </div>
 
-  if (res.ok) {
-    const created = await res.json();
-    await loadRooms();
-    if (created && created.id) {
-      roomSelect.value = created.id;
-      await joinRoom(created.id);
+            <div class="form-group">
+              <label for="scriptSelection">Test Script Template</label>
+              <select id="scriptSelection" name="scriptSelection">
+                <option value="">Create empty script (add tests later)</option>
+                ${scriptLibrary.map(script => `
+                  <option value="${script.id}">
+                    ${script.name} ${script.category ? `(${script.category})` : ''}
+                    - ${script.line_count} test${script.line_count !== 1 ? 's' : ''}
+                  </option>
+                `).join('')}
+              </select>
+              <small class="form-help">Choose a pre-built test script or start with an empty script</small>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" onclick="closeCreateRoomModal()">Cancel</button>
+              <button type="submit">Create Test Fest</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Add modal to page
+  const modalContainer = document.createElement('div');
+  modalContainer.innerHTML = modalHtml;
+  document.body.appendChild(modalContainer);
+
+  // Focus on the name input
+  setTimeout(() => {
+    document.getElementById('roomName').focus();
+  }, 100);
+
+  // Handle form submission
+  document.getElementById('createRoomForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const name = formData.get('roomName').trim();
+    const description = formData.get('roomDescription').trim() || null;
+    const scriptId = formData.get('scriptSelection') || null;
+
+    if (!name) {
+      alert('Test Fest Name is required');
+      return;
     }
-  } else {
-    const error = await res.text().catch(() => "Unknown error");
-    alert(`Failed to create room: ${error}`);
+
+    try {
+      const res = await fetch('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          description,
+          scriptId
+        }),
+      });
+
+      if (res.ok) {
+        const created = await res.json();
+        closeCreateRoomModal();
+        await loadRooms();
+        if (created && created.id) {
+          roomSelect.value = created.id;
+          await joinRoom(created.id);
+        }
+      } else {
+        const error = await res.text().catch(() => 'Unknown error');
+        alert(`Failed to create room: ${error}`);
+      }
+    } catch (error) {
+      console.error('Error creating room:', error);
+      alert('Failed to create room. Please try again.');
+    }
+  });
+}
+
+function closeCreateRoomModal() {
+  const modal = document.querySelector('.room-modal-overlay');
+  if (modal && modal.parentElement) {
+    modal.parentElement.removeChild(modal);
   }
 } async function joinRoom(roomId) {
   currentRoomId = roomId;

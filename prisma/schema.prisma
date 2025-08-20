@@ -131,3 +131,31 @@ model TestScriptLineProgress {
   @@map("test_script_line_progress")
   @@schema("testfest")
 }
+
+model ScriptLibrary {
+  id          String   @id @db.Uuid
+  name        String
+  description String?
+  category    String?
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+
+  lines ScriptLibraryLine[]
+
+  @@map("script_library")
+  @@schema("testfest")
+}
+
+model ScriptLibraryLine {
+  id          String  @id @db.Uuid
+  script_id   String  @db.Uuid
+  line_number Int
+  name        String
+  description String?
+  notes       String?
+
+  script ScriptLibrary @relation(fields: [script_id], references: [id], onDelete: Cascade)
+
+  @@map("script_library_line")
+  @@schema("testfest")
+}

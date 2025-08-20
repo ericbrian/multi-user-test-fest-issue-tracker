@@ -68,6 +68,28 @@ function registerRoutes(app, deps) {
     res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
   });
 
+  // Script Library
+  app.get('/api/script-library', requireAuth, async (req, res) => {
+    try {
+      const prisma = getPrisma();
+      const scripts = await prisma.scriptLibrary.findMany({
+        where: { is_active: true },
+        orderBy: { name: 'asc' },
+        include: {
+          _count: { select: { lines: true } }
+        }
+      });
+      const result = scripts.map((s) => ({
+        ...s,
+        line_count: s._count?.lines || 0
+      }));
+      res.json(result);
+    } catch (error) {
+      console.error('Error fetching script library:', error);
+      res.status(500).json({ error: 'Failed to fetch script library' });
+    }
+  });
+
   // Rooms
   app.get('/api/rooms', requireAuth, async (req, res) => {
     try {
@@ -89,6 +111,7 @@ function registerRoutes(app, deps) {
       const prisma = getPrisma();
       const name = (req.body.name || '').trim() || `Room ${new Date().toLocaleString()}`;
       const description = req.body.description || null;
+      const selectedScriptId = req.body.scriptId || null;
 
       const roomId = uuidv4();
       const userId = req.user.id;
@@ -96,16 +119,64 @@ function registerRoutes(app, deps) {
       // Create the room
       await prisma.room.create({ data: { id: roomId, name, created_by: userId } });
 
-      // Create a single test script with the same name as the room
-      await prisma.testScript.create({
-        data: {
-          id: uuidv4(),
-          room_id: roomId,
-          script_id: 1, // Always script ID 1 since there's only one per room
-          name: name,
-          description: description,
+      // Create test script based on selection
+      const testScriptId = uuidv4();
+      if (selectedScriptId) {
+        // User selected a script from the library
+        const libraryScript = await prisma.scriptLibrary.findUnique({
+          where: { id: selectedScriptId },
+          include: { lines: { orderBy: { line_number: 'asc' } } }
+        });
+
+        if (libraryScript) {
+          // Create test script with library script name and description
+          await prisma.testScript.create({
+            data: {
+              id: testScriptId,
+              room_id: roomId,
+              script_id: 1,
+              name: libraryScript.name,
+              description: libraryScript.description,
+            }
+          });
+
+          // Copy lines from library script to test script
+          for (const libraryLine of libraryScript.lines) {
+            await prisma.testScriptLine.create({
+              data: {
+                id: uuidv4(),
+                test_script_id: testScriptId,
+                test_script_line_id: libraryLine.line_number,
+                name: libraryLine.name,
+                description: libraryLine.description,
+                notes: libraryLine.notes,
+              }
+            });
+          }
+        } else {
+          // Fallback: create empty script if library script not found
+          await prisma.testScript.create({
+            data: {
+              id: testScriptId,
+              room_id: roomId,
+              script_id: 1,
+              name: name,
+              description: description,
+            }
+          });
         }
-      });
+      } else {
+        // No script selected, create empty test script
+        await prisma.testScript.create({
+          data: {
+            id: testScriptId,
+            room_id: roomId,
+            script_id: 1,
+            name: name,
+            description: description,
+          }
+        });
+      }
 
       const GROUPIER_EMAILS = (process.env.GROUPIER_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
       const isGroupier = GROUPIER_EMAILS.includes((req.user.email || '').toLowerCase()) || true; // creator is groupier
@@ -305,7 +376,7 @@ function registerRoutes(app, deps) {
 
       const summary = `Script ${issue.script_id || ''} - ${issue.description?.slice(0, 80) || 'Issue'}`.slice(0, 255);
       const descriptionText = `Description:\n${issue.description || ''}\n\nFlags: issue=${issue.is_issue}, annoyance=${issue.is_annoyance}, existing_upper_env=${issue.is_existing_upper_env}, not_sure_how_to_test=${issue.is_not_sure_how_to_test}`;
-      
+
       // Convert to Atlassian Document Format
       const description = {
         type: 'doc',
@@ -372,7 +443,7 @@ function registerRoutes(app, deps) {
               if (fs.existsSync(fullPath)) {
                 const form = new FormData();
                 form.append('file', fs.createReadStream(fullPath));
-                
+
                 await axios.post(
                   `${JIRA_BASE_URL.replace(/\/$/, '')}/rest/api/3/issue/${jiraKey}/attachments`,
                   form,
