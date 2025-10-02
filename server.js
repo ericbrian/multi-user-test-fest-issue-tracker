@@ -20,6 +20,13 @@ const PORT = process.env.PORT || 3000;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change_me_session_secret';
 const DATABASE_URL = process.env.DATABASE_URL;
 const SCHEMA = ((process.env.DB_SCHEMA || 'testfest').replace(/[^a-zA-Z0-9_]/g, '')) || 'testfest';
+
+// Validate SESSION_SECRET
+if (!SESSION_SECRET || SESSION_SECRET === 'change_me_session_secret') {
+  console.error('FATAL: SESSION_SECRET must be set to a secure random value in .env');
+  console.error('Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))";');
+  process.exit(1);
+}
 const DISABLE_SSO = process.env.DISABLE_SSO === 'true';
 const DEV_USER_EMAIL = process.env.DEV_USER_EMAIL || 'dev@example.com';
 const DEV_USER_NAME = process.env.DEV_USER_NAME || 'Dev User';
@@ -52,10 +59,18 @@ pool.on('error', (err, client) => {
   console.error('Unexpected error on idle database client:', err);
 });
 
+// Whitelist of allowed schema names for security
+const ALLOWED_SCHEMAS = ['testfest', 'public'];
+if (!ALLOWED_SCHEMAS.includes(SCHEMA)) {
+  console.error(`FATAL: Invalid schema name "${SCHEMA}". Allowed schemas: ${ALLOWED_SCHEMAS.join(', ')}`);
+  process.exit(1);
+}
+
 // Ensure all new connections default to testfest schema and log connection
 pool.on('connect', (client) => {
   console.log('Database connected successfully');
-  client.query(`SET search_path TO ${SCHEMA}, public`);
+  // Using identifier sanitization - schema name is validated against allow list above
+  client.query(`SET search_path TO "${SCHEMA}", public`);
 });
 
 // Ensure uploads directory exists
@@ -213,30 +228,57 @@ io.on('connection', (socket) => {
 // Global process error handlers
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
-  // Perform cleanup if needed
-  process.exit(1);
+  console.error('Stack:', error.stack);
+  // Only exit on fatal errors, log others for monitoring
+  if (error.code === 'ECONNREFUSED' || error.message.includes('FATAL')) {
+    console.error('Fatal error detected, shutting down...');
+    process.exit(1);
+  }
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Promise Rejection at:', promise, 'reason:', reason);
-  // Handle the rejection gracefully or exit
-  process.exit(1);
+  // Log but don't exit - let the application continue for non-fatal rejections
 });
 
 // Graceful shutdown handlers
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully...');
-  server.close(() => {
+  server.close(async () => {
     console.log('Server closed.');
-    process.exit(0);
+    try {
+      // Close database connections
+      await pool.end();
+      console.log('Database pool closed.');
+      // Disconnect Prisma
+      const prisma = getPrisma();
+      await prisma.$disconnect();
+      console.log('Prisma disconnected.');
+    } catch (err) {
+      console.error('Error during cleanup:', err);
+    } finally {
+      process.exit(0);
+    }
   });
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully...');
-  server.close(() => {
+  server.close(async () => {
     console.log('Server closed.');
-    process.exit(0);
+    try {
+      // Close database connections
+      await pool.end();
+      console.log('Database pool closed.');
+      // Disconnect Prisma
+      const prisma = getPrisma();
+      await prisma.$disconnect();
+      console.log('Prisma disconnected.');
+    } catch (err) {
+      console.error('Error during cleanup:', err);
+    } finally {
+      process.exit(0);
+    }
   });
 });
 

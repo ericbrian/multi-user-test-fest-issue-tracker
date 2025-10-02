@@ -22,6 +22,18 @@ function registerRoutes(app, deps) {
 
   const { requireAuth } = require('./middleware');
 
+  // Sanitization helper to prevent XSS attacks
+  function sanitizeHtml(str) {
+    if (!str || typeof str !== 'string') return str;
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/\//g, '&#x2F;');
+  }
+
   // Health endpoint for container orchestration
   app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok' });
@@ -109,8 +121,10 @@ function registerRoutes(app, deps) {
   app.post('/api/rooms', requireAuth, async (req, res) => {
     try {
       const prisma = getPrisma();
-      const name = (req.body.name || '').trim() || `Room ${new Date().toLocaleString()}`;
-      const description = req.body.description || null;
+      // Sanitize inputs to prevent XSS
+      const rawName = (req.body.name || '').trim();
+      const name = sanitizeHtml(rawName) || `Room ${new Date().toLocaleString()}`;
+      const description = req.body.description ? sanitizeHtml(req.body.description.trim()) : null;
       const selectedScriptId = req.body.scriptId || null;
 
       const roomId = uuidv4();
@@ -181,7 +195,9 @@ function registerRoutes(app, deps) {
       // Room creator is always a groupier (they just created this room)
       const isGroupier = true;
       // creator joins as member
-      await prisma.roomMember.create({ data: { room_id: roomId, user_id: userId, is_groupier: isGroupier } }).catch(() => { });
+      await prisma.roomMember.create({ data: { room_id: roomId, user_id: userId, is_groupier: isGroupier } }).catch((err) => {
+        console.error('Failed to add room creator as member (may already exist):', err.message);
+      });
 
       res.json({ id: roomId, name, created_by: userId });
     } catch (error) {
@@ -243,12 +259,15 @@ function registerRoutes(app, deps) {
     try {
       const { roomId } = req.params;
       const prisma = getPrisma();
-      const { scriptId, description } = req.body;
+      const { scriptId } = req.body;
+      
+      // Sanitize description to prevent XSS
+      const description = req.body.description ? sanitizeHtml(String(req.body.description).trim()) : '';
 
       if (!scriptId || !/^\d+$/.test(String(scriptId))) {
         return res.status(400).json({ error: 'Script ID is required and must be numeric' });
       }
-      if (!description || String(description).trim().length === 0) {
+      if (!description || description.length === 0) {
         return res.status(400).json({ error: 'Issue Description is required' });
       }
 
@@ -579,6 +598,30 @@ function registerRoutes(app, deps) {
       const prisma = getPrisma();
       const userId = req.user.id;
 
+      // First, verify the test script line exists and get the room_id
+      const testScriptLine = await prisma.testScriptLine.findUnique({
+        where: { id: lineId },
+        include: { testScript: true }
+      });
+
+      if (!testScriptLine) {
+        return res.status(404).json({ error: 'Test script line not found' });
+      }
+
+      // Verify user is a member of the room
+      const membership = await prisma.roomMember.findUnique({
+        where: {
+          room_id_user_id: {
+            room_id: testScriptLine.testScript.room_id,
+            user_id: userId
+          }
+        }
+      });
+
+      if (!membership) {
+        return res.status(403).json({ error: 'You must be a member of this room to update test progress' });
+      }
+
       const progressData = {
         is_checked: Boolean(is_checked),
         checked_at: is_checked ? new Date() : null,
@@ -617,21 +660,14 @@ function registerRoutes(app, deps) {
         });
       }
 
-      // Fetch the test script line to get the room_id for socket notification
-      const testScriptLine = await prisma.testScriptLine.findUnique({
-        where: { id: lineId },
-        include: { testScript: true }
+      // Emit socket notification (testScriptLine already fetched above for auth check)
+      io.to(testScriptLine.testScript.room_id).emit('testScriptLine:progress', {
+        lineId,
+        userId,
+        is_checked: progress.is_checked,
+        checked_at: progress.checked_at,
+        notes: progress.notes
       });
-
-      if (testScriptLine) {
-        io.to(testScriptLine.testScript.room_id).emit('testScriptLine:progress', {
-          lineId,
-          userId,
-          is_checked: progress.is_checked,
-          checked_at: progress.checked_at,
-          notes: progress.notes
-        });
-      }
 
       res.json(progress);
     } catch (error) {
