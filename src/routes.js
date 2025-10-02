@@ -178,8 +178,8 @@ function registerRoutes(app, deps) {
         });
       }
 
-      const GROUPIER_EMAILS = (process.env.GROUPIER_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-      const isGroupier = GROUPIER_EMAILS.includes((req.user.email || '').toLowerCase()) || true; // creator is groupier
+      // Room creator is always a groupier (they just created this room)
+      const isGroupier = true;
       // creator joins as member
       await prisma.roomMember.create({ data: { room_id: roomId, user_id: userId, is_groupier: isGroupier } }).catch(() => { });
 
