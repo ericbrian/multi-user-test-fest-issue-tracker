@@ -21,7 +21,7 @@ function registerRoutes(app, deps) {
   } = deps;
 
   const { requireAuth } = require('./middleware');
-  const { authLimiter, issueCreationLimiter, uploadLimiter } = require('./rateLimiter').default;
+  const { authLimiter, issueCreationLimiter, uploadLimiter } = require('./rateLimiter');
 
   // Sanitization helper to prevent XSS attacks
   function sanitizeHtml(str) {

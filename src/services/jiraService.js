@@ -3,10 +3,10 @@
  * Handles all Jira API interactions
  */
 
-import { post } from 'axios';
-import FormData from 'form-data';
-import { existsSync, createReadStream } from 'fs';
-import { join, basename } from 'path';
+const axios = require('axios');
+const FormData = require('form-data');
+const fs = require('fs');
+const path = require('path');
 
 class JiraService {
   constructor(config) {
@@ -84,7 +84,7 @@ class JiraService {
     try {
       // Create issue
       const url = `${this.baseUrl.replace(/\/$/, '')}/rest/api/3/issue`;
-      const response = await post(url, payload, {
+      const response = await axios.post(url, payload, {
         headers: {
           Authorization: this.getAuthHeader(),
           'Content-Type': 'application/json',
@@ -117,12 +117,12 @@ class JiraService {
   async uploadAttachments(jiraKey, images) {
     for (const imagePath of images) {
       try {
-        const fullPath = join(this.uploadsDir, basename(imagePath));
-        if (existsSync(fullPath)) {
+        const fullPath = path.join(this.uploadsDir, path.basename(imagePath));
+        if (fs.existsSync(fullPath)) {
           const form = new FormData();
-          form.append('file', createReadStream(fullPath));
+          form.append('file', fs.createReadStream(fullPath));
 
-          await post(
+          await axios.post(
             `${this.baseUrl.replace(/\/$/, '')}/rest/api/3/issue/${jiraKey}/attachments`,
             form,
             {
@@ -183,4 +183,4 @@ class JiraService {
   }
 }
 
-export default { JiraService };
+module.exports = { JiraService };

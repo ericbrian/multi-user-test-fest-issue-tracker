@@ -3,7 +3,7 @@
  * Protects API endpoints from abuse and DoS attacks
  */
 
-import rateLimit from 'express-rate-limit';
+const rateLimit = require('express-rate-limit');
 
 /**
  * General API rate limiter
@@ -64,7 +64,7 @@ const uploadLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-export default {
+module.exports = {
   apiLimiter,
   authLimiter,
   issueCreationLimiter,
