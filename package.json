@@ -28,7 +28,7 @@
   "homepage": "https://github.com/ericbrian/multi-user-test-fest-issue-tracker#readme",
   "dependencies": {
     "@prisma/client": "^6.13.0",
-    "axios": "^1.11.0",
+    "axios": "^1.12.0",
     "connect-pg-simple": "^10.0.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.1",
