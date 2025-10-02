@@ -21,6 +21,7 @@ function registerRoutes(app, deps) {
   } = deps;
 
   const { requireAuth } = require('./middleware');
+  const { authLimiter, issueCreationLimiter, uploadLimiter } = require('./rateLimiter').default;
 
   // Sanitization helper to prevent XSS attacks
   function sanitizeHtml(str) {
@@ -29,9 +30,9 @@ function registerRoutes(app, deps) {
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
+      .replace(/\"/g, '&quot;')
       .replace(/'/g, '&#x27;')
-      .replace(/\//g, '&#x2F;');
+      .replace(/\\//g, '&#x2F;');
   }
 
   // Health endpoint for container orchestration
@@ -39,21 +40,21 @@ function registerRoutes(app, deps) {
     res.status(200).json({ status: 'ok' });
   });
 
-  // Auth routes
-  app.get('/auth/login', async (req, res, next) => {
+  // Auth routes (with rate limiting)
+  app.get('/auth/login', authLimiter, async (req, res, next) => {
     if (DISABLE_SSO) return res.redirect('/');
     if (!passport || !passport._strategies || !passport._strategies['oidc']) return res.status(500).send('OIDC not configured');
     passport.authenticate('oidc')(req, res, next);
   });
 
-  app.get('/auth/callback', (req, res, next) => {
+  app.get('/auth/callback', authLimiter, (req, res, next) => {
     passport.authenticate('oidc', {
       successRedirect: '/',
       failureRedirect: '/?login=failed',
     })(req, res, next);
   });
 
-  app.post('/auth/logout', (req, res) => {
+  app.post('/auth/logout', authLimiter, (req, res) => {
     req.logout(() => {
       req.session.destroy(() => {
         res.clearCookie('connect.sid');
@@ -254,8 +255,8 @@ function registerRoutes(app, deps) {
     }
   });
 
-  // Issues create with uploads
-  app.post('/api/rooms/:roomId/issues', requireAuth, upload.array('images', 5), async (req, res) => {
+  // Issues create with uploads (with rate limiting)
+  app.post('/api/rooms/:roomId/issues', requireAuth, issueCreationLimiter, uploadLimiter, upload.array('images', 5), async (req, res) => {
     try {
       const { roomId } = req.params;
       const prisma = getPrisma();

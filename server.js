@@ -13,42 +13,30 @@ const passport = require('passport');
 const { Issuer, Strategy } = require('openid-client');
 const { registerRoutes } = require('./src/routes');
 const { getPrisma } = require('./src/prismaClient');
-require('dotenv').config();
+const { validateConfig } = require('./src/config');
 
-// Environment
-const PORT = process.env.PORT || 3000;
-const SESSION_SECRET = process.env.SESSION_SECRET || 'change_me_session_secret';
-const DATABASE_URL = process.env.DATABASE_URL;
-const SCHEMA = ((process.env.DB_SCHEMA || 'testfest').replace(/[^a-zA-Z0-9_]/g, '')) || 'testfest';
-
-// Validate SESSION_SECRET
-if (!SESSION_SECRET || SESSION_SECRET === 'change_me_session_secret') {
-  console.error('FATAL: SESSION_SECRET must be set to a secure random value in .env');
-  console.error('Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))";');
-  process.exit(1);
-}
-const DISABLE_SSO = process.env.DISABLE_SSO === 'true';
-const DEV_USER_EMAIL = process.env.DEV_USER_EMAIL || 'dev@example.com';
-const DEV_USER_NAME = process.env.DEV_USER_NAME || 'Dev User';
-const ENTRA_ISSUER = process.env.ENTRA_ISSUER; // e.g. https://login.microsoftonline.com/<tenant-id>/v2.0
-const ENTRA_CLIENT_ID = process.env.ENTRA_CLIENT_ID;
-const ENTRA_CLIENT_SECRET = process.env.ENTRA_CLIENT_SECRET;
-const ENTRA_REDIRECT_URI = process.env.ENTRA_REDIRECT_URI || 'http://localhost:3000/auth/callback';
-const GROUPIER_EMAILS = (process.env.GROUPIER_EMAILS || '').split(',').map((s) => s.trim()).filter(Boolean);
-const TAGS = (process.env.TAGS || 'duplicate,as-designed,low-priority').split(',').map((s) => s.trim());
-
-// Jira config
-const JIRA_BASE_URL = process.env.JIRA_BASE_URL; // e.g. https://your-domain.atlassian.net
-const JIRA_EMAIL = process.env.JIRA_EMAIL; // account email
-const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN; // API token
-const JIRA_PROJECT_KEY = process.env.JIRA_PROJECT_KEY; // e.g. TEST
-const JIRA_ISSUE_TYPE = process.env.JIRA_ISSUE_TYPE || 'Bug';
-
-// Basic checks
-if (!DATABASE_URL) {
-  console.error('DATABASE_URL is required in .env');
-  process.exit(1);
-}
+// Validate and load configuration
+const config = validateConfig();
+const {
+  PORT,
+  SESSION_SECRET,
+  DATABASE_URL,
+  SCHEMA,
+  DISABLE_SSO,
+  DEV_USER_EMAIL,
+  DEV_USER_NAME,
+  ENTRA_ISSUER,
+  ENTRA_CLIENT_ID,
+  ENTRA_CLIENT_SECRET,
+  ENTRA_REDIRECT_URI,
+  GROUPIER_EMAILS,
+  TAGS,
+  JIRA_BASE_URL,
+  JIRA_EMAIL,
+  JIRA_API_TOKEN,
+  JIRA_PROJECT_KEY,
+  JIRA_ISSUE_TYPE,
+} = config;
 
 // DB setup
 const { Pool } = pg;
@@ -59,17 +47,10 @@ pool.on('error', (err, client) => {
   console.error('Unexpected error on idle database client:', err);
 });
 
-// Whitelist of allowed schema names for security
-const ALLOWED_SCHEMAS = ['testfest', 'public'];
-if (!ALLOWED_SCHEMAS.includes(SCHEMA)) {
-  console.error(`FATAL: Invalid schema name "${SCHEMA}". Allowed schemas: ${ALLOWED_SCHEMAS.join(', ')}`);
-  process.exit(1);
-}
-
 // Ensure all new connections default to testfest schema and log connection
 pool.on('connect', (client) => {
   console.log('Database connected successfully');
-  // Using identifier sanitization - schema name is validated against allow list above
+  // Using identifier sanitization - schema name is validated in config.js
   client.query(`SET search_path TO "${SCHEMA}", public`);
 });
 
@@ -99,12 +80,18 @@ const io = require('socket.io')(server, {
   cors: { origin: false },
 });
 
+// Rate limiting
+const { apiLimiter } = require('./src/rateLimiter').default;
+
 app.use(morgan('dev'));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(uploadsDir));
 app.use('/static', express.static(path.join(__dirname, 'public')));
+
+// Apply rate limiting to API routes
+app.use('/api/', apiLimiter);
 
 // Routes are now in src/routes.js
 
