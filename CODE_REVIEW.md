@@ -85,16 +85,19 @@ Overall, the codebase is well-structured for a small-to-medium sized application
 
 ## 7. Summary of Action Items
 
-1.  **High Priority**:
-    -   Add `helmet` for security headers.
-    -   Replace manual `sanitizeHtml` with a library.
-    -   Refactor `src/routes.js` into smaller modules.
+1. **High Priority**
 
-2.  **Medium Priority**:
-    -   Refactor `public/app.js` into ES modules.
-    -   Update `Dockerfile` to run as a non-root user.
-    -   Consolidate database connection logic if possible, or tune pool sizes.
+    - Add `helmet` for security headers.
+    - Replace manual `sanitizeHtml` with a library.
+    - Refactor `src/routes.js` into smaller modules.
 
-3.  **Low Priority**:
-    -   Remove `db/schema.sql` if it's redundant to Prisma.
-    -   Implement a more robust state management solution for the frontend.
+2. **Medium Priority**
+
+    - Refactor `public/app.js` into ES modules.
+    - Update `Dockerfile` to run as a non-root user.
+    - Consolidate database connection logic if possible, or tune pool sizes.
+
+3. **Low Priority**
+
+    - Remove `db/schema.sql` if it's redundant to Prisma.
+    - Implement a more robust state management solution for the frontend.
