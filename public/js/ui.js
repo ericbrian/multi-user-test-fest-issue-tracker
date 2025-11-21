@@ -171,17 +171,28 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
   if (!container) {
     container = document.createElement('div');
     container.id = 'testScriptLinesContainer';
-    container.className = 'test-script-lines left-section';
+    container.className = 'test-script-lines';
 
-    const issueFormSection = document.querySelector('.left-section');
-    if (issueFormSection && issueFormSection.nextSibling) {
-      issueFormSection.parentNode.insertBefore(container, issueFormSection.nextSibling);
-    } else if (issueFormSection) {
-      issueFormSection.parentNode.appendChild(container);
+    // Try to insert the test script container just above the description
+    // label inside the issue form so it appears directly before the
+    // issue description field.
+    const issueForm = document.getElementById('issueForm');
+    if (issueForm) {
+      const descLabel = issueForm.querySelector('label[for="description"]');
+      if (descLabel && descLabel.parentNode) {
+        descLabel.parentNode.insertBefore(container, descLabel);
+      } else {
+        // If label not found, append to the top of the form
+        issueForm.insertBefore(container, issueForm.firstChild);
+      }
     } else {
-      const leftPanel = document.querySelector('.left');
-      if (leftPanel) {
-        leftPanel.appendChild(container);
+      // Fallbacks: try the left topbar first, then the left panel
+      const leftTopbar = document.querySelector('.left .topbar');
+      if (leftTopbar) {
+        leftTopbar.appendChild(container);
+      } else {
+        const leftPanel = document.querySelector('.left');
+        if (leftPanel) leftPanel.appendChild(container);
       }
     }
   }
@@ -222,6 +233,15 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
     <div class="test-script-lines-title">Test Script</div>
     ${linesHtml}
   `;
+
+  // If a scriptId is already set (hidden input), mark that line as selected
+  const currentScriptId = (document.getElementById('scriptId') || {}).value || null;
+  if (currentScriptId) {
+    setTimeout(() => {
+      const selectedEl = container.querySelector(`.test-script-line[data-script-line-id="${currentScriptId}"]`);
+      if (selectedEl) selectedEl.classList.add('selected');
+    }, 0);
+  }
 
   container.querySelectorAll('.test-script-line').forEach(lineEl => {
     lineEl.addEventListener('click', onTestScriptLineClick);
@@ -285,7 +305,13 @@ function onTestScriptLineClick(e) {
   const scriptIdInput = document.getElementById('scriptId');
   if (scriptIdInput) {
     scriptIdInput.value = scriptLineId;
-    scriptIdInput.focus();
+  }
+
+  // Update visual selection state
+  const container = document.getElementById('testScriptLinesContainer');
+  if (container) {
+    container.querySelectorAll('.test-script-line.selected').forEach(el => el.classList.remove('selected'));
+    lineEl.classList.add('selected');
   }
 }
 
