@@ -344,7 +344,9 @@ body {
 }
 
 #issueForm .form-actions button[type="submit"]:hover {
-  box-shadow: 0 10px 22px rgba(22, 163, 74, 0.35);
+  /* Remove glow on hover for submit button to keep interaction subtle */
+  box-shadow: none;
+  transform: none;
 }
 
 label {
