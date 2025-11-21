@@ -7,97 +7,93 @@
 
 The application is a Node.js/Express web application designed for tracking issues during "Test Fests". It features real-time updates via Socket.io, authentication via OpenID Connect (Entra ID), and uses PostgreSQL with Prisma ORM for data persistence.
 
-Overall, the codebase is well-structured for a small-to-medium sized application. It demonstrates several best practices, such as centralized configuration validation, rate limiting, and containerization. However, there are areas for improvement regarding frontend architecture, security hardening, and code modularity.
+The codebase has undergone significant improvements following an initial review. Key areas such as security hardening, frontend architecture, and backend modularity have been addressed. The application now adheres to best practices in configuration validation, rate limiting, and container security.
 
 ## 2. Project Structure & Configuration
 
 ### 2.1 Strengths
 
-- **Configuration Validation**: `src/config.js` provides robust validation of environment variables, preventing the app from starting with invalid or insecure configurations.
-- **Dependencies**: The project uses standard, well-maintained libraries (`express`, `prisma`, `passport`, `socket.io`).
-- **Containerization**: A `Dockerfile` is present, facilitating consistent deployment.
+- **Configuration Validation**: `src/config.js` provides robust validation of environment variables.
+- **Dependencies**: The project uses standard, well-maintained libraries.
+- **Containerization**: The `Dockerfile` is configured securely, running the application as a non-root user (`USER node`).
+- **Modularity**: The backend routes have been refactored into modular files (`src/routes/`), improving maintainability.
 
 ### 2.2 Recommendations
 
-- **Dockerfile Security**: The current `Dockerfile` runs the application as the `root` user. It is recommended to switch to the `node` user provided by the image for better security.
-
-  ```dockerfile
-  # ... existing code ...
-  USER node
-  CMD ["node", "server.js"]
-  ```
-
-- **Scripts**: The `scripts` folder is a good place for utility scripts. Ensure `generate-session-secret.sh` is executable and documented.
+- **Scripts**: Ensure all utility scripts in the `scripts` folder are executable and documented.
 
 ## 3. Backend Architecture
 
 ### 3.1 Strengths
 
-- **Rate Limiting**: `src/rateLimiter.js` implements granular rate limiting for API, Auth, and Issue Creation endpoints, protecting against abuse.
-- **Middleware**: Authentication middleware is centralized in `src/middleware.js`.
+- **Rate Limiting**: Granular rate limiting is implemented for API, Auth, and Issue Creation endpoints.
+- **Middleware**: Authentication middleware is centralized.
+- **Security Headers**: `helmet` middleware is now integrated to set secure HTTP headers.
+- **Input Sanitization**: The `xss` library is used for robust input sanitization, replacing the previous manual implementation.
 
 ### 3.2 Recommendations
 
-- **Route Modularity**: `src/routes.js` is becoming a monolithic file (~700 lines). Consider splitting it into separate router files (e.g., `routes/auth.js`, `routes/issues.js`, `routes/rooms.js`) and mounting them in `server.js`.
-- **Input Sanitization**: The `sanitizeHtml` function in `src/routes.js` is a manual implementation. Manual sanitization is error-prone.
-  - **Action**: Replace with a dedicated library like `xss` or `dompurify` (via `jsdom`) to ensure comprehensive protection against XSS.
-- **Security Headers**: The application lacks `helmet` middleware.
-  - **Action**: Install and use `helmet` to set secure HTTP headers (HSTS, X-Frame-Options, etc.).
+- **CSRF Protection**: While `SameSite` cookies provide some protection, consider adding explicit CSRF tokens (e.g., using `csurf`) for state-changing requests to further harden security.
 
 ## 4. Database
 
 ### 4.1 Strengths
 
-- **Prisma ORM**: Using Prisma provides type safety and a clear schema definition (`prisma/schema.prisma`).
-- **Schema Isolation**: The application uses a dedicated `testfest` schema, keeping its tables separate from the `public` schema.
+- **Prisma ORM**: Prisma is used for type safety and schema definition.
+- **Schema Source of Truth**: `prisma/schema.prisma` is now the single source of truth, with the redundant `db/schema.sql` file removed.
+- **Connection Management**: The `pg` pool for session management is explicitly configured with a connection limit to prevent resource exhaustion.
 
 ### 4.2 Recommendations
 
-- **Schema Synchronization**: There is a `db/schema.sql` file alongside `prisma/schema.prisma`. This creates a risk of the two falling out of sync.
-  - **Action**: Treat `prisma/schema.prisma` as the single source of truth. If raw SQL is needed for specific migrations, use Prisma Migrate's customization features.
-- **Connection Management**: The application uses both `pg` (Pool) directly in `server.js` and `PrismaClient` in `src/prismaClient.js`. While `pg` is likely used for `connect-pg-simple`, ensure that connection pool limits are configured to avoid exhausting database connections, as two separate pools are being created.
+- **Monitoring**: Continue to monitor database connection usage in production to ensure the separate pools for Prisma and `express-session` do not conflict under high load.
 
 ## 5. Frontend
 
 ### 5.1 Strengths
 
-- **Simplicity**: The vanilla JavaScript approach (`public/app.js`) avoids the build complexity of modern frameworks.
+- **Modular Architecture**: The monolithic `app.js` has been refactored into ES modules (`api.js`, `ui.js`, `socket.js`, `main.js`, `state.js`), significantly improving maintainability.
+- **State Management**: A centralized `Store` class (in `state.js`) now manages application state with a subscription model, replacing fragile global variables.
 - **Real-time**: Effective use of Socket.io for live updates.
 
 ### 5.2 Recommendations
 
-- **Maintainability**: `public/app.js` is nearly 1000 lines long. As the application grows, this will become difficult to maintain.
-  - **Action**: Refactor `app.js` into smaller ES modules (e.g., `api.js`, `ui.js`, `socket.js`). Since this is a browser-based app without a bundler, you can use native ES modules (`<script type="module">`).
-- **State Management**: State is managed via global variables (`me`, `currentRoomId`, etc.). This is fragile. Encapsulating state in a store object or class would be cleaner.
+- **Testing**: With the logic now separated into modules, adding unit tests for the frontend logic (especially `state.js` and `api.js`) would be beneficial.
 
 ## 6. Security
 
 ### 6.1 Strengths
 
-- **Session Security**: `SESSION_SECRET` is validated to ensure it's not the default value.
+- **Session Security**: `SESSION_SECRET` is validated.
 - **Authentication**: Uses standard OIDC for authentication.
+- **Container Security**: The application runs as a non-root user in the container.
 
 ### 6.2 Recommendations
 
-- **Dev Mode Risk**: The `DISABLE_SSO` flag and `createDevAutoAuthMiddleware` allow bypassing authentication.
-  - **Action**: Ensure this flag is strictly disabled in production environments. Consider adding a log warning when the server starts in this mode.
-- **CSRF Protection**: While `SameSite` cookies provide some protection, explicit CSRF tokens (e.g., using `csurf` or similar) are recommended for state-changing requests (POST/PUT/DELETE), especially since the app uses session-based auth.
+- **Dev Mode Risk**: Ensure the `DISABLE_SSO` flag is strictly disabled in production environments.
 
 ## 7. Summary of Action Items
 
-1. **High Priority**
+### Completed Items ✅
 
-    - Add `helmet` for security headers.
-    - Replace manual `sanitizeHtml` with a library.
-    - Refactor `src/routes.js` into smaller modules.
+- **High Priority**:
+  - [x] Add `helmet` for security headers.
+  - [x] Replace manual `sanitizeHtml` with `xss` library.
+  - [x] Refactor `src/routes.js` into smaller modules.
 
-2. **Medium Priority**
+- **Medium Priority**:
+  - [x] Refactor `public/app.js` into ES modules.
+  - [x] Update `Dockerfile` to run as a non-root user.
+  - [x] Configure database connection pool limits.
 
-    - Refactor `public/app.js` into ES modules.
-    - Update `Dockerfile` to run as a non-root user.
-    - Consolidate database connection logic if possible, or tune pool sizes.
+- **Low Priority**:
+  - [x] Remove redundant `db/schema.sql`.
+  - [x] Implement robust state management (`Store` class) for the frontend.
 
-3. **Low Priority**
+### Remaining Recommendations
+
+1. **Security**: Implement explicit CSRF token protection.
+2. **Testing**: Add unit tests for the new frontend modules.
+3. **Ops**: Ensure `DISABLE_SSO` is disabled in production.
 
     - Remove `db/schema.sql` if it's redundant to Prisma.
     - Implement a more robust state management solution for the frontend.
