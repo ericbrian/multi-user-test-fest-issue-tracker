@@ -1,12 +1,15 @@
+const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
-const { getPrisma } = require('./prismaClient');
+const xss = require('xss');
+const { getPrisma } = require('../prismaClient');
+const { requireAuth } = require('../middleware');
+const { issueCreationLimiter, uploadLimiter } = require('../rateLimiter');
 
-function registerRoutes(app, deps) {
+function registerIssueRoutes(router, deps) {
   const {
-    pool,
     io,
     upload,
     uploadsDir,
@@ -16,222 +19,9 @@ function registerRoutes(app, deps) {
     JIRA_API_TOKEN,
     JIRA_PROJECT_KEY,
     JIRA_ISSUE_TYPE,
-    DISABLE_SSO,
-    passport,
   } = deps;
 
-  const { requireAuth } = require('./middleware');
-  const { authLimiter, issueCreationLimiter, uploadLimiter } = require('./rateLimiter');
-
-  // Sanitization helper to prevent XSS attacks
-  function sanitizeHtml(str) {
-    if (!str || typeof str !== 'string') return str;
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\"/g, '&quot;')
-      .replace(/'/g, '&#x27;')
-      .replace(/\\//g, '&#x2F;');
-  }
-
-  // Health endpoint for container orchestration
-  app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok' });
-  });
-
-  // Auth routes (with rate limiting)
-  app.get('/auth/login', authLimiter, async (req, res, next) => {
-    if (DISABLE_SSO) return res.redirect('/');
-    if (!passport || !passport._strategies || !passport._strategies['oidc']) return res.status(500).send('OIDC not configured');
-    passport.authenticate('oidc')(req, res, next);
-  });
-
-  app.get('/auth/callback', authLimiter, (req, res, next) => {
-    passport.authenticate('oidc', {
-      successRedirect: '/',
-      failureRedirect: '/?login=failed',
-    })(req, res, next);
-  });
-
-  app.post('/auth/logout', authLimiter, (req, res) => {
-    req.logout(() => {
-      req.session.destroy(() => {
-        res.clearCookie('connect.sid');
-        res.status(200).json({ ok: true });
-      });
-    });
-  });
-
-  app.get('/me', (req, res) => {
-    res.json({
-      user: req.user || null,
-      tags: TAGS,
-      jiraBaseUrl: JIRA_BASE_URL ? JIRA_BASE_URL.replace(/\/$/, '') : null,
-    });
-  });
-
-  // HTML entry
-  app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
-  });
-
-  // Room-specific URLs
-  app.get('/fest/:roomId', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
-  });
-
-  // Script Library
-  app.get('/api/script-library', requireAuth, async (req, res) => {
-    try {
-      const prisma = getPrisma();
-      const scripts = await prisma.scriptLibrary.findMany({
-        where: { is_active: true },
-        orderBy: { name: 'asc' },
-        include: {
-          _count: { select: { lines: true } }
-        }
-      });
-      const result = scripts.map((s) => ({
-        ...s,
-        line_count: s._count?.lines || 0
-      }));
-      res.json(result);
-    } catch (error) {
-      console.error('Error fetching script library:', error);
-      res.status(500).json({ error: 'Failed to fetch script library' });
-    }
-  });
-
-  // Rooms
-  app.get('/api/rooms', requireAuth, async (req, res) => {
-    try {
-      const prisma = getPrisma();
-      const rooms = await prisma.room.findMany({
-        orderBy: { created_at: 'desc' },
-        include: { _count: { select: { members: true } } },
-      });
-      const result = rooms.map((r) => ({ ...r, member_count: String(r._count?.members || 0) }));
-      res.json(result);
-    } catch (error) {
-      console.error('Error fetching rooms:', error);
-      res.status(500).json({ error: 'Failed to fetch rooms' });
-    }
-  });
-
-  app.post('/api/rooms', requireAuth, async (req, res) => {
-    try {
-      const prisma = getPrisma();
-      // Sanitize inputs to prevent XSS
-      const rawName = (req.body.name || '').trim();
-      const name = sanitizeHtml(rawName) || `Room ${new Date().toLocaleString()}`;
-      const description = req.body.description ? sanitizeHtml(req.body.description.trim()) : null;
-      const selectedScriptId = req.body.scriptId || null;
-
-      const roomId = uuidv4();
-      const userId = req.user.id;
-
-      // Create the room
-      await prisma.room.create({ data: { id: roomId, name, created_by: userId } });
-
-      // Create test script based on selection
-      const testScriptId = uuidv4();
-      if (selectedScriptId) {
-        // User selected a script from the library
-        const libraryScript = await prisma.scriptLibrary.findUnique({
-          where: { id: selectedScriptId },
-          include: { lines: { orderBy: { line_number: 'asc' } } }
-        });
-
-        if (libraryScript) {
-          // Create test script with library script name and description
-          await prisma.testScript.create({
-            data: {
-              id: testScriptId,
-              room_id: roomId,
-              script_id: 1,
-              name: libraryScript.name,
-              description: libraryScript.description,
-            }
-          });
-
-          // Copy lines from library script to test script
-          for (const libraryLine of libraryScript.lines) {
-            await prisma.testScriptLine.create({
-              data: {
-                id: uuidv4(),
-                test_script_id: testScriptId,
-                test_script_line_id: libraryLine.line_number,
-                name: libraryLine.name,
-                description: libraryLine.description,
-                notes: libraryLine.notes,
-              }
-            });
-          }
-        } else {
-          // Fallback: create empty script if library script not found
-          await prisma.testScript.create({
-            data: {
-              id: testScriptId,
-              room_id: roomId,
-              script_id: 1,
-              name: name,
-              description: description,
-            }
-          });
-        }
-      } else {
-        // No script selected, create empty test script
-        await prisma.testScript.create({
-          data: {
-            id: testScriptId,
-            room_id: roomId,
-            script_id: 1,
-            name: name,
-            description: description,
-          }
-        });
-      }
-
-      // Room creator is always a groupier (they just created this room)
-      const isGroupier = true;
-      // creator joins as member
-      await prisma.roomMember.create({ data: { room_id: roomId, user_id: userId, is_groupier: isGroupier } }).catch((err) => {
-        console.error('Failed to add room creator as member (may already exist):', err.message);
-      });
-
-      res.json({ id: roomId, name, created_by: userId });
-    } catch (error) {
-      console.error('Error creating room:', error);
-      res.status(500).json({ error: 'Failed to create room' });
-    }
-  });
-
-  app.post('/api/rooms/:roomId/join', requireAuth, async (req, res) => {
-    try {
-      const { roomId } = req.params;
-      const prisma = getPrisma();
-
-      // Check if this user created the room
-      const room = await prisma.room.findUnique({ where: { id: roomId } });
-      const isRoomCreator = room && room.created_by === req.user.id;
-
-      const GROUPIER_EMAILS = (process.env.GROUPIER_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-      const isGroupier = GROUPIER_EMAILS.includes((req.user.email || '').toLowerCase()) || isRoomCreator;
-
-      await prisma.roomMember.upsert({
-        where: { room_id_user_id: { room_id: roomId, user_id: req.user.id } },
-        update: { is_groupier: isGroupier },
-        create: { room_id: roomId, user_id: req.user.id, is_groupier: isGroupier },
-      });
-      res.json({ ok: true, isGroupier });
-    } catch (error) {
-      console.error('Error joining room:', error);
-      res.status(500).json({ error: 'Failed to join room' });
-    }
-  });
-
-  app.get('/api/rooms/:roomId/issues', requireAuth, async (req, res) => {
+  router.get('/api/rooms/:roomId/issues', requireAuth, async (req, res) => {
     try {
       const { roomId } = req.params;
       const prisma = getPrisma();
@@ -256,14 +46,14 @@ function registerRoutes(app, deps) {
   });
 
   // Issues create with uploads (with rate limiting)
-  app.post('/api/rooms/:roomId/issues', requireAuth, issueCreationLimiter, uploadLimiter, upload.array('images', 5), async (req, res) => {
+  router.post('/api/rooms/:roomId/issues', requireAuth, issueCreationLimiter, uploadLimiter, upload.array('images', 5), async (req, res) => {
     try {
       const { roomId } = req.params;
       const prisma = getPrisma();
       const { scriptId } = req.body;
-      
-      // Sanitize description to prevent XSS
-      const description = req.body.description ? sanitizeHtml(String(req.body.description).trim()) : '';
+
+      // Sanitize description to prevent XSS using xss library
+      const description = req.body.description ? xss(String(req.body.description).trim()) : '';
 
       if (!scriptId || !/^\d+$/.test(String(scriptId))) {
         return res.status(400).json({ error: 'Script ID is required and must be numeric' });
@@ -340,7 +130,7 @@ function registerRoutes(app, deps) {
   });
 
   // Update issue status (Groupier only)
-  app.post('/api/issues/:id/status', requireAuth, async (req, res) => {
+  router.post('/api/issues/:id/status', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { status: requestedStatus, roomId } = req.body;
@@ -375,7 +165,7 @@ function registerRoutes(app, deps) {
   });
 
   // Send to Jira (Groupier only)
-  app.post('/api/issues/:id/jira', requireAuth, async (req, res) => {
+  router.post('/api/issues/:id/jira', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { roomId } = req.body;
@@ -512,7 +302,7 @@ function registerRoutes(app, deps) {
   });
 
   // Delete issue (creator or Groupier)
-  app.delete('/api/issues/:id', requireAuth, async (req, res) => {
+  router.delete('/api/issues/:id', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const prisma = getPrisma();
@@ -550,148 +340,6 @@ function registerRoutes(app, deps) {
       res.status(500).json({ error: 'Failed to delete issue' });
     }
   });
-
-  // Test Script Lines
-  app.get('/api/rooms/:roomId/test-script-lines', requireAuth, async (req, res) => {
-    try {
-      const { roomId } = req.params;
-      const prisma = getPrisma();
-      const userId = req.user.id;
-
-      const testScriptLines = await prisma.testScriptLine.findMany({
-        where: {
-          testScript: {
-            room_id: roomId
-          }
-        },
-        include: {
-          testScript: true,
-          progress: {
-            where: {
-              user_id: userId
-            }
-          }
-        },
-        orderBy: [
-          { testScript: { script_id: 'asc' } },
-          { test_script_line_id: 'asc' }
-        ]
-      });
-
-      const result = testScriptLines.map(line => ({
-        ...line,
-        is_checked: line.progress.length > 0 ? line.progress[0].is_checked : false,
-        checked_at: line.progress.length > 0 ? line.progress[0].checked_at : null,
-        progress_notes: line.progress.length > 0 ? line.progress[0].notes : null
-      }));
-
-      res.json(result);
-    } catch (error) {
-      console.error('Error fetching test script lines:', error);
-      res.status(500).json({ error: 'Failed to fetch test script lines' });
-    }
-  });
-
-  app.post('/api/test-script-lines/:lineId/progress', requireAuth, async (req, res) => {
-    try {
-      const { lineId } = req.params;
-      const { is_checked, notes } = req.body;
-      const prisma = getPrisma();
-      const userId = req.user.id;
-
-      // First, verify the test script line exists and get the room_id
-      const testScriptLine = await prisma.testScriptLine.findUnique({
-        where: { id: lineId },
-        include: { testScript: true }
-      });
-
-      if (!testScriptLine) {
-        return res.status(404).json({ error: 'Test script line not found' });
-      }
-
-      // Verify user is a member of the room
-      const membership = await prisma.roomMember.findUnique({
-        where: {
-          room_id_user_id: {
-            room_id: testScriptLine.testScript.room_id,
-            user_id: userId
-          }
-        }
-      });
-
-      if (!membership) {
-        return res.status(403).json({ error: 'You must be a member of this room to update test progress' });
-      }
-
-      const progressData = {
-        is_checked: Boolean(is_checked),
-        checked_at: is_checked ? new Date() : null,
-        notes: notes || null,
-        updated_at: new Date()
-      };
-
-      const existingProgress = await prisma.testScriptLineProgress.findUnique({
-        where: {
-          user_id_test_script_line_id: {
-            user_id: userId,
-            test_script_line_id: lineId
-          }
-        }
-      });
-
-      let progress;
-      if (existingProgress) {
-        progress = await prisma.testScriptLineProgress.update({
-          where: {
-            user_id_test_script_line_id: {
-              user_id: userId,
-              test_script_line_id: lineId
-            }
-          },
-          data: progressData
-        });
-      } else {
-        progress = await prisma.testScriptLineProgress.create({
-          data: {
-            id: uuidv4(),
-            user_id: userId,
-            test_script_line_id: lineId,
-            ...progressData
-          }
-        });
-      }
-
-      // Emit socket notification (testScriptLine already fetched above for auth check)
-      io.to(testScriptLine.testScript.room_id).emit('testScriptLine:progress', {
-        lineId,
-        userId,
-        is_checked: progress.is_checked,
-        checked_at: progress.checked_at,
-        notes: progress.notes
-      });
-
-      res.json(progress);
-    } catch (error) {
-      console.error('Error updating test script line progress:', error);
-      res.status(500).json({ error: 'Failed to update progress' });
-    }
-  });
-
-  // Global error handling middleware
-  app.use((error, req, res, next) => {
-    console.error('Unhandled error:', error);
-
-    // Don't leak internal error details to clients in production
-    if (process.env.NODE_ENV === 'production') {
-      res.status(500).json({ error: 'Internal server error' });
-    } else {
-      res.status(500).json({
-        error: 'Internal server error',
-        details: error.message,
-        stack: error.stack
-      });
-    }
-  });
 }
 
-module.exports = { registerRoutes };
+module.exports = registerIssueRoutes;

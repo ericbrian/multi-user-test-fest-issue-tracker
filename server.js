@@ -10,6 +10,7 @@ const multer = require('multer');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const passport = require('passport');
+const helmet = require('helmet');
 const { Issuer, Strategy } = require('openid-client');
 const { registerRoutes } = require('./src/routes');
 const { getPrisma } = require('./src/prismaClient');
@@ -81,8 +82,11 @@ const io = require('socket.io')(server, {
 });
 
 // Rate limiting
-const { apiLimiter } = require('./src/rateLimiter').default;
+const { apiLimiter } = require('./src/rateLimiter');
 
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for now to avoid breaking inline scripts/styles if any
+}));
 app.use(morgan('dev'));
 app.use(cookieParser());
 app.use(express.json());
@@ -276,7 +280,7 @@ process.on('SIGINT', async () => {
   } catch (e) {
     console.error('OIDC setup error:', e);
   }
-  
+
   // Handle server startup errors
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
