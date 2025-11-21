@@ -44,6 +44,18 @@ export function updateVisibility() {
     elements.testProgress.classList.toggle("hidden", !shouldShow);
   }
 
+  // Show a friendly placeholder in panels when user is not logged in
+  document.querySelectorAll('.auth-placeholder').forEach((el) => {
+    el.classList.toggle('hidden', isLoggedIn);
+  });
+
+  // Hide main layout and show centered auth box when not logged in
+  const layoutEl = document.querySelector('.layout');
+  if (layoutEl) layoutEl.style.display = isLoggedIn ? 'flex' : 'none';
+
+  const authCenter = document.getElementById('authCenter');
+  if (authCenter) authCenter.classList.toggle('hidden', isLoggedIn);
+
   document.querySelectorAll(".left-section").forEach((el) => {
     el.classList.toggle("hidden", !shouldShow);
   });

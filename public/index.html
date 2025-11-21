@@ -40,10 +40,19 @@
       </button>
     </div>
   </div>
+  <!-- Centered auth box shown when the user is not logged in -->
+  <div id="authCenter" class="auth-center hidden" aria-hidden="true">
+    <div class="auth-card">
+      <div class="auth-card-title">Welcome to Test Fest Issue Tracker</div>
+      <div class="auth-card-desc">Sign in to join a Test Fest, report issues, and view team issues.</div>
+      <div class="auth-card-actions">
+        <button id="loginCenterBtn" onclick="window.location.href='/auth/login'">Log in</button>
+      </div>
+    </div>
+  </div>
   <div class="layout">
     <div class="left">
       <div class="topbar"></div>
-
       <div class="left-section">
         <form id="issueForm" class="hidden" style="margin-top: 12px">
           <label for="scriptId">Test Script ID</label>
@@ -69,9 +78,29 @@
           </div>
         </form>
       </div>
+      <!-- Shown when user is not logged in to encourage login -->
+      <div id="leftAuthPlaceholder" class="left-section auth-placeholder">
+        <div class="auth-card">
+          <div class="auth-card-title">Sign in to report issues</div>
+          <div class="auth-card-desc">Log in to create issues, join rooms, and see test scripts.</div>
+          <div class="auth-card-actions">
+            <button id="loginBtnPlaceholder" onclick="window.location.href='/auth/login'">Log in</button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="right">
       <h2 class="section-title">All Issues Reported by Team</h2>
+      <!-- Placeholder shown when user is not logged in -->
+      <div id="rightAuthPlaceholder" class="auth-placeholder">
+        <div class="auth-card">
+          <div class="auth-card-title">Please sign in to view issues</div>
+          <div class="auth-card-desc">Issues are visible to authenticated participants. Log in to join a Test Fest.</div>
+          <div class="auth-card-actions">
+            <button id="loginBtnPlaceholderRight" onclick="window.location.href='/auth/login'">Log in</button>
+          </div>
+        </div>
+      </div>
       <div class="topbar">
         <div id="tagLegend" class="hidden"></div>
       </div>
