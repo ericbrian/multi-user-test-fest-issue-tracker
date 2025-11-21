@@ -1,25 +1,26 @@
-import { state } from './state.js';
+import { store } from './state.js';
 import * as ui from './ui.js';
 import * as api from './api.js';
 
 export function initSocket(roomId) {
-  if (state.socket) {
-    state.socket.disconnect();
+  if (store.state.socket) {
+    store.state.socket.disconnect();
   }
 
   // Assuming io is available globally via the script tag in index.html
   // If we were using a bundler, we would import it.
   // Since we are using native ES modules, we rely on the global `io` or we need to import it from a CDN or local file.
   // The original app.js assumed `io` was global.
-  state.socket = io();
+  const socket = io();
+  store.setState({ socket });
 
-  state.socket.emit("room:join", roomId);
+  store.state.socket.emit("room:join", roomId);
 
-  state.socket.on("issue:new", () => refreshIssues(roomId));
-  state.socket.on("issue:update", () => refreshIssues(roomId));
+  store.state.socket.on("issue:new", () => refreshIssues(roomId));
+  store.state.socket.on("issue:update", () => refreshIssues(roomId));
 
-  state.socket.on("testScriptLine:progress", (payload) => {
-    const line = state.testScriptLines.find(l => l.id === payload.lineId);
+  store.state.socket.on("testScriptLine:progress", (payload) => {
+    const line = store.state.testScriptLines.find(l => l.id === payload.lineId);
     if (line) {
       line.is_checked = payload.is_checked;
       line.checked_at = payload.checked_at;
@@ -28,7 +29,7 @@ export function initSocket(roomId) {
     }
   });
 
-  state.socket.on("issue:delete", (payload) => {
+  store.state.socket.on("issue:delete", (payload) => {
     if (payload && payload.id) {
       ui.removeIssueElement(payload.id);
     } else {
@@ -38,9 +39,9 @@ export function initSocket(roomId) {
 }
 
 export function disconnectSocket() {
-  if (state.socket) {
-    state.socket.disconnect();
-    state.socket = null;
+  if (store.state.socket) {
+    store.state.socket.disconnect();
+    store.setState({ socket: null });
   }
 }
 

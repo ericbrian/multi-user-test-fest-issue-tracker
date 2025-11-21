@@ -1,12 +1,17 @@
-import { state, setState, LS_KEY_LAST_ROOM } from './state.js';
+import { store, LS_KEY_LAST_ROOM } from './state.js';
 import * as api from './api.js';
 import * as ui from './ui.js';
 import * as socket from './socket.js';
 
+// Subscribe to state changes to update UI visibility
+store.subscribe(() => {
+  ui.updateVisibility();
+});
+
 // Initialize application
 (async function init() {
   const userData = await api.fetchMe();
-  if (state.me) {
+  if (store.state.me) {
     await loadRooms();
 
     // Check if there's a room ID in the URL
@@ -53,7 +58,7 @@ ui.elements.createRoomBtn.addEventListener("click", async () => {
 });
 
 ui.elements.changeRoomBtn.addEventListener("click", async () => {
-  setState({
+  store.setState({
     currentRoomId: null,
     currentRoomNameValue: null,
     isGroupier: false,
@@ -67,7 +72,7 @@ ui.elements.changeRoomBtn.addEventListener("click", async () => {
 
   socket.disconnectSocket();
   await loadRooms();
-  ui.updateVisibility();
+  // ui.updateVisibility() is called by subscription
 });
 
 ui.elements.roomSelect.addEventListener("change", async () => {
@@ -78,7 +83,7 @@ ui.elements.roomSelect.addEventListener("change", async () => {
 
 ui.elements.issueForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!state.currentRoomId) return alert("Select a room");
+  if (!store.state.currentRoomId) return alert("Select a room");
 
   const scriptVal = (document.getElementById("scriptId").value || "").trim();
   if (!/^\d+$/.test(scriptVal)) {
@@ -94,7 +99,7 @@ ui.elements.issueForm.addEventListener("submit", async (e) => {
 
   const formData = new FormData(ui.elements.issueForm);
   try {
-    await api.submitIssue(state.currentRoomId, formData);
+    await api.submitIssue(store.state.currentRoomId, formData);
     ui.elements.issueForm.reset();
   } catch (error) {
     alert(`Failed to submit: ${error.message}`);
@@ -103,10 +108,10 @@ ui.elements.issueForm.addEventListener("submit", async (e) => {
 
 // Handle browser back/forward navigation
 window.addEventListener('popstate', async (event) => {
-  if (!state.me) return;
+  if (!store.state.me) return;
 
   const urlRoomId = getRoomIdFromUrl();
-  if (urlRoomId && urlRoomId !== state.currentRoomId) {
+  if (urlRoomId && urlRoomId !== store.state.currentRoomId) {
     const roomOption = Array.from(ui.elements.roomSelect.options).find(opt => opt.value === urlRoomId);
     if (roomOption) {
       ui.elements.roomSelect.value = urlRoomId;
@@ -114,35 +119,35 @@ window.addEventListener('popstate', async (event) => {
     } else {
       clearRoomFromUrl();
     }
-  } else if (!urlRoomId && state.currentRoomId) {
-    setState({
+  } else if (!urlRoomId && store.state.currentRoomId) {
+    store.setState({
       currentRoomId: null,
       currentRoomNameValue: null,
       isGroupier: false,
     });
     socket.disconnectSocket();
     ui.elements.roomSelect.value = '';
-    ui.updateVisibility();
+    // ui.updateVisibility() is called by subscription
   }
 });
 
 // Helper Functions
 async function loadRooms() {
-  if (!state.me) return;
+  if (!store.state.me) return;
   const rooms = await api.fetchRooms();
   ui.populateRoomSelect(rooms);
-  setState({
+  store.setState({
     currentRoomId: null,
     currentRoomNameValue: null,
   });
-  ui.updateVisibility();
+  // ui.updateVisibility() is called by subscription
 }
 
 async function joinRoom(roomId) {
-  setState({ currentRoomId: roomId });
+  store.setState({ currentRoomId: roomId });
 
   const selectedOption = Array.from(ui.elements.roomSelect.options).find(opt => opt.value === roomId);
-  setState({ currentRoomNameValue: selectedOption ? selectedOption.textContent : "Unknown Room" });
+  store.setState({ currentRoomNameValue: selectedOption ? selectedOption.textContent : "Unknown Room" });
 
   const newUrl = `/fest/${roomId}`;
   if (window.location.pathname !== newUrl) {
@@ -164,16 +169,16 @@ async function joinRoom(roomId) {
 
     ui.renderIssues(issues);
 
-    setState({ testScriptLines });
+    store.setState({ testScriptLines });
     ui.renderTestScriptLines(true);
 
-    setState({ isGroupier: !!(joinData && joinData.isGroupier) });
+    store.setState({ isGroupier: !!(joinData && joinData.isGroupier) });
     ui.updateUserInfoDisplay();
   } catch (error) {
     console.error("Error joining room:", error);
   }
 
-  ui.updateVisibility();
+  // ui.updateVisibility() is called by subscription
 }
 
 function getRoomIdFromUrl() {

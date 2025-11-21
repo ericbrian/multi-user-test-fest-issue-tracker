@@ -1,4 +1,4 @@
-import { state } from './state.js';
+import { store } from './state.js';
 import * as api from './api.js';
 
 // DOM Elements
@@ -23,8 +23,8 @@ export const elements = {
 };
 
 export function updateVisibility() {
-  const isLoggedIn = Boolean(state.me);
-  const shouldShow = Boolean(state.currentRoomId);
+  const isLoggedIn = Boolean(store.state.me);
+  const shouldShow = Boolean(store.state.currentRoomId);
 
   if (elements.roomControls) elements.roomControls.style.display = isLoggedIn ? "block" : "none";
   if (elements.userInfoHeader) elements.userInfoHeader.style.display = isLoggedIn ? "inline-block" : "none";
@@ -57,25 +57,25 @@ export function updateVisibility() {
     elements.currentRoomName.style.display = shouldShow ? "inline-block" : "none";
     const roomNameText = elements.currentRoomName.querySelector('.room-name-text');
     if (roomNameText) {
-      roomNameText.textContent = state.currentRoomNameValue || "";
+      roomNameText.textContent = store.state.currentRoomNameValue || "";
     }
   }
 
-  if (elements.loginBtn) elements.loginBtn.style.display = state.me ? "none" : "inline-block";
-  if (elements.logoutBtn) elements.logoutBtn.style.display = state.me ? "inline-block" : "none";
+  if (elements.loginBtn) elements.loginBtn.style.display = store.state.me ? "none" : "inline-block";
+  if (elements.logoutBtn) elements.logoutBtn.style.display = store.state.me ? "inline-block" : "none";
 }
 
 export function updateUserInfoDisplay() {
   if (!elements.userInfoHeader) return;
 
-  if (!state.me) {
+  if (!store.state.me) {
     elements.userInfoHeader.textContent = "";
     return;
   }
 
-  const userName = state.me.name || state.me.email || "User";
+  const userName = store.state.me.name || store.state.me.email || "User";
 
-  if (state.isGroupier) {
+  if (store.state.isGroupier) {
     elements.userInfoHeader.innerHTML = `<span class="groupier-bubble">You are the Groupier</span> &nbsp; ${userName}`;
   } else {
     elements.userInfoHeader.textContent = userName;
@@ -84,7 +84,7 @@ export function updateUserInfoDisplay() {
 
 export function renderTags() {
   elements.tagLegend.innerHTML = "";
-  state.tags.forEach((t) => {
+  store.state.tags.forEach((t) => {
     const span = document.createElement("span");
     span.className = "tag";
     span.textContent = t;
@@ -112,10 +112,10 @@ export function updateTestProgress() {
   const progressText = elements.testProgress ? elements.testProgress.querySelector(".progress-text") : null;
   const progressFill = elements.testProgress ? elements.testProgress.querySelector(".progress-fill") : null;
 
-  if (!state.testScriptLines || !progressText || !progressFill) return;
+  if (!store.state.testScriptLines || !progressText || !progressFill) return;
 
-  const totalTests = state.testScriptLines.length;
-  const completedTests = state.testScriptLines.filter(line => line.is_checked).length;
+  const totalTests = store.state.testScriptLines.length;
+  const completedTests = store.state.testScriptLines.filter(line => line.is_checked).length;
   const percentage = totalTests > 0 ? (completedTests / totalTests) * 100 : 0;
 
   const testsWord = totalTests === 1 ? 'test' : 'tests';
@@ -143,7 +143,7 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
     }
   }
 
-  if (!state.testScriptLines || state.testScriptLines.length === 0) {
+  if (!store.state.testScriptLines || store.state.testScriptLines.length === 0) {
     container.innerHTML = `
       <div class="test-script-lines-title">Test Scripts</div>
       <div class="test-script-lines-empty">No test scripts available for this room.</div>
@@ -151,7 +151,7 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
     return;
   }
 
-  const linesHtml = state.testScriptLines.map(line => {
+  const linesHtml = store.state.testScriptLines.map(line => {
     const isChecked = line.is_checked;
     const checkedClass = isChecked ? 'checked' : '';
     const databaseNotesHtml = line.notes ?
@@ -195,7 +195,7 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
 }
 
 function scrollToFirstUncheckedLine(container) {
-  const hasCheckedItems = state.testScriptLines.some(line => line.is_checked);
+  const hasCheckedItems = store.state.testScriptLines.some(line => line.is_checked);
   if (hasCheckedItems) {
     const firstUncheckedLine = container.querySelector('.test-script-line:not(.checked)');
     if (firstUncheckedLine && container) {
@@ -260,7 +260,7 @@ async function onTestScriptLineCheckboxClick(e) {
     } else {
       lineEl.classList.remove('checked');
     }
-    const line = state.testScriptLines.find(l => l.id === lineId);
+    const line = store.state.testScriptLines.find(l => l.id === lineId);
     if (line) {
       line.is_checked = isChecked;
       line.checked_at = isChecked ? new Date().toISOString() : null;
@@ -286,7 +286,7 @@ export function renderIssues(list) {
 export function addOrUpdateIssue(issue, isInitial = false) {
   let el = document.getElementById(`issue-${issue.id}`);
   const isFaded = Boolean(issue.status) && issue.status !== "open";
-  const isMine = state.me && issue.created_by && issue.created_by === state.me.id;
+  const isMine = store.state.me && issue.created_by && issue.created_by === store.state.me.id;
 
   if (!el) {
     el = document.createElement("div");
@@ -331,7 +331,7 @@ export function addOrUpdateIssue(issue, isInitial = false) {
     <div class="dimmable" style="margin-top:6px;">${issue.description || ""}</div>
     ${reasonsHtml}
     <div class="images dimmable">${imgs}</div>
-    ${state.me ? renderActionBar(issue) : ""}
+    ${store.state.me ? renderActionBar(issue) : ""}
   `;
 
   el.querySelectorAll("button").forEach((btn) => {
@@ -364,7 +364,7 @@ function insertIssueInSortedOrder(issueElement, issue) {
 
 function renderActionBar(issue) {
   if (issue.jira_key) {
-    const base = (state.jiraBaseUrl || "").replace(/\/$/, "");
+    const base = (store.state.jiraBaseUrl || "").replace(/\/$/, "");
     const url = base && issue.jira_key ? `${base}/browse/${issue.jira_key}` : "#";
     return `
       <div class="issue-footer">
@@ -373,8 +373,8 @@ function renderActionBar(issue) {
     `;
   }
 
-  const isMine = state.me && issue.created_by && issue.created_by === state.me.id;
-  const canDelete = isMine || state.isGroupier;
+  const isMine = store.state.me && issue.created_by && issue.created_by === store.state.me.id;
+  const canDelete = isMine || store.state.isGroupier;
 
   return `
     <div class="issue-footer">
@@ -396,7 +396,7 @@ function renderTagButtonsInline(issue) {
 
   return `<div style=\"display:flex; gap:6px; align-items:center;\">
     <span style=\"color: var(--muted); font-size: 12px;\">Status:</span>
-    ${state.tags
+    ${store.state.tags
       .map(
         (t) =>
           `<button class=\"btn-tag\" data-action=\"setStatus\" data-tag=\"${t}\" data-id=\"${issue.id}\">${t}</button>`
@@ -413,14 +413,14 @@ async function onIssueButtonClick(e) {
   if (action === "setStatus") {
     const status = e.target.getAttribute("data-tag");
     try {
-      await api.updateIssueStatus(id, status, state.currentRoomId);
+      await api.updateIssueStatus(id, status, store.state.currentRoomId);
     } catch (error) {
       alert(error.message);
     }
   }
   if (action === "toJira") {
     try {
-      const data = await api.sendToJira(id, state.currentRoomId);
+      const data = await api.sendToJira(id, store.state.currentRoomId);
       alert("Created in Jira: " + data.jira_key);
     } catch (error) {
       alert("Failed to create Jira issue");
@@ -436,7 +436,7 @@ async function onIssueButtonClick(e) {
   }
   if (action === "clearStatus") {
     try {
-      await api.updateIssueStatus(id, "clear-status", state.currentRoomId);
+      await api.updateIssueStatus(id, "clear-status", store.state.currentRoomId);
     } catch (error) {
       console.error(error);
     }

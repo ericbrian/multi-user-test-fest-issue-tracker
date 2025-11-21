@@ -1,10 +1,10 @@
-import { state, setState } from './state.js';
+import { store } from './state.js';
 
 export async function fetchMe() {
   try {
     const res = await fetch("/me");
     const data = await res.json();
-    setState({
+    store.setState({
       me: data.user,
       tags: data.tags || [],
       jiraBaseUrl: data.jiraBaseUrl || null,
