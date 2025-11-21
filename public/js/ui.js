@@ -346,6 +346,25 @@ function onTestScriptLineClick(e) {
   }
   // Update visible badge with the chosen script ID
   updateSelectedScriptBadge(scriptLineId);
+
+  // Scroll the right-hand issues panel to the item matching this script ID
+  try {
+    const issuesContainer = elements.issuesEl || document.getElementById('issues');
+    if (issuesContainer) {
+      const target = issuesContainer.querySelector(`.issue[data-script-id="${scriptLineId}"]`);
+      if (target) {
+        // Smooth-scroll into view within the issues container
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Briefly highlight the target so the user sees the match
+        target.classList.add('scroll-highlight');
+        setTimeout(() => {
+          target.classList.remove('scroll-highlight');
+        }, 1400);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to scroll to matching issue:', err);
+  }
 }
 
 export function updateSelectedScriptBadge(scriptId) {
