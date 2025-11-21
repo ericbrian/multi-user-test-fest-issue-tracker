@@ -177,10 +177,12 @@ class JiraService {
    * @param {Array<string>} images - Array of image paths
    */
   async uploadAttachments(jiraKey, images) {
+    console.log(`Attempting to upload ${images.length} attachments for issue ${jiraKey}`);
     for (const imagePath of images) {
       try {
         const fullPath = path.join(this.uploadsDir, path.basename(imagePath));
         if (fs.existsSync(fullPath)) {
+          console.log(`Uploading attachment: ${fullPath}`);
           const form = new FormData();
           form.append('file', fs.createReadStream(fullPath));
 
@@ -193,12 +195,20 @@ class JiraService {
                 'X-Atlassian-Token': 'no-check',
                 ...form.getHeaders()
               },
-              timeout: 30000
+              maxBodyLength: Infinity,
+              maxContentLength: Infinity,
+              timeout: 60000
             }
           );
+          console.log(`Successfully uploaded: ${path.basename(imagePath)}`);
+        } else {
+          console.warn(`Attachment file not found: ${fullPath}`);
         }
       } catch (error) {
         console.error(`Failed to upload attachment ${imagePath}:`, error.message);
+        if (error.response) {
+          console.error('Jira upload error response:', error.response.data);
+        }
         // Don't throw, continue with other attachments
       }
     }
