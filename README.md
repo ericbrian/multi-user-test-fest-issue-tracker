@@ -3,6 +3,7 @@
 Real-time multi-user issue tracker for Test Fests. Left pane: submit issues. Right pane: live list of issues from everyone. Auth via Entra ID (SSO), data in Postgres, real-time via Socket.IO, optional Jira integration.
 
 ## Features
+
 - Real-time updates across all connected users in a room
 - Entra ID (Azure AD) OIDC login required to submit
 - Rooms: Created by a Groupier; members join and report issues
@@ -12,25 +13,30 @@ Real-time multi-user issue tracker for Test Fests. Left pane: submit issues. Rig
 - “Send to Jira” button (requires Jira config)
 
 ## Tech
+
 - Node.js, Express, Socket.IO
 - Postgres (schema auto-migrates on startup)
 - Passport + openid-client for Entra ID
 - Multer for uploads
 
 ## Setup
-1) Prerequisites (local dev)
+
+1. Prerequisites (local dev)
+
 ```
 - Node.js 20+
 - Postgres 13+ with psql CLI
 ```
 
-2) Install dependencies
-```
+2. Install dependencies
+
+```bash
 npm install
 ```
 
-3) Create `.env` from the template values below
-```
+3. Create `.env` from the template values below
+
+```text
 PORT=3000
 SESSION_SECRET=please_change_me
 
@@ -62,8 +68,9 @@ JIRA_PROJECT_KEY=
 JIRA_ISSUE_TYPE=Bug
 ```
 
-4) Provision local database (optional but recommended for first run)
-```
+4. Provision local database (optional but recommended for first run)
+
+```bash
 # create the database if it does not exist
 createdb test_fest_tracker || true
 
@@ -71,14 +78,16 @@ createdb test_fest_tracker || true
 psql "$DATABASE_URL" -f db/schema.sql
 ```
 
-5) Run in development mode (Nodemon)
-```
+5. Run in development mode (Nodemon)
+
+```bash
 npm run dev
 ```
 
 Open `http://localhost:3000`.
 
 ### Entra ID setup for development
+
 - Create an app registration in Azure Entra ID (Azure AD)
 - Add a Web redirect URI: `http://localhost:3000/auth/callback`
 - Configure client secret and set `ENTRA_CLIENT_SECRET`
@@ -88,28 +97,36 @@ Open `http://localhost:3000`.
 If you see “OIDC not configured” on login, ensure `ENTRA_ISSUER`, `ENTRA_CLIENT_ID`, and `ENTRA_CLIENT_SECRET` are set in `.env`.
 
 ## Database schema
+
 You can pre-provision the DB with the SQL file to use a dedicated schema `testfest` (instead of `public`):
-```
+
+```bash
 psql "$DATABASE_URL" -f db/schema.sql
 ```
+
 At runtime, the app will also create the schema/tables if they don’t exist, and sets `search_path` to `testfest,public`. You can override the schema via env var `DB_SCHEMA`.
 
 ## Notes
+
 - File uploads are stored under `uploads/` and served via `/uploads/<file>`
 - Session store is Postgres via `connect-pg-simple`
 - Schema is created on startup if missing
 
 ## Containerization (Docker)
+
 Build locally:
-```
+
+```bash
 docker build -t test-fest-tracker:local .
 docker run --env-file .env -p 3000:3000 test-fest-tracker:local
 ```
 
 ## Bitbucket Pipelines (AWS ECR)
+
 `bitbucket-pipelines.yml` builds the image and pushes to AWS ECR repository `testfest-repo` on branch `main`.
 
 Set these Bitbucket Repository Variables (Repository settings → Pipelines → Repository variables):
+
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_ACCOUNT_ID` (e.g., 123456789012)
