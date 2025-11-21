@@ -20,6 +20,7 @@ export const elements = {
   progressText: document.getElementById("testProgress") ? document.getElementById("testProgress").querySelector(".progress-text") : null,
   progressFill: document.getElementById("testProgress") ? document.getElementById("testProgress").querySelector(".progress-fill") : null,
   testScriptLinesContainer: document.getElementById('testScriptLinesContainer'),
+  imagesInput: document.getElementById('images'),
 };
 
 export function updateVisibility() {
@@ -479,7 +480,7 @@ export function addOrUpdateIssue(issue, isInitial = false) {
 
   const reasons = [];
   if (issue.is_issue) reasons.push("New Issue");
-  if (issue.is_existing_upper_env) reasons.push("Issue in Production");
+  if (issue.is_existing_upper_env) reasons.push("Issue already in Production");
   if (issue.is_annoyance) reasons.push("Annoyance");
   if (issue.is_not_sure_how_to_test) reasons.push("Not sure how to test");
 
@@ -749,3 +750,154 @@ if (elements.issueForm) {
     if (container) container.querySelectorAll('.test-script-line.selected').forEach(el => el.classList.remove('selected'));
   });
 }
+
+// ------------ Image drag & drop support ------------
+// Allows users to drag images onto the `#images` file input to add files.
+let _selectedFiles = [];
+
+function syncInputFiles() {
+  const input = elements.imagesInput || document.getElementById('images');
+  if (!input) return;
+  const dt = new DataTransfer();
+  _selectedFiles.forEach(f => dt.items.add(f));
+  input.files = dt.files;
+}
+
+function updateImagesPreview(fileList) {
+  const files = fileList || _selectedFiles || [];
+  let preview = document.getElementById('imagesPreview');
+  const imagesInput = elements.imagesInput || document.getElementById('images');
+  const dropzone = document.getElementById('imagesDropzone');
+  if (!preview) {
+    if (!imagesInput) return;
+    preview = document.createElement('div');
+    preview.id = 'imagesPreview';
+    preview.className = 'images-preview';
+    // Prefer to render previews inside the dropzone so they don't push
+    // other form content (like the submit button) further down.
+    if (dropzone) dropzone.appendChild(preview);
+    else if (imagesInput.parentNode) imagesInput.parentNode.insertBefore(preview, imagesInput.nextSibling);
+  }
+
+  // Clear existing previews
+  preview.innerHTML = '';
+  if (!files || files.length === 0) return;
+
+  files.forEach((file, idx) => {
+    const item = document.createElement('div');
+    item.className = 'images-preview-item';
+
+    if (file.type && file.type.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.className = 'images-preview-thumb';
+      img.src = URL.createObjectURL(file);
+      img.onload = () => URL.revokeObjectURL(img.src);
+      item.appendChild(img);
+    }
+
+    const name = document.createElement('div');
+    name.className = 'images-preview-name';
+    name.textContent = file.name;
+    item.appendChild(name);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'images-preview-remove';
+    removeBtn.setAttribute('aria-label', `Remove ${file.name}`);
+    removeBtn.textContent = 'Remove';
+    removeBtn.addEventListener('click', () => {
+      removeFileAtIndex(idx);
+    });
+    item.appendChild(removeBtn);
+
+    preview.appendChild(item);
+  });
+}
+
+function removeFileAtIndex(index) {
+  if (index < 0 || index >= _selectedFiles.length) return;
+  _selectedFiles.splice(index, 1);
+  syncInputFiles();
+  updateImagesPreview();
+}
+
+function enableImageDragDrop() {
+  const input = elements.imagesInput || document.getElementById('images');
+  const dropzone = document.getElementById('imagesDropzone');
+  if (!input || !dropzone) return;
+
+  // Hide the native button if it wasn't hidden already
+  input.style.display = 'none';
+
+  const setDragOver = (on) => {
+    if (on) dropzone.classList.add('drag-over'); else dropzone.classList.remove('drag-over');
+  };
+
+  dropzone.addEventListener('click', () => input.click());
+  dropzone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      input.click();
+    }
+  });
+
+  dropzone.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    setDragOver(true);
+  });
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setDragOver(true);
+  });
+  dropzone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    setDragOver(false);
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const dt = e.dataTransfer;
+    if (!dt || !dt.files || dt.files.length === 0) return;
+
+    // Filter to images only
+    const files = Array.from(dt.files).filter(f => f.type && f.type.startsWith('image/'));
+    if (files.length === 0) return;
+
+    // Append (deduplicating by name+size)
+    files.forEach(f => {
+      const exists = _selectedFiles.some(sf => sf.name === f.name && sf.size === f.size && sf.lastModified === f.lastModified);
+      if (!exists) _selectedFiles.push(f);
+    });
+
+    syncInputFiles();
+    updateImagesPreview();
+  });
+
+  // When user uses the file picker, merge new selections
+  input.addEventListener('change', (e) => {
+    const picked = Array.from(input.files || []);
+    // Replace _selectedFiles with picked (user intent) but keep uniqueness
+    _selectedFiles = [];
+    picked.forEach(f => _selectedFiles.push(f));
+    syncInputFiles();
+    updateImagesPreview();
+  });
+
+  // Ensure preview reflects any preloaded files
+  if (input.files && input.files.length) {
+    _selectedFiles = Array.from(input.files);
+    updateImagesPreview();
+  }
+
+  // Ensure the form includes files before submit (redundant but defensive)
+  if (elements.issueForm) {
+    elements.issueForm.addEventListener('submit', () => {
+      syncInputFiles();
+    });
+  }
+}
+
+// Initialize drag & drop wiring after module load
+enableImageDragDrop();

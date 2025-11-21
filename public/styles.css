@@ -219,7 +219,13 @@ body {
   width: 40%;
   padding: 16px;
   box-sizing: border-box;
-  overflow: hidden;
+  /* Allow the left panel to scroll internally so tall form elements
+     (e.g., image previews) don't push the submit button off-screen.
+     Previously this was `overflow: hidden;` which prevented scrolling
+     of the left column and made form controls unreachable. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
   /* left panel doesn't scroll */
 }
 
@@ -515,6 +521,96 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* Visual affordance when dragging files over the input */
+#images.drag-over {
+  outline: 2px dashed var(--accent-2);
+  outline-offset: 6px;
+  border-radius: 10px;
+  background: rgba(6, 182, 212, 0.03);
+}
+
+/* Dropzone */
+.images-dropzone {
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  color: var(--muted);
+  text-align: center;
+  cursor: pointer;
+  margin-top: 8px;
+  background: rgba(255,255,255,0.01);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  min-height: 56px;
+  max-height: 220px;
+  overflow: hidden;
+}
+.images-dropzone.drag-over {
+  background: rgba(6, 182, 212, 0.03);
+  border-color: var(--accent-2);
+  color: var(--text);
+}
+
+/* Small preview area shown below the file input when files are selected/dropped */
+.images-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  max-height: 160px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-items: stretch;
+  padding: 4px 0;
+  -webkit-overflow-scrolling: touch;
+}
+.images-preview-item {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: center;
+  flex: 0 0 auto;
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255,255,255,0.03);
+}
+.images-preview-remove {
+  margin-top: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(185, 28, 28, 0.12);
+  color: #ffdddd;
+  cursor: pointer;
+}
+.images-preview-remove:hover {
+  background: rgba(185, 28, 28, 0.22);
+}
+.images-preview-thumb {
+  max-height: 72px;
+  max-width: 96px;
+  width: auto;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+.images-preview-name {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+}
+
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -652,7 +748,7 @@ button:disabled {
 /* Test Script Lines */
 .test-script-lines {
   margin-bottom: 16px;
-  max-height: 400px;
+  max-height: 270px;
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: 8px;
