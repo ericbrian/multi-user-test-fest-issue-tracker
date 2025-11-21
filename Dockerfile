@@ -12,13 +12,14 @@ RUN npm install --omit=dev && npm cache clean --force
 COPY . .
 
 # Create uploads dir (mounted volume in ECS if desired)
-RUN mkdir -p /usr/src/app/uploads
+RUN mkdir -p /usr/src/app/uploads && chown -R node:node /usr/src/app
 
 EXPOSE 3000
 
 # Simple healthcheck (expects server to expose /health)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s CMD wget -qO- http://localhost:3000/health || exit 1
 
+USER node
 CMD ["node", "server.js"]
 
 

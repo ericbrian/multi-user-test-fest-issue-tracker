@@ -41,7 +41,13 @@ const {
 
 // DB setup
 const { Pool } = pg;
-const pool = new Pool({ connectionString: DATABASE_URL });
+// Limit the pool size for session management to avoid exhausting connections
+// Prisma has its own connection pool
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  max: 10, // Limit to 10 connections for session management
+  idleTimeoutMillis: 30000,
+});
 
 // Handle database connection errors
 pool.on('error', (err, client) => {
@@ -194,7 +200,6 @@ app.use(createDevAutoAuthMiddleware({ DISABLE_SSO, DEV_USER_EMAIL, DEV_USER_NAME
 
 // Register routes
 registerRoutes(app, {
-  pool,
   io,
   upload,
   uploadsDir,
