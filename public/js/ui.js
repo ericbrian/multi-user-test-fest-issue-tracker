@@ -26,6 +26,11 @@ export function updateVisibility() {
   const isLoggedIn = Boolean(store.state.me);
   const inRoom = Boolean(store.state.currentRoomId);
 
+  // Convenience flag for UI areas that should be visible when the user
+  // is inside a room. Historically this was `shouldShow` but it wasn't
+  // defined, causing a ReferenceError; derive it from `inRoom` here.
+  const shouldShow = inRoom;
+
   // Header controls
   if (elements.roomControls) elements.roomControls.style.display = isLoggedIn ? "block" : "none";
   if (elements.userInfoHeader) elements.userInfoHeader.style.display = isLoggedIn ? "inline-block" : "none";
