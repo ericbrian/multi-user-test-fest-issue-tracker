@@ -78,6 +78,9 @@ class JiraService {
         description,
         issuetype: { name: this.issueType },
         labels: [roomLabel],
+        // Required custom fields for this Jira instance
+        customfield_10909: 'N/A', // Job Name
+        customfield_10910: 'None', // Dependencies
       },
     };
 
@@ -165,7 +168,7 @@ class JiraService {
    */
   handleJiraError(error) {
     console.error('Jira API error:', error.message);
-    
+
     if (error.response) {
       console.error('Jira response status:', error.response.status);
       console.error('Jira response data:', error.response.data);
@@ -178,7 +181,7 @@ class JiraService {
         throw new Error('Invalid Jira request. Please check project configuration.');
       }
     }
-    
+
     throw new Error('Failed to create Jira issue. Please try again later.');
   }
 }

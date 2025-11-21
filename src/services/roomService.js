@@ -178,6 +178,128 @@ class RoomService {
     });
     return !!(membership && membership.is_groupier);
   }
+
+  /**
+   * Get all active scripts from the library
+   * @returns {Promise<Array>} - Array of scripts with line counts
+   */
+  async getScriptLibrary() {
+    const scripts = await this.prisma.scriptLibrary.findMany({
+      where: { is_active: true },
+      orderBy: { name: 'asc' },
+      include: {
+        _count: { select: { lines: true } }
+      }
+    });
+    return scripts.map((s) => ({
+      ...s,
+      line_count: s._count?.lines || 0
+    }));
+  }
+
+  /**
+   * Get test script lines for a room with user progress
+   * @param {string} roomId - Room UUID
+   * @param {string} userId - User UUID
+   * @returns {Promise<Array>} - Array of test script lines with progress
+   */
+  async getTestScriptLines(roomId, userId) {
+    const testScriptLines = await this.prisma.testScriptLine.findMany({
+      where: {
+        testScript: {
+          room_id: roomId
+        }
+      },
+      include: {
+        testScript: true,
+        progress: {
+          where: {
+            user_id: userId
+          }
+        }
+      },
+      orderBy: [
+        { testScript: { script_id: 'asc' } },
+        { test_script_line_id: 'asc' }
+      ]
+    });
+
+    return testScriptLines.map(line => ({
+      ...line,
+      is_checked: line.progress.length > 0 ? line.progress[0].is_checked : false,
+      checked_at: line.progress.length > 0 ? line.progress[0].checked_at : null,
+      progress_notes: line.progress.length > 0 ? line.progress[0].notes : null
+    }));
+  }
+
+  /**
+   * Update progress for a test script line
+   * @param {string} lineId - Test script line UUID
+   * @param {string} userId - User UUID
+   * @param {boolean} isChecked - Checked status
+   * @param {string} notes - Optional notes
+   * @returns {Promise<Object>} - Updated progress and roomId
+   */
+  async updateTestScriptLineProgress(lineId, userId, isChecked, notes) {
+    // Verify line exists and get room_id
+    const testScriptLine = await this.prisma.testScriptLine.findUnique({
+      where: { id: lineId },
+      include: { testScript: true }
+    });
+
+    if (!testScriptLine) {
+      throw new Error('Test script line not found');
+    }
+
+    // Verify membership
+    const isMember = await this.isMember(testScriptLine.testScript.room_id, userId);
+    if (!isMember) {
+      throw new Error('You must be a member of this room to update test progress');
+    }
+
+    const progressData = {
+      is_checked: Boolean(isChecked),
+      checked_at: isChecked ? new Date() : null,
+      notes: notes || null,
+      updated_at: new Date()
+    };
+
+    const existingProgress = await this.prisma.testScriptLineProgress.findUnique({
+      where: {
+        user_id_test_script_line_id: {
+          user_id: userId,
+          test_script_line_id: lineId
+        }
+      }
+    });
+
+    let progress;
+    if (existingProgress) {
+      progress = await this.prisma.testScriptLineProgress.update({
+        where: {
+          user_id_test_script_line_id: {
+            user_id: userId,
+            test_script_line_id: lineId
+          }
+        },
+        data: progressData
+      });
+    } else {
+      progress = await this.prisma.testScriptLineProgress.create({
+        data: {
+          id: uuidv4(),
+          user_id: userId,
+          test_script_line_id: lineId,
+          ...progressData
+        }
+      });
+    }
+
+    return {
+      progress,
+      roomId: testScriptLine.testScript.room_id
+    };
+  }
 }
 
 module.exports = { RoomService };

@@ -420,10 +420,17 @@ async function onIssueButtonClick(e) {
   }
   if (action === "toJira") {
     try {
+      const btn = e.target;
+      btn.disabled = true;
+      btn.textContent = "Sending...";
       const data = await api.sendToJira(id, store.state.currentRoomId);
       alert("Created in Jira: " + data.jira_key);
+      // The UI will update automatically via socket event
     } catch (error) {
-      alert("Failed to create Jira issue");
+      alert("Failed to create Jira issue: " + error.message);
+      const btn = e.target;
+      btn.disabled = false;
+      btn.textContent = "Send to Jira";
     }
   }
   if (action === "delete") {
