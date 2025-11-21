@@ -198,8 +198,9 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
   }
 
   if (!store.state.testScriptLines || store.state.testScriptLines.length === 0) {
+    // Ensure the title sits above the container as a separate element
+    ensureTestScriptTitle(container.parentNode, 'Test Scripts');
     container.innerHTML = `
-      <div class="test-script-lines-title">Test Scripts</div>
       <div class="test-script-lines-empty">No test scripts available for this room.</div>
     `;
     return;
@@ -229,10 +230,9 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
     `;
   }).join('');
 
-  container.innerHTML = `
-    <div class="test-script-lines-title">Test Script</div>
-    ${linesHtml}
-  `;
+  // Ensure the title sits above the container as a separate element
+  ensureTestScriptTitle(container.parentNode, 'Test Script');
+  container.innerHTML = `${linesHtml}`;
 
   // If a scriptId is already set (hidden input), mark that line as selected
   const currentScriptId = (document.getElementById('scriptId') || {}).value || null;
@@ -240,6 +240,8 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
     setTimeout(() => {
       const selectedEl = container.querySelector(`.test-script-line[data-script-line-id="${currentScriptId}"]`);
       if (selectedEl) selectedEl.classList.add('selected');
+      // Update the visible badge for the selected script
+      updateSelectedScriptBadge(currentScriptId);
     }, 0);
   }
 
@@ -278,6 +280,35 @@ function scrollToFirstUncheckedLine(container) {
   }
 }
 
+// Ensure there's a title element for test scripts placed immediately
+// before the container. If one already exists, update its text.
+function ensureTestScriptTitle(insertParent, text) {
+  if (!insertParent) return;
+  // If a dedicated title element exists, update it
+  let titleEl = document.getElementById('testScriptLinesTitle');
+  if (titleEl) {
+    titleEl.textContent = text;
+    // make sure it's directly before our container
+    const container = document.getElementById('testScriptLinesContainer');
+    if (container && titleEl.nextElementSibling !== container) {
+      insertParent.insertBefore(titleEl, container);
+    }
+    return;
+  }
+
+  titleEl = document.createElement('div');
+  titleEl.id = 'testScriptLinesTitle';
+  titleEl.className = 'test-script-lines-title';
+  titleEl.textContent = text;
+  // insert before the container if present, otherwise append to parent
+  const container = document.getElementById('testScriptLinesContainer');
+  if (container) {
+    insertParent.insertBefore(titleEl, container);
+  } else {
+    insertParent.appendChild(titleEl);
+  }
+}
+
 function escapeHtml(text) {
   if (!text) return '';
   const div = document.createElement('div');
@@ -312,6 +343,20 @@ function onTestScriptLineClick(e) {
   if (container) {
     container.querySelectorAll('.test-script-line.selected').forEach(el => el.classList.remove('selected'));
     lineEl.classList.add('selected');
+  }
+  // Update visible badge with the chosen script ID
+  updateSelectedScriptBadge(scriptLineId);
+}
+
+export function updateSelectedScriptBadge(scriptId) {
+  const badge = document.getElementById('selectedScriptBadge');
+  if (!badge) return;
+  if (scriptId) {
+    badge.textContent = `#${scriptId}`;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.textContent = '';
+    badge.style.display = 'none';
   }
 }
 
@@ -638,3 +683,14 @@ export function showCreateRoomModal(scriptLibrary, onSubmit) {
     });
   }
 })();
+
+// Clear selected badge & selection when the issue form is reset
+if (elements.issueForm) {
+  elements.issueForm.addEventListener('reset', () => {
+    const scriptIdInput = document.getElementById('scriptId');
+    if (scriptIdInput) scriptIdInput.value = '';
+    updateSelectedScriptBadge(null);
+    const container = document.getElementById('testScriptLinesContainer');
+    if (container) container.querySelectorAll('.test-script-line.selected').forEach(el => el.classList.remove('selected'));
+  });
+}

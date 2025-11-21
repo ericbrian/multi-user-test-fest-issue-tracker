@@ -672,10 +672,11 @@ button:disabled {
 }
 
 .test-script-lines-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 12px;
+  /* Match the other section titles for consistent visual hierarchy */
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 14px;
   padding: 0 4px;
 }
 
@@ -808,9 +809,25 @@ button:disabled {
 }
 
 .test-script-line.selected {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: rgba(59, 130, 246, 0.28);
-  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.06);
+  /* Strong dark-green selected state for clear emphasis */
+  background: linear-gradient(90deg, #064e3b, #065f46);
+  border-color: rgba(6, 95, 70, 0.7);
+  box-shadow: 0 12px 30px rgba(6, 95, 70, 0.14);
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+/* Small badge showing the selected script ID next to the description label */
+.selected-script-badge {
+  display: inline-block;
+  margin-left: 8px;
+  background: rgba(124, 58, 237, 0.95);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  vertical-align: middle;
 }
 
 .test-script-line-checkbox {

@@ -82,7 +82,7 @@
           <!-- Test Script selector moved to topbar; keep a hidden input so form submission still includes scriptId -->
           <input id="scriptId" name="scriptId" type="hidden" />
 
-          <label for="description">Issue Description</label>
+          <label for="description">Issue Description <span id="selectedScriptBadge" class="selected-script-badge" style="display:none" aria-hidden="true"></span></label>
           <textarea id="description" name="description" rows="4" required></textarea>
 
           <label>Reason for logging?</label>
