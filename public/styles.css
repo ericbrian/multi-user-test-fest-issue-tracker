@@ -841,6 +841,46 @@ button:disabled {
   display: block;
 }
 
+/* Remove glow/box-shadow from all buttons and related interactive controls.
+   Users requested a flatter, non-glowy UI — apply an explicit override so
+   no button shows a glowing shadow on hover or focus. */
+button,
+input[type="button"],
+input[type="submit"],
+.btn-tag,
+.btn-jira,
+.btn-danger,
+.icon-btn,
+#images::file-selector-button,
+#images::-webkit-file-upload-button {
+  box-shadow: none !important;
+}
+
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+.btn-tag:hover,
+.btn-jira:hover,
+.btn-danger:hover,
+.icon-btn:hover,
+#images:hover::file-selector-button,
+#images:hover::-webkit-file-upload-button {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Also clear any focus rings that were implemented via box-shadow on focus */
+button:focus,
+input[type="button"]:focus,
+input[type="submit"]:focus,
+.btn-tag:focus,
+.btn-jira:focus,
+.btn-danger:focus,
+.icon-btn:focus {
+  box-shadow: none !important;
+  outline: 2px solid rgba(124, 58, 237, 0.12); /* keep keyboard focus visible but subtle */
+}
+
 /* Make header room controls more compact */
 .room-selection-area {
   display: flex;
