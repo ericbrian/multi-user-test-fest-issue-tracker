@@ -45,26 +45,84 @@ class JiraService {
     }
 
     // Create summary (max 255 chars)
-    const summary = `Script ${issue.script_id || ''} - ${issue.description?.slice(0, 80) || 'Issue'}`.slice(0, 255);
+    const summary = `[Test Fest] Script ${issue.script_id || '?'} - ${issue.description?.slice(0, 80) || 'Issue'}`.slice(0, 255);
 
-    // Create description text
-    const descriptionText = `Description:\n${issue.description || ''}\n\nFlags: issue=${issue.is_issue}, annoyance=${issue.is_annoyance}, existing_upper_env=${issue.is_existing_upper_env}, not_sure_how_to_test=${issue.is_not_sure_how_to_test}`;
+    const reporterName = issue.createdBy?.name || issue.createdBy?.email || 'Unknown User';
+
+    // Construct ADF content
+    const content = [];
+
+    // 1. Description Header
+    content.push({
+      type: 'heading',
+      attrs: { level: 3 },
+      content: [{ type: 'text', text: 'Issue Description' }]
+    });
+
+    // 2. Description Body
+    content.push({
+      type: 'paragraph',
+      content: [{ type: 'text', text: issue.description || 'No description provided.' }]
+    });
+
+    // 3. Context Header
+    content.push({
+      type: 'heading',
+      attrs: { level: 3 },
+      content: [{ type: 'text', text: 'Context' }]
+    });
+
+    // 4. Context List
+    const contextItems = [];
+    contextItems.push({
+      type: 'listItem',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: `Test Fest: ${roomName}` }] }]
+    });
+    if (issue.script_id) {
+      contextItems.push({
+        type: 'listItem',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: `Test Script ID: ${issue.script_id}` }] }]
+      });
+    }
+    contextItems.push({
+      type: 'listItem',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: `Reported By: ${reporterName}` }] }]
+    });
+
+    content.push({
+      type: 'bulletList',
+      content: contextItems
+    });
+
+    // 5. Flags List
+    const flagItems = [];
+    if (issue.is_issue) flagItems.push('Is an Issue');
+    if (issue.is_annoyance) flagItems.push('Is an Annoyance');
+    if (issue.is_existing_upper_env) flagItems.push('Exists in Upper Environment');
+    if (issue.is_not_sure_how_to_test) flagItems.push('Not Sure How To Test');
+
+    if (flagItems.length > 0) {
+      // Add Header only if there are flags
+      content.push({
+        type: 'heading',
+        attrs: { level: 3 },
+        content: [{ type: 'text', text: 'Flags' }]
+      });
+
+      content.push({
+        type: 'bulletList',
+        content: flagItems.map(flag => ({
+          type: 'listItem',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: flag }] }]
+        }))
+      });
+    }
 
     // Convert to Atlassian Document Format
     const description = {
       type: 'doc',
       version: 1,
-      content: [
-        {
-          type: 'paragraph',
-          content: [
-            {
-              type: 'text',
-              text: descriptionText
-            }
-          ]
-        }
-      ]
+      content: content
     };
 
     // Generate room label
@@ -81,6 +139,7 @@ class JiraService {
         // Required custom fields for this Jira instance
         customfield_10909: 'N/A', // Job Name
         customfield_10910: 'None', // Dependencies
+        // customfield_10908: 'Test Fest', // Source - Removed as it causes 400 error (not on screen)
       },
     };
 

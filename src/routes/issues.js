@@ -129,7 +129,10 @@ function registerIssueRoutes(router, deps) {
 
       const membership = await prisma.roomMember.findUnique({ where: { room_id_user_id: { room_id: roomId, user_id: req.user.id } } });
 
-      const issue = await prisma.issue.findUnique({ where: { id } });
+      const issue = await prisma.issue.findUnique({
+        where: { id },
+        include: { createdBy: true }
+      });
       if (!issue) return res.status(404).json({ error: 'Issue not found' });
 
       const isGroupier = membership && membership.is_groupier;
