@@ -25,8 +25,11 @@
         </div>
         <label id="roomLabel" for="roomSelect">Room</label>
         <select id="roomSelect"></select>
-        <button id="createRoomBtn" title="Create a new Test Fest">
-          Create New Test Fest
+        <button id="createRoomBtn" title="Create a new Test Fest" aria-label="Create new Test Fest" class="icon-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </button>
         <button id="changeRoomBtn" style="display: none">Change Test Fest</button>
       </div>
@@ -39,16 +42,37 @@
         Logout
       </button>
     </div>
-  </div>
-  <!-- Centered auth box shown when the user is not logged in -->
   <div id="authCenter" class="auth-center hidden" aria-hidden="true">
     <div class="auth-card">
       <div class="auth-card-title">Welcome to Test Fest Issue Tracker</div>
       <div class="auth-card-desc">Sign in to join a Test Fest, report issues, and view team issues.</div>
       <div class="auth-card-actions">
         <button id="loginCenterBtn" onclick="window.location.href='/auth/login'">Log in</button>
+        <button class="btn-tag" onclick="window.location.href='/auth/login'">Log in</button>
       </div>
     </div>
+  </div>
+  <!-- Room chooser shown to authenticated users who are not in a room -->
+  <div id="roomChooserCenter" class="auth-center hidden" aria-hidden="true">
+    <div class="auth-card">
+      <div class="auth-card-title">Join or create a Test Fest</div>
+      <div class="auth-card-desc">Select an existing room or create a new Test Fest to get started.</div>
+      <div class="auth-card-actions" style="width:100%; gap:8px;">
+        <select id="roomChooserSelect" style="flex:1; min-width:0; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text);">
+          <option value="">— Select a Test —</option>
+        </select>
+        <button id="roomChooserJoinBtn" disabled>Join</button>
+      </div>
+      <div style="margin-top:12px; display:flex; justify-content:center;">
+        <button id="roomChooserCreateBtn" aria-label="Create new Test Fest" class="icon-btn"> 
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
   </div>
   <div class="layout">
     <div class="left">
@@ -78,29 +102,11 @@
           </div>
         </form>
       </div>
-      <!-- Shown when user is not logged in to encourage login -->
-      <div id="leftAuthPlaceholder" class="left-section auth-placeholder">
-        <div class="auth-card">
-          <div class="auth-card-title">Sign in to report issues</div>
-          <div class="auth-card-desc">Log in to create issues, join rooms, and see test scripts.</div>
-          <div class="auth-card-actions">
-            <button id="loginBtnPlaceholder" onclick="window.location.href='/auth/login'">Log in</button>
-          </div>
-        </div>
-      </div>
+      <!-- left auth placeholder removed; use centered auth/chooser instead -->
     </div>
     <div class="right">
       <h2 class="section-title">All Issues Reported by Team</h2>
-      <!-- Placeholder shown when user is not logged in -->
-      <div id="rightAuthPlaceholder" class="auth-placeholder">
-        <div class="auth-card">
-          <div class="auth-card-title">Please sign in to view issues</div>
-          <div class="auth-card-desc">Issues are visible to authenticated participants. Log in to join a Test Fest.</div>
-          <div class="auth-card-actions">
-            <button id="loginBtnPlaceholderRight" onclick="window.location.href='/auth/login'">Log in</button>
-          </div>
-        </div>
-      </div>
+      <!-- right auth placeholder removed; use centered auth/chooser instead -->
       <div class="topbar">
         <div id="tagLegend" class="hidden"></div>
       </div>

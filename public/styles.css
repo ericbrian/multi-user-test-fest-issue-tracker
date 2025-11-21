@@ -390,7 +390,7 @@ button {
 
 /* Make the Create Room button wider */
 #createRoomBtn {
-  min-width: 180px;
+  min-width: 36px;
 }
 
 button:hover {
@@ -716,6 +716,46 @@ button:disabled {
   min-width: 120px;
 }
 
+/* Small icon-only button used for create room */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.icon-btn svg {
+  display: block;
+}
+
+/* Make header room controls more compact */
+.room-selection-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.room-selection-area select,
+.room-selection-area #roomSelect {
+  max-width: 240px;
+  min-width: 120px;
+}
+
+/* Icon-only create button should be compact and square */
+.icon-btn {
+  padding: 6px;
+  width: 40px;
+  height: 36px;
+}
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* Full-screen centered auth container */
 .auth-center {
   position: fixed;
@@ -737,6 +777,11 @@ button:disabled {
   .auth-card { width: 100%; max-width: 420px; }
   .auth-card-actions { flex-direction: column; }
   .auth-card-actions button { width: 100%; }
+}
+
+/* Slightly adjust room chooser select to match form fields */
+#roomChooserSelect {
+  background: rgba(0,0,0,0.12);
 }
 
 .test-script-line {

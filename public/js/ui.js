@@ -24,15 +24,17 @@ export const elements = {
 
 export function updateVisibility() {
   const isLoggedIn = Boolean(store.state.me);
-  const shouldShow = Boolean(store.state.currentRoomId);
+  const inRoom = Boolean(store.state.currentRoomId);
 
+  // Header controls
   if (elements.roomControls) elements.roomControls.style.display = isLoggedIn ? "block" : "none";
   if (elements.userInfoHeader) elements.userInfoHeader.style.display = isLoggedIn ? "inline-block" : "none";
   if (elements.loginNote) elements.loginNote.style.display = isLoggedIn ? "none" : "inline-block";
 
-  elements.issueForm.classList.toggle("hidden", !shouldShow);
-  elements.issuesEl.classList.toggle("hidden", !shouldShow);
-  elements.tagLegend.classList.toggle("hidden", !shouldShow);
+  // Main panels only visible when user is in a room
+  elements.issueForm.classList.toggle("hidden", !inRoom);
+  elements.issuesEl.classList.toggle("hidden", !inRoom);
+  elements.tagLegend.classList.toggle("hidden", !inRoom);
 
   // Handle test script lines container dynamically if it doesn't exist in initial DOM
   let container = document.getElementById('testScriptLinesContainer');
@@ -44,17 +46,18 @@ export function updateVisibility() {
     elements.testProgress.classList.toggle("hidden", !shouldShow);
   }
 
-  // Show a friendly placeholder in panels when user is not logged in
-  document.querySelectorAll('.auth-placeholder').forEach((el) => {
-    el.classList.toggle('hidden', isLoggedIn);
-  });
+  // (In-panel auth placeholders removed) — use centered auth and room chooser.
 
   // Hide main layout and show centered auth box when not logged in
   const layoutEl = document.querySelector('.layout');
-  if (layoutEl) layoutEl.style.display = isLoggedIn ? 'flex' : 'none';
+  if (layoutEl) layoutEl.style.display = inRoom ? 'flex' : 'none';
 
   const authCenter = document.getElementById('authCenter');
   if (authCenter) authCenter.classList.toggle('hidden', isLoggedIn);
+
+  // Show the room chooser when logged in but not in a room
+  const roomChooser = document.getElementById('roomChooserCenter');
+  if (roomChooser) roomChooser.classList.toggle('hidden', !(isLoggedIn && !inRoom));
 
   document.querySelectorAll(".left-section").forEach((el) => {
     el.classList.toggle("hidden", !shouldShow);
@@ -108,7 +111,7 @@ export function populateRoomSelect(rooms) {
   elements.roomSelect.innerHTML = "";
   const placeholder = document.createElement("option");
   placeholder.value = "";
-  placeholder.textContent = "— Select a room —";
+  placeholder.textContent = "— Select a Test —";
   placeholder.disabled = true;
   placeholder.selected = true;
   elements.roomSelect.appendChild(placeholder);
@@ -118,6 +121,29 @@ export function populateRoomSelect(rooms) {
     opt.textContent = `${r.name}`;
     elements.roomSelect.appendChild(opt);
   });
+
+  // Also populate the chooser select if present
+  const chooser = document.getElementById('roomChooserSelect');
+  if (chooser) {
+    chooser.innerHTML = '';
+    const ph = document.createElement('option');
+    ph.value = '';
+    ph.textContent = '— Select a Test —';
+    ph.disabled = true;
+    ph.selected = true;
+    chooser.appendChild(ph);
+    rooms.forEach((r) => {
+      const o = document.createElement('option');
+      o.value = r.id;
+      o.textContent = `${r.name}`;
+      chooser.appendChild(o);
+    });
+    // Enable join button when rooms are available
+    const joinBtn = document.getElementById('roomChooserJoinBtn');
+    if (joinBtn) {
+      joinBtn.disabled = rooms.length === 0;
+    }
+  }
 }
 
 export function updateTestProgress() {
@@ -559,3 +585,25 @@ export function showCreateRoomModal(scriptLibrary, onSubmit) {
     await onSubmit(data, closeModal);
   });
 }
+
+// Wire up room chooser actions (join/create) if the elements are present
+(() => {
+  const joinBtn = document.getElementById('roomChooserJoinBtn');
+  const chooser = document.getElementById('roomChooserSelect');
+  if (joinBtn && chooser && elements.roomSelect) {
+    joinBtn.addEventListener('click', () => {
+      const val = chooser.value;
+      if (!val) return alert('Please select a test to join.');
+      // propagate selection to the main room select which main.js listens to
+      elements.roomSelect.value = val;
+      elements.roomSelect.dispatchEvent(new Event('change'));
+    });
+  }
+
+  const createBtn = document.getElementById('roomChooserCreateBtn');
+  if (createBtn && elements.createRoomBtn) {
+    createBtn.addEventListener('click', () => {
+      elements.createRoomBtn.click();
+    });
+  }
+})();

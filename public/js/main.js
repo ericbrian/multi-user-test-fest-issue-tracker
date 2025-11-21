@@ -83,7 +83,7 @@ ui.elements.roomSelect.addEventListener("change", async () => {
 
 ui.elements.issueForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!store.state.currentRoomId) return alert("Select a room");
+  if (!store.state.currentRoomId) return alert("Select a Test");
 
   const scriptVal = (document.getElementById("scriptId").value || "").trim();
   if (!/^\d+$/.test(scriptVal)) {
