@@ -395,6 +395,42 @@ export function renderIssues(list) {
   });
   elements.issuesEl.innerHTML = "";
   sortedList.forEach((i) => addOrUpdateIssue(i, true));
+
+  // Add placeholders for test script lines that don't have an issue
+  // If test script lines are available in state, show a placeholder
+  // entry on the right for each line that isn't represented by an issue.
+  try {
+    const lines = store.state.testScriptLines || [];
+    if (lines && lines.length) {
+      const issueScriptIds = new Set((list || []).map(x => String(x.script_id)));
+      lines.forEach(line => {
+        const scriptId = String(line.test_script_line_id);
+        if (!issueScriptIds.has(scriptId)) {
+          // Create a placeholder element and insert it in sorted order
+          const placeholderId = `issue-placeholder-${scriptId}`;
+          // Avoid duplicate placeholders if renderIssues called multiple times
+          if (document.getElementById(placeholderId)) return;
+
+          const el = document.createElement('div');
+          el.id = placeholderId;
+          el.className = 'issue placeholder not-mine';
+          el.setAttribute('data-script-id', scriptId);
+          el.innerHTML = `
+            <div style="display:flex; justify-content: space-between; align-items:center; gap: 10px;">
+              <div class="dimmable" style="flex: 1 1 auto;"><strong>ID# ${scriptId}</strong> - No Issue reported.</div>
+              <div class="dimmable" style="color: var(--muted); font-size: 12px;">&nbsp;</div>
+            </div>
+          `;
+
+          // Use the insert helper to place in sorted order
+          insertIssueInSortedOrder(el, { script_id: scriptId });
+        }
+      });
+    }
+  } catch (err) {
+    // Non-fatal; do not break issue rendering
+    console.error('Error rendering placeholders for test script lines:', err);
+  }
 }
 
 export function addOrUpdateIssue(issue, isInitial = false) {

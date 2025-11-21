@@ -167,9 +167,10 @@ async function joinRoom(roomId) {
       api.joinRoomApi(roomId)
     ]);
 
-    ui.renderIssues(issues);
-
+    // Ensure test script lines are set before rendering issues so that
+    // placeholders for lines without issues can be rendered immediately.
     store.setState({ testScriptLines });
+    ui.renderIssues(issues);
     ui.renderTestScriptLines(true);
 
     store.setState({ isGroupier: !!(joinData && joinData.isGroupier) });
