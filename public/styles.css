@@ -246,8 +246,10 @@ body {
   background: var(--right-panel);
 }
 
-/* Keep the right panel title visible when the panel scrolls */
-.right > .section-title {
+/* Keep the right panel title visible when the panel scrolls.
+   Use a non-child selector so the title keeps its background even if
+   the DOM structure changes slightly (e.g., wrapped or moved). */
+.right .section-title {
   position: sticky;
   top: 0;
   z-index: 20;
@@ -255,7 +257,15 @@ body {
   margin-bottom: 12px;
   padding-top: 8px;
   padding-bottom: 8px;
+  /* Ensure the header has a visibly darker background for contrast */
   background: var(--right-panel);
+  /* Dark overlay to increase contrast against the panel */
+  background-color: rgba(0,0,0,0.60);
+  padding-left: 12px;
+  padding-right: 12px;
+  /* stronger explicit border so it is visible on the darker header */
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset;
 }
 
 .hidden {
