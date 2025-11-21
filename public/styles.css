@@ -815,6 +815,23 @@ button:disabled {
   box-shadow: 0 12px 30px rgba(6, 95, 70, 0.14);
   color: #ffffff;
   transform: translateX(2px);
+  transition: transform 220ms ease, box-shadow 300ms ease, background 300ms ease;
+  animation: testScriptSelectPulse 900ms ease;
+}
+
+@keyframes testScriptSelectPulse {
+  0% {
+    transform: translateX(2px) scale(1);
+    box-shadow: 0 6px 18px rgba(6, 95, 70, 0.08);
+  }
+  50% {
+    transform: translateX(2px) scale(1.02);
+    box-shadow: 0 22px 44px rgba(6, 95, 70, 0.18);
+  }
+  100% {
+    transform: translateX(2px) scale(1);
+    box-shadow: 0 12px 30px rgba(6, 95, 70, 0.14);
+  }
 }
 
 /* Small badge showing the selected script ID next to the description label */
