@@ -37,6 +37,11 @@ body {
   /* prevent whole-page scroll */
 }
 
+/* Slightly smaller base font for denser UI */
+body {
+  font-size: 14px;
+}
+
 .layout {
   display: flex;
   flex: 1 1 auto;
@@ -63,7 +68,7 @@ body {
 }
 
 .site-title {
-  font-size: 18px;
+  font-size: 16px;
   letter-spacing: 0.2px;
 }
 
@@ -117,7 +122,7 @@ body {
   border: 1px solid rgba(124, 58, 237, 0.4);
   padding: 8px 16px;
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: 0.3px;
   display: inline-flex;
   align-items: center;
@@ -375,6 +380,24 @@ body {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+/* De-emphasize placeholder cards for "no issue reported" entries.
+   Keep them in the flow but reduce contrast, remove heavy shadows
+   and disable hover transforms so they don't compete with real issues. */
+.issue.placeholder {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px dashed rgba(255, 255, 255, 0.03);
+  box-shadow: none;
+  color: var(--muted);
+  padding: 10px;
+}
+.issue.placeholder:hover {
+  transform: none;
+  box-shadow: none;
+}
+.issue.placeholder .issue-footer {
+  opacity: 0.85;
 }
 
 .row {
@@ -1214,7 +1237,7 @@ input[type="submit"]:focus,
 .room-modal-header h2 {
   margin: 0;
   color: var(--text);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
 }
 
