@@ -117,10 +117,10 @@ body {
 
 .current-room-name {
   font-weight: 600;
-  color: #ffffff;
-  background: var(--accent);
-  border: 1px solid rgba(124, 58, 237, 0.4);
-  padding: 8px 16px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 6px 10px;
   border-radius: var(--radius-sm);
   font-size: 13px;
   letter-spacing: 0.3px;
@@ -956,6 +956,22 @@ input[type="submit"]:focus,
 .room-selection-area #roomSelect {
   max-width: 240px;
   min-width: 120px;
+}
+
+/* Make the Change Test Fest control low-contrast and compact */
+#changeRoomBtn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--muted);
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+#changeRoomBtn:hover {
+  background: rgba(255,255,255,0.02);
+  color: var(--text);
 }
 
 /* Icon-only create button should be compact and square */
