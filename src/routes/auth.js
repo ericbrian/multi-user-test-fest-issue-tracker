@@ -9,13 +9,53 @@ function registerAuthRoutes(router, deps) {
     JIRA_BASE_URL,
   } = deps;
 
-  // Auth routes (with rate limiting)
+  /**
+   * @openapi
+   * /auth/login:
+   *   get:
+   *     tags:
+   *       - Authentication
+   *     summary: Initiate SSO login
+   *     description: Redirects to Microsoft Entra ID (Azure AD) for OIDC authentication. If SSO is disabled, redirects to home page.
+   *     responses:
+   *       302:
+   *         description: Redirect to OIDC provider or home page
+   *       500:
+   *         description: OIDC not configured
+   *         content:
+   *           text/html:
+   *             schema:
+   *               type: string
+   */
   router.get('/auth/login', authLimiter, async (req, res, next) => {
     if (DISABLE_SSO) return res.redirect('/');
     if (!passport || !passport._strategies || !passport._strategies['oidc']) return res.status(500).send('OIDC not configured');
     passport.authenticate('oidc')(req, res, next);
   });
 
+  /**
+   * @openapi
+   * /auth/callback:
+   *   get:
+   *     tags:
+   *       - Authentication
+   *     summary: OIDC callback endpoint
+   *     description: Handles the callback from Microsoft Entra ID after authentication. Creates or updates user session.
+   *     parameters:
+   *       - in: query
+   *         name: code
+   *         schema:
+   *           type: string
+   *         description: Authorization code from OIDC provider
+   *       - in: query
+   *         name: state
+   *         schema:
+   *           type: string
+   *         description: State parameter for CSRF protection
+   *     responses:
+   *       302:
+   *         description: Redirect to home page on success or login page on failure
+   */
   router.get('/auth/callback', authLimiter, (req, res, next) => {
     passport.authenticate('oidc', {
       successRedirect: '/',
@@ -23,6 +63,28 @@ function registerAuthRoutes(router, deps) {
     })(req, res, next);
   });
 
+  /**
+   * @openapi
+   * /auth/logout:
+   *   post:
+   *     tags:
+   *       - Authentication
+   *     summary: Logout current user
+   *     description: Destroys the user session and clears authentication cookies.
+   *     security:
+   *       - cookieAuth: []
+   *     responses:
+   *       200:
+   *         description: Successfully logged out
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 ok:
+   *                   type: boolean
+   *                   example: true
+   */
   router.post('/auth/logout', authLimiter, (req, res) => {
     req.logout(() => {
       req.session.destroy(() => {
@@ -32,6 +94,37 @@ function registerAuthRoutes(router, deps) {
     });
   });
 
+  /**
+   * @openapi
+   * /me:
+   *   get:
+   *     tags:
+   *       - Authentication
+   *     summary: Get current user info
+   *     description: Returns the currently authenticated user information along with system configuration (tags and Jira base URL).
+   *     responses:
+   *       200:
+   *         description: Current user information and system config
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 user:
+   *                   oneOf:
+   *                     - $ref: '#/components/schemas/User'
+   *                     - type: 'null'
+   *                   description: User object if authenticated, null otherwise
+   *                 tags:
+   *                   type: array
+   *                   items:
+   *                     type: string
+   *                   description: Available status tags for issues
+   *                 jiraBaseUrl:
+   *                   type: string
+   *                   nullable: true
+   *                   description: Base URL for Jira instance
+   */
   router.get('/me', (req, res) => {
     res.json({
       user: req.user || null,

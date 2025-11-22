@@ -34,6 +34,40 @@ function registerIssueRoutes(router, deps) {
     uploadsDir
   });
 
+  /**
+   * @openapi
+   * /api/rooms/{roomId}/issues:
+   *   get:
+   *     tags:
+   *       - Issues
+   *     summary: Get all issues for a room
+   *     description: Retrieves all issues reported in a specific test fest room, including creator information.
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: roomId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Room ID
+   *     responses:
+   *       200:
+   *         description: List of issues
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 $ref: '#/components/schemas/Issue'
+   *       500:
+   *         description: Server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
   router.get('/api/rooms/:roomId/issues', requireAuth, async (req, res) => {
     try {
       const { roomId } = req.params;
@@ -45,7 +79,91 @@ function registerIssueRoutes(router, deps) {
     }
   });
 
-  // Issues create with uploads (with rate limiting)
+  /**
+   * @openapi
+   * /api/rooms/{roomId}/issues:
+   *   post:
+   *     tags:
+   *       - Issues
+   *     summary: Create a new issue
+   *     description: Creates a new issue in a room with optional image attachments (up to 5 images). Rate limited to 30 requests per 15 minutes.
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: roomId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Room ID
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         multipart/form-data:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - scriptId
+   *               - description
+   *             properties:
+   *               scriptId:
+   *                 type: integer
+   *                 description: Test script ID number
+   *                 example: 42
+   *               description:
+   *                 type: string
+   *                 description: Issue description (will be sanitized for XSS)
+   *                 example: "Login button not responding on mobile"
+   *               is_issue:
+   *                 type: boolean
+   *                 description: Mark as an issue
+   *                 example: true
+   *               is_annoyance:
+   *                 type: boolean
+   *                 description: Mark as an annoyance
+   *                 example: false
+   *               is_existing_upper_env:
+   *                 type: boolean
+   *                 description: Issue exists in upper environment
+   *                 example: false
+   *               is_not_sure_how_to_test:
+   *                 type: boolean
+   *                 description: Tester is unsure how to test
+   *                 example: false
+   *               images:
+   *                 type: array
+   *                 items:
+   *                   type: string
+   *                   format: binary
+   *                 description: Image attachments (max 5)
+   *                 maxItems: 5
+   *     responses:
+   *       200:
+   *         description: Issue created successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Issue'
+   *       400:
+   *         description: Invalid input (missing or invalid scriptId/description)
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       429:
+   *         description: Rate limit exceeded
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       500:
+   *         description: Server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
   router.post('/api/rooms/:roomId/issues', requireAuth, issueCreationLimiter, uploadLimiter, upload.array('images', 5), async (req, res) => {
     try {
       const { roomId } = req.params;
@@ -98,7 +216,68 @@ function registerIssueRoutes(router, deps) {
     }
   });
 
-  // Update issue status (Groupier only)
+  /**
+   * @openapi
+   * /api/issues/{id}/status:
+   *   post:
+   *     tags:
+   *       - Issues
+   *     summary: Update issue status
+   *     description: Updates the status tag of an issue. Only groupiers (room admins) can perform this action.
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Issue ID
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - status
+   *               - roomId
+   *             properties:
+   *               status:
+   *                 type: string
+   *                 description: Status tag to apply (must be from configured TAGS or 'clear-status')
+   *                 example: "in-progress"
+   *               roomId:
+   *                 type: string
+   *                 format: uuid
+   *                 description: Room ID (for permission check and real-time updates)
+   *     responses:
+   *       200:
+   *         description: Status updated successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Issue'
+   *       400:
+   *         description: Invalid status value
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       403:
+   *         description: User is not a groupier
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       500:
+   *         description: Server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
   router.post('/api/issues/:id/status', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
@@ -121,7 +300,81 @@ function registerIssueRoutes(router, deps) {
     }
   });
 
-  // Send to Jira (Groupier or Creator)
+  /**
+   * @openapi
+   * /api/issues/{id}/jira:
+   *   post:
+   *     tags:
+   *       - Issues
+   *     summary: Create Jira ticket from issue
+   *     description: Creates a Jira ticket for this issue and links it. Only the issue creator or room groupiers can perform this action. If already linked, returns existing Jira key.
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Issue ID
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - roomId
+   *             properties:
+   *               roomId:
+   *                 type: string
+   *                 format: uuid
+   *                 description: Room ID (for permission check and real-time updates)
+   *     responses:
+   *       200:
+   *         description: Jira ticket created or already exists
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 jira_key:
+   *                   type: string
+   *                   description: Jira ticket key
+   *                   example: "PROJ-123"
+   *       403:
+   *         description: User is neither creator nor groupier
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       404:
+   *         description: Issue not found
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       500:
+   *         description: Server error or Jira API error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *             examples:
+   *               notConfigured:
+   *                 value:
+   *                   error: "Jira not configured"
+   *               authFailed:
+   *                 value:
+   *                   error: "Jira authentication failed. Please check credentials."
+   *               insufficientPermissions:
+   *                 value:
+   *                   error: "Insufficient Jira permissions."
+   *               invalidRequest:
+   *                 value:
+   *                   error: "Invalid Jira request. Please check project configuration."
+   */
   router.post('/api/issues/:id/jira', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
@@ -142,7 +395,7 @@ function registerIssueRoutes(router, deps) {
 
       if (!jiraService.isConfigured()) {
         return res.status(500).json({ error: 'Jira not configured' });
-      }      if (issue.jira_key) {
+      } if (issue.jira_key) {
         return res.json({ jira_key: issue.jira_key });
       }
 
@@ -175,7 +428,54 @@ function registerIssueRoutes(router, deps) {
     }
   });
 
-  // Delete issue (creator or Groupier)
+  /**
+   * @openapi
+   * /api/issues/{id}:
+   *   delete:
+   *     tags:
+   *       - Issues
+   *     summary: Delete an issue
+   *     description: Deletes an issue and its associated files. Only the issue creator or room groupiers can perform this action.
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Issue ID
+   *     responses:
+   *       200:
+   *         description: Issue deleted successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 ok:
+   *                   type: boolean
+   *                   example: true
+   *       403:
+   *         description: User is neither creator nor groupier
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       404:
+   *         description: Issue not found
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       500:
+   *         description: Server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
   router.delete('/api/issues/:id', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;

@@ -16,7 +16,32 @@ function registerRoomRoutes(router, deps) {
   const prisma = getPrisma();
   const roomService = new RoomService(prisma);
 
-  // Script Library
+  /**
+   * @openapi
+   * /api/script-library:
+   *   get:
+   *     tags:
+   *       - Rooms
+   *     summary: Get all test scripts
+   *     description: Retrieves the library of available test scripts that can be used when creating rooms.
+   *     security:
+   *       - cookieAuth: []
+   *     responses:
+   *       200:
+   *         description: List of test scripts
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 $ref: '#/components/schemas/TestScript'
+   *       500:
+   *         description: Server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
   router.get('/api/script-library', requireAuth, async (req, res) => {
     try {
       const result = await roomService.getScriptLibrary();
@@ -27,7 +52,32 @@ function registerRoomRoutes(router, deps) {
     }
   });
 
-  // Rooms
+  /**
+   * @openapi
+   * /api/rooms:
+   *   get:
+   *     tags:
+   *       - Rooms
+   *     summary: Get all rooms
+   *     description: Retrieves all available test fest rooms.
+   *     security:
+   *       - cookieAuth: []
+   *     responses:
+   *       200:
+   *         description: List of rooms
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 $ref: '#/components/schemas/Room'
+   *       500:
+   *         description: Server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
   router.get('/api/rooms', requireAuth, async (req, res) => {
     try {
       const result = await roomService.getAllRooms();
@@ -38,6 +88,53 @@ function registerRoomRoutes(router, deps) {
     }
   });
 
+  /**
+   * @openapi
+   * /api/rooms:
+   *   post:
+   *     tags:
+   *       - Rooms
+   *     summary: Create a new room
+   *     description: Creates a new test fest room. The creator automatically becomes a groupier (admin) of the room.
+   *     security:
+   *       - cookieAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - name
+   *             properties:
+   *               name:
+   *                 type: string
+   *                 description: Room name (will be sanitized)
+   *                 example: "Sprint 42 Test Fest"
+   *               description:
+   *                 type: string
+   *                 nullable: true
+   *                 description: Optional room description
+   *                 example: "Testing new payment features"
+   *               scriptId:
+   *                 type: string
+   *                 format: uuid
+   *                 nullable: true
+   *                 description: Optional test script to associate with room
+   *     responses:
+   *       200:
+   *         description: Room created successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Room'
+   *       500:
+   *         description: Server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
   router.post('/api/rooms', requireAuth, async (req, res) => {
     try {
       // Sanitize inputs to prevent XSS using xss library
@@ -61,6 +158,51 @@ function registerRoomRoutes(router, deps) {
     }
   });
 
+  /**
+   * @openapi
+   * /api/rooms/{roomId}/join:
+   *   post:
+   *     tags:
+   *       - Rooms
+   *     summary: Join a room
+   *     description: Adds the current user as a member of the specified room. Users with groupier emails are automatically granted groupier (admin) privileges.
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: roomId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Room ID to join
+   *     responses:
+   *       200:
+   *         description: Successfully joined room
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 room_id:
+   *                   type: string
+   *                   format: uuid
+   *                 user_id:
+   *                   type: string
+   *                   format: uuid
+   *                 is_groupier:
+   *                   type: boolean
+   *                   description: Whether user has groupier privileges
+   *                 joined_at:
+   *                   type: string
+   *                   format: date-time
+   *       500:
+   *         description: Server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
   router.post('/api/rooms/:roomId/join', requireAuth, async (req, res) => {
     try {
       const { roomId } = req.params;
@@ -78,7 +220,40 @@ function registerRoomRoutes(router, deps) {
     }
   });
 
-  // Test Script Lines
+  /**
+   * @openapi
+   * /api/rooms/{roomId}/test-script-lines:
+   *   get:
+   *     tags:
+   *       - Rooms
+   *     summary: Get test script lines for a room
+   *     description: Retrieves all test script lines for the room's associated test script, including progress tracking for the current user.
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: roomId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Room ID
+   *     responses:
+   *       200:
+   *         description: List of test script lines with progress
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 $ref: '#/components/schemas/TestScriptLine'
+   *       500:
+   *         description: Server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
   router.get('/api/rooms/:roomId/test-script-lines', requireAuth, async (req, res) => {
     try {
       const { roomId } = req.params;
@@ -92,6 +267,82 @@ function registerRoomRoutes(router, deps) {
     }
   });
 
+  /**
+   * @openapi
+   * /api/test-script-lines/{lineId}/progress:
+   *   post:
+   *     tags:
+   *       - Rooms
+   *     summary: Update test script line progress
+   *     description: Updates the current user's progress on a specific test script line. Emits real-time update via Socket.IO.
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: lineId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Test script line ID
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               is_checked:
+   *                 type: boolean
+   *                 description: Whether the line is marked as completed
+   *                 example: true
+   *               notes:
+   *                 type: string
+   *                 nullable: true
+   *                 description: Optional notes about this test step
+   *                 example: "Verified on Chrome and Firefox"
+   *     responses:
+   *       200:
+   *         description: Progress updated successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 user_id:
+   *                   type: string
+   *                   format: uuid
+   *                 test_script_line_id:
+   *                   type: string
+   *                   format: uuid
+   *                 is_checked:
+   *                   type: boolean
+   *                 checked_at:
+   *                   type: string
+   *                   format: date-time
+   *                   nullable: true
+   *                 notes:
+   *                   type: string
+   *                   nullable: true
+   *       403:
+   *         description: User is not a member of the room
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       404:
+   *         description: Test script line not found
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       500:
+   *         description: Server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   */
   router.post('/api/test-script-lines/:lineId/progress', requireAuth, async (req, res) => {
     try {
       const { lineId } = req.params;

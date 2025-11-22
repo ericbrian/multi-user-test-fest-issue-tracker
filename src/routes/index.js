@@ -4,7 +4,26 @@ const registerRoomRoutes = require('./rooms');
 const registerIssueRoutes = require('./issues');
 
 function registerRoutes(app, deps) {
-  // Health endpoint for container orchestration
+  /**
+   * @openapi
+   * /health:
+   *   get:
+   *     tags:
+   *       - System
+   *     summary: Health check endpoint
+   *     description: Returns the health status of the application. Used by container orchestration systems for liveness/readiness probes.
+   *     responses:
+   *       200:
+   *         description: Application is healthy
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 status:
+   *                   type: string
+   *                   example: ok
+   */
   app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok' });
   });

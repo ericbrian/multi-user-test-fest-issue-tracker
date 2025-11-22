@@ -12,6 +12,8 @@ const cookieParser = require('cookie-parser');
 const passport = require('passport');
 const helmet = require('helmet');
 const { Issuer, Strategy } = require('openid-client');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./src/swagger');
 const { registerRoutes } = require('./src/routes');
 const { getPrisma } = require('./src/prismaClient');
 const { validateConfig } = require('./src/config');
@@ -195,6 +197,15 @@ app.use(passport.session());
 // In dev mode with SSO disabled, automatically attach a dev user to the request
 const { createDevAutoAuthMiddleware } = require('./src/middleware');
 app.use(createDevAutoAuthMiddleware({ DISABLE_SSO, DEV_USER_EMAIL, DEV_USER_NAME }));
+
+// Swagger API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: 'Test Fest Tracker API Docs',
+  customCss: '.swagger-ui .topbar { display: none }',
+  swaggerOptions: {
+    persistAuthorization: true,
+  },
+}));
 
 // Auth routes moved to src/routes.js
 
