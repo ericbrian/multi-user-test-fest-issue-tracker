@@ -108,9 +108,15 @@
     <div class="right">
       <div class="right-header">
         <h2 class="section-title" style="margin:0;">All Issues Reported by Team</h2>
-        <div class="placeholders-toggle">
-          <label for="togglePlaceholders">Show placeholders</label>
-          <input id="togglePlaceholders" type="checkbox" checked aria-label="Show placeholder issues" />
+        <div class="right-header-controls" style="display:flex; align-items:center; gap:12px;">
+          <div class="issues-filter">
+            <label for="issuesFilter" class="filter-label">Filter</label>
+            <select id="issuesFilter" aria-label="Filter issues">
+              <option value="all">All</option>
+              <option value="mine">Only mine</option>
+              <option value="theirs">Only theirs</option>
+            </select>
+          </div>
         </div>
       </div>
       <!-- right auth placeholder removed; use centered auth/chooser instead -->

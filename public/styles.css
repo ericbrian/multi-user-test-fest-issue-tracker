@@ -276,25 +276,36 @@ body {
   padding-bottom: 8px;
 }
 
-.placeholders-toggle {
+
+/* Small select used for issue filtering */
+.issues-filter select {
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.issues-filter {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.placeholders-toggle label {
+.issues-filter .filter-label {
   font-size: 13px;
   color: var(--muted);
   margin: 0;
 }
 
-.placeholders-toggle input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  padding: 0;
-  accent-color: var(--accent);
-  cursor: pointer;
+.visually-hidden {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
 }
 
 /* Keep the right panel title visible when the panel scrolls.

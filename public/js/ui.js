@@ -21,7 +21,7 @@ export const elements = {
   progressFill: document.getElementById("testProgress") ? document.getElementById("testProgress").querySelector(".progress-fill") : null,
   testScriptLinesContainer: document.getElementById('testScriptLinesContainer'),
   imagesInput: document.getElementById('images'),
-  togglePlaceholders: document.getElementById('togglePlaceholders'),
+  issuesFilter: document.getElementById('issuesFilter'),
 };
 
 // Cache last rendered issues list so toggling placeholders can re-render locally
@@ -420,15 +420,24 @@ export function renderIssues(list) {
   // Cache last list for re-render when toggles change
   _lastRenderedIssues = list || [];
   elements.issuesEl.innerHTML = "";
-  sortedList.forEach((i) => addOrUpdateIssue(i, true));
+  // Apply issue-owner filtering ('all' | 'mine' | 'theirs') before rendering
+  const filterMode = store.state.issuesFilter || 'all';
+  let displayList = sortedList;
+  if (filterMode === 'mine') {
+    displayList = sortedList.filter(i => store.state.me && i.created_by && i.created_by === store.state.me.id);
+  } else if (filterMode === 'theirs') {
+    displayList = sortedList.filter(i => !(store.state.me && i.created_by && i.created_by === store.state.me.id));
+  }
+
+  displayList.forEach((i) => addOrUpdateIssue(i, true));
 
   // Add placeholders for test script lines that don't have an issue
   // If test script lines are available in state, show a placeholder
   // entry on the right for each line that isn't represented by an issue.
   try {
     const lines = store.state.testScriptLines || [];
-    // Respect user preference to hide placeholders
-    if (!store.state.showPlaceholders) return;
+    // Only render placeholders when showing the full list (no owner filter)
+    if (store.state.issuesFilter !== 'all') return;
     if (lines && lines.length) {
       const issueScriptIds = new Set((list || []).map(x => String(x.script_id)));
       lines.forEach(line => {
@@ -909,28 +918,27 @@ function enableImageDragDrop() {
 
 // Initialize drag & drop wiring after module load
 enableImageDragDrop();
+// Initialize drag & drop wiring after module load
+enableImageDragDrop();
 
-// Wire placeholder toggle control: update store and re-render issues locally
+// Wire issues filter select (All / Mine / Theirs)
 (() => {
-  const toggle = elements.togglePlaceholders || document.getElementById('togglePlaceholders');
-  if (!toggle) return;
+  const select = elements.issuesFilter || document.getElementById('issuesFilter');
+  if (!select) return;
 
-  // Initialize toggle from store
-  try { toggle.checked = !!store.state.showPlaceholders; } catch (e) { /* ignore */ }
+  try { select.value = store.state.issuesFilter || 'all'; } catch (e) { /* ignore */ }
 
-  toggle.addEventListener('change', (e) => {
-    const val = !!e.target.checked;
+  select.addEventListener('change', (e) => {
+    const val = e.target.value || 'all';
     try {
-      store.setState({ showPlaceholders: val });
+      store.setState({ issuesFilter: val });
     } catch (err) {
-      console.error('Failed to set showPlaceholders state:', err);
+      console.error('Failed to set issuesFilter:', err);
     }
-    // Re-render issues using cached list so change is instant and local
     try {
       renderIssues(_lastRenderedIssues || []);
     } catch (err) {
-      console.error('Failed to re-render issues after toggling placeholders:', err);
+      console.error('Failed to re-render issues after changing filter:', err);
     }
   });
-
 })();
