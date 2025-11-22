@@ -1,4 +1,4 @@
-import { store } from './state.js';
+import { store, LS_KEY_SELECTED_SCRIPT } from './state.js';
 import * as api from './api.js';
 
 // DOM Elements
@@ -240,7 +240,21 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
   container.innerHTML = `${linesHtml}`;
 
   // If a scriptId is already set (hidden input), mark that line as selected
-  const currentScriptId = (document.getElementById('scriptId') || {}).value || null;
+  // If a scriptId is already set (hidden input), mark that line as selected.
+  // If not present in the input, try to restore from localStorage (persisted selection).
+  let currentScriptId = (document.getElementById('scriptId') || {}).value || null;
+  if (!currentScriptId) {
+    try {
+      currentScriptId = localStorage.getItem(LS_KEY_SELECTED_SCRIPT) || null;
+      if (currentScriptId) {
+        const scriptInput = document.getElementById('scriptId');
+        if (scriptInput) scriptInput.value = currentScriptId;
+      }
+    } catch (e) {
+      currentScriptId = null;
+    }
+  }
+
   if (currentScriptId) {
     setTimeout(() => {
       const selectedEl = container.querySelector(`.test-script-line[data-script-line-id="${currentScriptId}"]`);
@@ -351,6 +365,13 @@ function onTestScriptLineClick(e) {
   }
   // Update visible badge with the chosen script ID
   updateSelectedScriptBadge(scriptLineId);
+
+  // Persist selection so it can be restored across reloads
+  try {
+    localStorage.setItem(LS_KEY_SELECTED_SCRIPT, scriptLineId);
+  } catch (err) {
+    // ignore storage errors
+  }
 
   // Scroll the right-hand issues panel to the item matching this script ID
   try {
@@ -765,6 +786,7 @@ if (elements.issueForm) {
     updateSelectedScriptBadge(null);
     const container = document.getElementById('testScriptLinesContainer');
     if (container) container.querySelectorAll('.test-script-line.selected').forEach(el => el.classList.remove('selected'));
+    try { localStorage.removeItem(LS_KEY_SELECTED_SCRIPT); } catch (e) { /* ignore */ }
   });
 }
 

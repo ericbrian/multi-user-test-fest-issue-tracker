@@ -37,3 +37,4 @@ const initialState = {
 
 export const store = new Store(initialState);
 export const LS_KEY_LAST_ROOM = "tft:lastRoomId";
+export const LS_KEY_SELECTED_SCRIPT = "tft:selectedScriptId";
