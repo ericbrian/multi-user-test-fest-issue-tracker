@@ -473,7 +473,7 @@ export function renderIssues(list) {
           el.setAttribute('data-script-id', scriptId);
           el.innerHTML = `
             <div style="display:flex; justify-content: space-between; align-items:center; gap: 10px;">
-              <div class="dimmable" style="flex: 1 1 auto;"><strong>ID# ${scriptId}</strong> - No Issue reported.</div>
+              <div class="dimmable" style="flex: 1 1 auto;"><strong>ID# ${scriptId}</strong> - No issue reported.</div>
               <div class="dimmable" style="color: var(--muted); font-size: 12px;">&nbsp;</div>
             </div>
           `;
