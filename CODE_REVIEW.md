@@ -13,6 +13,7 @@ This is a **well-architected, production-ready Node.js application** for real-ti
 **Overall Grade: A- (90/100)**
 
 ### Strengths
+
 - ✅ Clean service-oriented architecture
 - ✅ Comprehensive security measures (rate limiting, XSS protection, input validation)
 - ✅ Good error handling and logging
@@ -23,8 +24,8 @@ This is a **well-architected, production-ready Node.js application** for real-ti
 - ✅ Good test coverage for critical services
 
 ### Areas for Improvement
+
 - ⚠️ Missing integration tests
-- ⚠️ No API documentation (OpenAPI/Swagger)
 - ⚠️ Some code duplication in route handlers
 - ⚠️ Limited frontend error handling
 - ⚠️ Missing database migration strategy
@@ -37,12 +38,14 @@ This is a **well-architected, production-ready Node.js application** for real-ti
 ## 1. Architecture & Design (9/10)
 
 ### Strengths
+
 - **Service Layer Pattern**: Excellent separation between routes and business logic through `IssueService`, `RoomService`, and `JiraService`
 - **Dependency Injection**: Routes receive dependencies through the `registerRoutes` pattern, making testing easier
 - **Modular Structure**: Clear organization with separate directories for routes, services, and middleware
 - **Singleton Pattern**: Proper Prisma client singleton to avoid connection pool exhaustion
 
 ### Recommendations
+
 ```javascript
 // Consider adding a repository layer for better testability
 // Example: src/repositories/IssueRepository.js
@@ -64,6 +67,7 @@ class IssueRepository {
 **Issue**: The `GROUPIER_EMAILS_LIST` dependency in `rooms.js` line 11 is referenced but never passed in the deps object from `server.js`. This could cause runtime errors.
 
 **Fix Required**:
+
 ```javascript
 // In server.js, line 202-214
 registerRoutes(app, {
@@ -87,6 +91,7 @@ registerRoutes(app, {
 ## 2. Security (9/10)
 
 ### Strengths
+
 - **Rate Limiting**: Comprehensive rate limiting on all sensitive endpoints
   - API: 100 req/15min
   - Auth: 5 req/15min
@@ -102,7 +107,9 @@ registerRoutes(app, {
 ### Security Issues Found
 
 #### 🔴 Critical: Schema Injection Risk
+
 **Location**: `server.js` line 61
+
 ```javascript
 client.query(`SET search_path TO "${SCHEMA}", public`);
 ```
@@ -110,6 +117,7 @@ client.query(`SET search_path TO "${SCHEMA}", public`);
 **Issue**: While the schema is validated in `config.js`, using string interpolation for SQL is risky.
 
 **Fix**:
+
 ```javascript
 // Use parameterized query or pg-format
 const format = require('pg-format');
@@ -117,7 +125,9 @@ client.query(format('SET search_path TO %I, public', SCHEMA));
 ```
 
 #### 🟡 Medium: CSP Disabled
+
 **Location**: `server.js` line 94
+
 ```javascript
 app.use(helmet({
   contentSecurityPolicy: false, // Disable CSP for now
@@ -125,6 +135,7 @@ app.use(helmet({
 ```
 
 **Recommendation**: Implement a proper CSP policy instead of disabling it entirely:
+
 ```javascript
 app.use(helmet({
   contentSecurityPolicy: {
@@ -140,11 +151,13 @@ app.use(helmet({
 ```
 
 #### 🟡 Medium: File Upload Validation
+
 **Location**: `server.js` line 71-81
 
 **Issue**: No file size limits or MIME type validation on uploads.
 
 **Fix**:
+
 ```javascript
 const upload = multer({ 
   storage,
@@ -166,11 +179,13 @@ const upload = multer({
 ```
 
 #### 🟡 Medium: Missing CORS Configuration
+
 **Location**: `server.js` line 86-88
 
 **Issue**: Socket.IO CORS is set to `false`, which might cause issues in production.
 
 **Recommendation**:
+
 ```javascript
 const io = require('socket.io')(server, {
   cors: { 
@@ -185,6 +200,7 @@ const io = require('socket.io')(server, {
 ## 3. Error Handling (8/10)
 
 ### Strengths
+
 - Global error handlers for uncaught exceptions and unhandled rejections
 - Graceful shutdown handlers (SIGTERM, SIGINT)
 - Service-level error handling with appropriate HTTP status codes
@@ -193,7 +209,9 @@ const io = require('socket.io')(server, {
 ### Issues
 
 #### 🟡 Medium: Inconsistent Error Responses
+
 Different routes return errors in different formats:
+
 ```javascript
 // Some return { error: 'message' }
 res.status(500).json({ error: 'Failed to create room' });
@@ -203,6 +221,7 @@ res.json({ ok: true });
 ```
 
 **Recommendation**: Create a standardized error response format:
+
 ```javascript
 // src/utils/errorResponse.js
 class ApiError extends Error {
@@ -228,7 +247,9 @@ function errorHandler(err, req, res, next) {
 ```
 
 #### 🟡 Medium: Missing Error Logging Service
+
 **Recommendation**: Integrate a proper logging service like Winston or Pino:
+
 ```javascript
 const winston = require('winston');
 
@@ -253,6 +274,7 @@ if (process.env.NODE_ENV !== 'production') {
 ## 4. Database & Data Management (9/10)
 
 ### Strengths
+
 - **Prisma ORM**: Excellent choice for type safety and migrations
 - **Schema Design**: Well-normalized with proper relationships and cascade deletes
 - **Connection Pooling**: Separate pools for session management and Prisma
@@ -261,12 +283,15 @@ if (process.env.NODE_ENV !== 'production') {
 ### Issues
 
 #### 🟡 Medium: Missing Migration Strategy
+
 **Location**: Prisma setup
 
 **Issue**: No clear migration strategy documented. The app creates schema on startup, but this doesn't work well with Prisma migrations.
 
 **Recommendation**:
+
 1. Use Prisma migrations properly:
+
 ```bash
 # Development
 npx prisma migrate dev --name init
@@ -276,6 +301,7 @@ npx prisma migrate deploy
 ```
 
 2. Add to `package.json`:
+
 ```json
 {
   "scripts": {
@@ -288,6 +314,7 @@ npx prisma migrate deploy
 ```
 
 3. Update Dockerfile to run migrations:
+
 ```dockerfile
 # Add before CMD
 RUN npx prisma generate
@@ -295,7 +322,9 @@ CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
 ```
 
 #### 🟢 Minor: Index Optimization
+
 **Recommendation**: Add indexes for frequently queried fields:
+
 ```prisma
 model Issue {
   // ... existing fields
@@ -318,6 +347,7 @@ model RoomMember {
 ## 5. Testing (7/10)
 
 ### Strengths
+
 - Unit tests for critical services (`JiraService`, `config`)
 - Good test coverage for edge cases
 - Proper mocking with Jest
@@ -325,9 +355,11 @@ model RoomMember {
 ### Issues
 
 #### 🔴 Critical: Missing Integration Tests
+
 **Issue**: No integration tests for API endpoints, database operations, or Socket.IO events.
 
 **Recommendation**: Add integration tests:
+
 ```javascript
 // __tests__/integration/issues.test.js
 const request = require('supertest');
@@ -365,7 +397,9 @@ describe('Issues API', () => {
 ```
 
 #### 🟡 Medium: No E2E Tests
+
 **Recommendation**: Add Playwright or Cypress for E2E testing:
+
 ```javascript
 // e2e/issue-creation.spec.js
 test('user can create and view issue', async ({ page }) => {
@@ -378,6 +412,7 @@ test('user can create and view issue', async ({ page }) => {
 ```
 
 #### 🟡 Medium: Missing Test for Auth Routes
+
 **Location**: `__tests__/integration/auth.test.js` exists but needs expansion
 
 ---
@@ -385,6 +420,7 @@ test('user can create and view issue', async ({ page }) => {
 ## 6. Code Quality & Maintainability (8/10)
 
 ### Strengths
+
 - Consistent code style
 - Good use of async/await
 - Meaningful variable names
@@ -394,7 +430,9 @@ test('user can create and view issue', async ({ page }) => {
 ### Issues
 
 #### 🟡 Medium: Code Duplication in Route Handlers
+
 **Example**: Permission checks are duplicated across routes:
+
 ```javascript
 // In issues.js line 111-112
 const membership = await prisma.roomMember.findUnique({ where: { room_id_user_id: { room_id: roomId, user_id: req.user.id } } });

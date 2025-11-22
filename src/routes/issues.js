@@ -5,7 +5,7 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const xss = require('xss');
 const { getPrisma } = require('../prismaClient');
-const { requireAuth } = require('../middleware');
+const { requireAuth, requireGroupierByRoom, requireIssueAndMembership } = require('../middleware');
 const { issueCreationLimiter, uploadLimiter } = require('../rateLimiter');
 const { IssueService } = require('../services/issueService');
 const { JiraService } = require('../services/jiraService');
@@ -278,7 +278,7 @@ function registerIssueRoutes(router, deps) {
    *             schema:
    *               $ref: '#/components/schemas/Error'
    */
-  router.post('/api/issues/:id/status', requireAuth, async (req, res) => {
+  router.post('/api/issues/:id/status', requireAuth, requireGroupierByRoom(), async (req, res) => {
     try {
       const { id } = req.params;
       const { status: requestedStatus, roomId } = req.body;
@@ -286,9 +286,6 @@ function registerIssueRoutes(router, deps) {
       if (requestedStatus !== 'clear-status' && !TAGS.includes(requestedStatus)) {
         return res.status(400).json({ error: 'Invalid status' });
       }
-
-      const membership = await prisma.roomMember.findUnique({ where: { room_id_user_id: { room_id: roomId, user_id: req.user.id } } });
-      if (!membership || !membership.is_groupier) return res.status(403).json({ error: 'Forbidden' });
 
       const out = await issueService.updateStatus(id, requestedStatus);
 
@@ -375,21 +372,14 @@ function registerIssueRoutes(router, deps) {
    *                 value:
    *                   error: "Invalid Jira request. Please check project configuration."
    */
-  router.post('/api/issues/:id/jira', requireAuth, async (req, res) => {
+  router.post('/api/issues/:id/jira', requireAuth, requireIssueAndMembership(), async (req, res) => {
     try {
       const { id } = req.params;
       const { roomId } = req.body;
-
-      const membership = await prisma.roomMember.findUnique({ where: { room_id_user_id: { room_id: roomId, user_id: req.user.id } } });
-
-      const issue = await prisma.issue.findUnique({
-        where: { id },
-        include: { createdBy: true }
-      });
-      if (!issue) return res.status(404).json({ error: 'Issue not found' });
-
+      const issue = req.issue;
+      const membership = req.membership;
       const isGroupier = membership && membership.is_groupier;
-      const isCreator = issue.created_by === req.user.id;
+      const isCreator = issue && issue.created_by === req.user.id;
 
       if (!isGroupier && !isCreator) return res.status(403).json({ error: 'Forbidden' });
 
@@ -406,7 +396,6 @@ function registerIssueRoutes(router, deps) {
       try {
         const jiraKey = await jiraService.createIssue(issue, roomName);
         const updated = await issueService.updateJiraKey(id, jiraKey);
-
         io.to(roomId).emit('issue:update', updated);
         res.json({ jira_key: jiraKey });
       } catch (jiraError) {
@@ -476,20 +465,17 @@ function registerIssueRoutes(router, deps) {
    *             schema:
    *               $ref: '#/components/schemas/Error'
    */
-  router.delete('/api/issues/:id', requireAuth, async (req, res) => {
+  router.delete('/api/issues/:id', requireAuth, requireIssueAndMembership(), async (req, res) => {
     try {
-      const { id } = req.params;
-      const issue = await prisma.issue.findUnique({ where: { id } });
-      if (!issue) return res.status(404).json({ error: 'Issue not found' });
-
-      const membership = await prisma.roomMember.findUnique({ where: { room_id_user_id: { room_id: issue.room_id, user_id: req.user.id } } });
+      const issue = req.issue;
+      const membership = req.membership;
       const isGroupier = Boolean(membership && membership.is_groupier);
       const isCreator = issue.created_by === req.user.id;
       if (!isGroupier && !isCreator) return res.status(403).json({ error: 'Forbidden' });
 
-      await issueService.deleteIssue(id);
+      await issueService.deleteIssue(issue.id);
 
-      io.to(issue.room_id).emit('issue:delete', { id });
+      io.to(issue.room_id).emit('issue:delete', { id: issue.id });
       res.json({ ok: true });
     } catch (error) {
       console.error('Error deleting issue:', error);

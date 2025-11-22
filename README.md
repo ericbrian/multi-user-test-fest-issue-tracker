@@ -86,6 +86,22 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## API Documentation
+
+Interactive API documentation is available via Swagger UI at:
+
+```
+http://localhost:3000/api-docs
+```
+
+The documentation includes:
+- Complete endpoint reference for all REST API routes
+- Request/response schemas and examples
+- Authentication details
+- Interactive API testing interface
+
+For more details, see [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md).
+
 ### Entra ID setup for development
 
 - Create an app registration in Azure Entra ID (Azure AD)
