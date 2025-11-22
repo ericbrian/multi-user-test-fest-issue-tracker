@@ -5,6 +5,7 @@ Use this checklist before deploying to production.
 ## ✅ Configuration
 
 - [ ] **SESSION_SECRET** is set to a secure random value (minimum 32 characters)
+
   ```bash
   # Generate with:
   node -e "console.log(require('crypto').randomBytes(32).toString('hex'));"
@@ -70,6 +71,7 @@ Use this checklist before deploying to production.
 ## ✅ Database
 
 - [ ] Database schema is created and up to date
+
   ```bash
   npm run prisma:migrate
   ```
@@ -77,6 +79,7 @@ Use this checklist before deploying to production.
 - [ ] Database connection is tested
   
 - [ ] Prisma client is generated
+
   ```bash
   npm run prisma:generate
   ```
@@ -94,11 +97,13 @@ Use this checklist before deploying to production.
 ## ✅ Docker (if using)
 
 - [ ] Build Docker image successfully
+
   ```bash
   docker build -t test-fest-tracker:latest .
   ```
   
 - [ ] Test Docker container locally
+
   ```bash
   docker run --env-file .env -p 3000:3000 test-fest-tracker:latest
   ```
@@ -108,6 +113,7 @@ Use this checklist before deploying to production.
 ## ✅ Application Startup
 
 - [ ] Application starts without errors
+
   ```bash
   npm start
   ```
@@ -262,6 +268,7 @@ npm run dev
 ## Support
 
 For issues or questions:
+
 1. Review documentation in repository
 2. Check application logs
 3. Review git history for recent changes
