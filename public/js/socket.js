@@ -1,6 +1,7 @@
 import { store } from './state.js';
 import * as ui from './ui.js';
 import * as api from './api.js';
+import { showNotification } from './notifications.js';
 
 export function initSocket(roomId) {
   if (store.state.socket) {
@@ -16,8 +17,20 @@ export function initSocket(roomId) {
 
   store.state.socket.emit("room:join", roomId);
 
-  store.state.socket.on("issue:new", () => refreshIssues(roomId));
-  store.state.socket.on("issue:update", () => refreshIssues(roomId));
+  store.state.socket.on("issue:new", (payload) => {
+    try {
+      const who = payload && (payload.created_by_name || payload.created_by_email) ? ` by ${payload.created_by_name || payload.created_by_email}` : '';
+      showNotification('info', 'New issue', `New issue reported${who}`);
+    } catch (e) { /* non-fatal */ }
+    refreshIssues(roomId);
+  });
+
+  store.state.socket.on("issue:update", (payload) => {
+    try {
+      showNotification('info', 'Issue updated', payload && payload.status ? `Status: ${payload.status}` : 'An issue was updated');
+    } catch (e) { /* non-fatal */ }
+    refreshIssues(roomId);
+  });
 
   store.state.socket.on("testScriptLine:progress", (payload) => {
     const line = store.state.testScriptLines.find(l => l.id === payload.lineId);
@@ -26,10 +39,18 @@ export function initSocket(roomId) {
       line.checked_at = payload.checked_at;
       line.progress_notes = payload.notes;
       ui.renderTestScriptLines();
+      try {
+        const actor = payload && payload.userId && store.state.me && payload.userId === store.state.me.id ? 'You' : 'A tester';
+        const msg = payload && payload.is_checked ? `${actor} checked a test line` : `${actor} unchecked a test line`;
+        showNotification('success', 'Test progress', msg);
+      } catch (e) { /* ignore */ }
     }
   });
 
   store.state.socket.on("issue:delete", (payload) => {
+    try {
+      showNotification('warn', 'Issue deleted', payload && payload.id ? `Issue ${payload.id} was removed` : 'An issue was removed');
+    } catch (e) { /* ignore */ }
     if (payload && payload.id) {
       ui.removeIssueElement(payload.id);
     } else {
