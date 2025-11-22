@@ -19,11 +19,16 @@ Use this checklist before deploying to production.
   
 - [ ] **DISABLE_SSO** is set to `false` for production (use real auth)
 
+- [ ] **NODE_ENV** is set to `production` and `COOKIE_SECURE`/`HTTPS` are enabled
+  - Note: `server.js` sets session cookie `secure: false` for local/dev; in production behind TLS set `cookie.secure: true` (or use a `COOKIE_SECURE=true` env var) and ensure `app.set('trust proxy', 1)` when behind a proxy/load balancer.
+
 - [ ] If using SSO, all Entra ID variables are configured:
   - [ ] ENTRA_ISSUER
   - [ ] ENTRA_CLIENT_ID
   - [ ] ENTRA_CLIENT_SECRET
   - [ ] ENTRA_REDIRECT_URI
+  - [ ] Consider configuring logout to call the identity provider's `end_session_endpoint` (so app logout triggers provider logout), and set `post_logout_redirect_uri`.
+  - [ ] Consider enabling PKCE (`usePKCE: true`) in the OIDC client unless your confidential client prohibits it.
 
 - [ ] If using Jira integration, all Jira variables are configured:
   - [ ] JIRA_BASE_URL
@@ -68,12 +73,18 @@ Use this checklist before deploying to production.
   
 - [ ] Authorization checks are in place for protected endpoints
 
+- [ ] Review session cookie settings
+  - Ensure `httpOnly: true`, `sameSite` is appropriate (`'lax'` is recommended), and `secure: true` in production.
+- [ ] Secrets management
+  - Do not commit `.env` to source control. Use secret management (Azure Key Vault, AWS Secrets Manager, HashiCorp Vault) for `SESSION_SECRET`, `ENTRA_CLIENT_SECRET`, `DATABASE_URL`, `JIRA_API_TOKEN`, etc.
+
 ## ✅ Database
 
 - [ ] Database schema is created and up to date
 
   ```bash
-  npm run prisma:migrate
+  # In production use the deploy command (run after taking backups)
+  npx prisma migrate deploy
   ```
   
 - [ ] Database connection is tested
@@ -94,6 +105,9 @@ Use this checklist before deploying to production.
   
 - [ ] Consider using cloud storage (S3, etc.) for production
 
+- [ ] Avoid using local disk for uploads when running in containers
+  - Use durable object storage (S3/Azure Blob/GCS) or persistent volumes and ensure backups if local storage is unavoidable.
+
 ## ✅ Docker (if using)
 
 - [ ] Build Docker image successfully
@@ -109,6 +123,9 @@ Use this checklist before deploying to production.
   ```
   
 - [ ] Health check endpoint responds: `http://localhost:3000/health`
+
+- [ ] Configure readiness and liveness probes for your orchestrator
+  - Use `/health` for basic liveness; add a readiness probe that verifies DB connectivity before routing traffic.
 
 ## ✅ Application Startup
 
@@ -135,6 +152,9 @@ Use this checklist before deploying to production.
 - [ ] Set up alerts for application errors
   
 - [ ] Monitor rate limit rejections
+
+- [ ] Centralized logging and error monitoring
+  - Integrate a log/monitoring service (Sentry, Datadog, CloudWatch) to capture `uncaughtException` and `unhandledRejection` and application metrics.
 
 ## ✅ Load Testing (Optional but Recommended)
 
@@ -189,6 +209,7 @@ Use this checklist before deploying to production.
 - [ ] File uploads work
   
 - [ ] Real-time updates work (Socket.IO)
+  - [ ] Verify WebSocket support through any reverse proxy (nginx, ALB). If using multiple app replicas without sticky sessions, consider using a Socket.IO adapter (Redis) or centralized pub/sub.
   
 - [ ] Jira integration works (if configured)
   
@@ -208,6 +229,14 @@ Use this checklist before deploying to production.
   
 - [ ] Check that file upload restrictions are in place
 
+- [ ] OIDC logout and CSP
+  - Ensure the app logout flow optionally calls the OIDC provider `end_session_endpoint` to fully sign users out.
+  - Enable a Content Security Policy for production (the app currently disables CSP in `helmet`); document required script/style exceptions or use nonces/hashes.
+- [ ] Socket.IO CORS & proxy settings
+  - Confirm Socket.IO CORS origin(s) are configured correctly and WebSocket proxying is enabled if using a reverse proxy. The server currently uses `cors: { origin: false }` so update in production if necessary.
+- [ ] Session store & scaling
+  - If running multiple replicas, use a shared session store (Redis or DB-backed store). `connect-pg-simple` works but watch DB connection pool and session load.
+
 ---
 
 ## Quick Start Commands
@@ -219,14 +248,16 @@ npm install
 # Generate Prisma client
 npm run prisma:generate
 
-# Run database migrations
-npm run prisma:migrate
+# Run database migrations (production-safe)
+npx prisma migrate deploy
 
 # Run tests
 npm test
 
 # Start application
-npm start
+# Development: `npm start`
+# Production example (set NODE_ENV and ensure secure cookies):
+# NODE_ENV=production COOKIE_SECURE=true npm start
 
 # Development mode with auto-reload
 npm run dev
