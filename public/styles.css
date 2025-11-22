@@ -745,6 +745,19 @@ button:disabled {
   background: transparent;
 }
 
+/* Visual state when an issue has been sent to Jira successfully */
+.issue.jira-sent {
+  border-color: rgba(245, 158, 11, 0.14);
+}
+.issue.jira-sent .issue-footer,
+.issue-footer.jpa-sent {
+  background: rgba(245, 158, 11, 0.04);
+  border-top-color: rgba(245, 158, 11, 0.14);
+}
+.issue.jira-sent .jira-note a {
+  color: #f97316; /* orange link color for Jira */
+}
+
 .issue-footer-left {
   display: flex;
   align-items: center;

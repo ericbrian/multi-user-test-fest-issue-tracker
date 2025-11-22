@@ -668,7 +668,21 @@ async function onIssueButtonClick(e) {
       btn.disabled = true;
       btn.textContent = "Sending...";
       await api.sendToJira(id, store.state.currentRoomId);
-      // The UI will update automatically via socket event
+      // Optimistically mark the issue footer as 'sent to Jira' for immediate feedback.
+      try {
+        const issueEl = document.getElementById(`issue-${id}`);
+        if (issueEl) {
+          issueEl.classList.add('jira-sent');
+          const footer = issueEl.querySelector('.issue-footer');
+          if (footer) footer.classList.add('jira-sent');
+        }
+      } catch (err) { /* non-fatal */ }
+      // Update the button to indicate success
+      try {
+        btn.textContent = "Sent";
+        btn.disabled = true;
+      } catch (err) { /* ignore */ }
+      // The UI will also update automatically via socket event
     } catch (error) {
       alert("Failed to create Jira issue: " + error.message);
       const btn = e.target;
