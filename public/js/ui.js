@@ -926,12 +926,26 @@ enableImageDragDrop();
   const select = elements.issuesFilter || document.getElementById('issuesFilter');
   if (!select) return;
 
-  try { select.value = store.state.issuesFilter || 'all'; } catch (e) { /* ignore */ }
+  const LS_KEY = 'tft:issuesFilter';
+  // Initialize from localStorage (if available), otherwise fall back to store
+  let initial = 'all';
+  try {
+    const saved = localStorage.getItem(LS_KEY);
+    initial = saved || store.state.issuesFilter || 'all';
+  } catch (e) {
+    initial = store.state.issuesFilter || 'all';
+  }
+
+  try {
+    select.value = initial;
+    store.setState({ issuesFilter: initial });
+  } catch (e) { /* ignore */ }
 
   select.addEventListener('change', (e) => {
     const val = e.target.value || 'all';
     try {
       store.setState({ issuesFilter: val });
+      try { localStorage.setItem(LS_KEY, val); } catch (err) { /* ignore storage errors */ }
     } catch (err) {
       console.error('Failed to set issuesFilter:', err);
     }
