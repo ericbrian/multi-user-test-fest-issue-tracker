@@ -154,20 +154,7 @@ export function populateRoomSelect(rooms) {
   }
 }
 
-export function updateTestProgress() {
-  const progressText = elements.testProgress ? elements.testProgress.querySelector(".progress-text") : null;
-  const progressFill = elements.testProgress ? elements.testProgress.querySelector(".progress-fill") : null;
 
-  if (!store.state.testScriptLines || !progressText || !progressFill) return;
-
-  const totalTests = store.state.testScriptLines.length;
-  const completedTests = store.state.testScriptLines.filter(line => line.is_checked).length;
-  const percentage = totalTests > 0 ? (completedTests / totalTests) * 100 : 0;
-
-  const testsWord = totalTests === 1 ? 'test' : 'tests';
-  progressText.textContent = `${completedTests} of ${totalTests} ${testsWord} done`;
-  progressFill.style.width = `${percentage}%`;
-}
 
 export function renderTestScriptLines(shouldAutoScroll = false) {
   let container = document.getElementById('testScriptLinesContainer');
@@ -304,7 +291,28 @@ function ensureTestScriptTitle(insertParent, text) {
   // If a dedicated title element exists, update it
   let titleEl = document.getElementById('testScriptLinesTitle');
   if (titleEl) {
-    titleEl.textContent = text;
+    // Update text but preserve the progress bar if it exists
+    const progressBar = titleEl.querySelector('#testProgress');
+    titleEl.innerHTML = '';
+    const textSpan = document.createElement('span');
+    textSpan.textContent = text;
+    titleEl.appendChild(textSpan);
+    let prog = progressBar;
+    if (!prog) {
+      // Create progress bar inside title
+      prog = document.createElement('div');
+      prog.id = 'testProgress';
+      prog.className = 'test-progress';
+      prog.innerHTML = `
+        <span class="progress-text">0 of 0 tests done</span>
+        <div class="progress-bar">
+          <div class="progress-fill"></div>
+        </div>
+      `;
+    }
+    titleEl.appendChild(prog);
+    // keep a reference on the exported elements map so other code can find it
+    try { elements.testProgress = prog; } catch (e) { /* ignore */ }
     // make sure it's directly before our container
     const container = document.getElementById('testScriptLinesContainer');
     if (container && titleEl.nextElementSibling !== container) {
@@ -316,7 +324,21 @@ function ensureTestScriptTitle(insertParent, text) {
   titleEl = document.createElement('div');
   titleEl.id = 'testScriptLinesTitle';
   titleEl.className = 'test-script-lines-title';
-  titleEl.textContent = text;
+  const textSpan = document.createElement('span');
+  textSpan.textContent = text;
+  titleEl.appendChild(textSpan);
+  // Create progress bar inside title
+  const prog = document.createElement('div');
+  prog.id = 'testProgress';
+  prog.className = 'test-progress';
+  prog.innerHTML = `
+    <span class="progress-text">0 of 0 tests done</span>
+    <div class="progress-bar">
+      <div class="progress-fill"></div>
+    </div>
+  `;
+  titleEl.appendChild(prog);
+  try { elements.testProgress = prog; } catch (e) { /* ignore */ }
   // insert before the container if present, otherwise append to parent
   const container = document.getElementById('testScriptLinesContainer');
   if (container) {
@@ -324,6 +346,22 @@ function ensureTestScriptTitle(insertParent, text) {
   } else {
     insertParent.appendChild(titleEl);
   }
+}
+
+export function updateTestProgress() {
+  // Locate the progress element dynamically (it may be created after module load)
+  const progressEl = document.getElementById('testProgress') || elements.testProgress || null;
+  const progressText = progressEl ? progressEl.querySelector('.progress-text') : null;
+  const progressFill = progressEl ? progressEl.querySelector('.progress-fill') : null;
+
+  if (!store.state.testScriptLines || !progressText || !progressFill) return;
+
+  const totalTests = store.state.testScriptLines.length;
+  const completedTests = store.state.testScriptLines.filter(line => line.is_checked).length;
+  const percentage = totalTests > 0 ? (completedTests / totalTests) * 100 : 0;
+
+  progressText.textContent = `${completedTests} of ${totalTests} tests done`;
+  progressFill.style.width = `${percentage}%`;
 }
 
 function escapeHtml(text) {

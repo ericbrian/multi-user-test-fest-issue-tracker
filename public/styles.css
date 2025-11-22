@@ -73,11 +73,11 @@ body {
 }
 
 .test-progress {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   gap: 4px;
-  min-width: 120px;
+  margin-left: auto;
 }
 
 .progress-text {
@@ -850,6 +850,9 @@ button:disabled {
   margin-bottom: 8px;
   font-size: 14px;
   padding: 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 /* Auth placeholder card for unauthenticated visitors */
