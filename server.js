@@ -80,7 +80,34 @@ const storage = multer.diskStorage({
     cb(null, `${unique}${ext}`);
   },
 });
-const upload = multer({ storage });
+
+// File upload validation
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILES = 5;
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: MAX_FILE_SIZE,
+    files: MAX_FILES
+  },
+  fileFilter: (req, file, cb) => {
+    // Check MIME type
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      return cb(new Error(`Invalid file type. Only images are allowed (JPEG, PNG, GIF, WebP). Received: ${file.mimetype}`));
+    }
+
+    // Additional check on file extension
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    if (!allowedExtensions.includes(ext)) {
+      return cb(new Error(`Invalid file extension. Only ${allowedExtensions.join(', ')} are allowed. Received: ${ext}`));
+    }
+
+    cb(null, true);
+  }
+});
 
 // Express app
 const app = express();

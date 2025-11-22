@@ -47,6 +47,39 @@ function registerRoutes(app, deps) {
   app.use((error, req, res, next) => {
     console.error('Unhandled error:', error);
 
+    // Handle Multer file upload errors
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        error: 'File too large',
+        details: 'Maximum file size is 5MB per file'
+      });
+    }
+
+    if (error.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({
+        error: 'Too many files',
+        details: 'Maximum 5 files per upload'
+      });
+    }
+
+    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({
+        error: 'Unexpected file field',
+        details: 'Please use the correct file upload field name'
+      });
+    }
+
+    // Handle custom multer fileFilter errors
+    if (error.message && (
+      error.message.includes('Invalid file type') ||
+      error.message.includes('Invalid file extension')
+    )) {
+      return res.status(400).json({
+        error: 'Invalid file',
+        details: error.message
+      });
+    }
+
     // Don't leak internal error details to clients in production
     if (process.env.NODE_ENV === 'production') {
       res.status(500).json({ error: 'Internal server error' });
