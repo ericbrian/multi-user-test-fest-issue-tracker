@@ -69,9 +69,7 @@ export function updateVisibility() {
   const roomChooser = document.getElementById('roomChooserCenter');
   if (roomChooser) roomChooser.classList.toggle('hidden', !(isLoggedIn && !inRoom));
 
-  document.querySelectorAll(".left-section").forEach((el) => {
-    el.classList.toggle("hidden", !shouldShow);
-  });
+  // left-section wrapper removed; visibility is controlled on the form itself
 
   if (elements.createRoomBtn) elements.createRoomBtn.style.display = shouldShow ? "none" : "inline-block";
   if (elements.roomSelect) elements.roomSelect.style.display = shouldShow ? "none" : "inline-block";
