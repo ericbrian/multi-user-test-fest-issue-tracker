@@ -321,14 +321,10 @@ body {
   margin-bottom: 12px;
   padding-top: 8px;
   padding-bottom: 8px;
-  /* Ensure the header has a visibly darker background for contrast */
-  background: var(--right-panel);
-  /* Dark overlay to increase contrast against the panel */
-  padding-left: 12px;
-  padding-right: 12px;
-  /* stronger explicit border so it is visible on the darker header */
-  border-bottom: 1px solid rgba(255,255,255,0.12);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset;
+  /* Remove heavy background so the title visually blends with the panel */
+  background: transparent;
+  /* Remove the bottom border so the title sits flush with the header */
+  border-bottom: none;
 }
 
 .hidden {
@@ -827,7 +823,7 @@ button:disabled {
 /* Test Script Lines */
 .test-script-lines {
   margin-bottom: 16px;
-  max-height: 270px;
+  max-height: 320px;
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);

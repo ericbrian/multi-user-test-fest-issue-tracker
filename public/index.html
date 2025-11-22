@@ -47,7 +47,6 @@
       <div class="auth-card-desc">Sign in to join a Test Fest, report issues, and view team issues.</div>
       <div class="auth-card-actions">
         <button id="loginCenterBtn" onclick="window.location.href='/auth/login'">Log in</button>
-        <button class="btn-tag" onclick="window.location.href='/auth/login'">Log in</button>
       </div>
     </div>
   </div>
@@ -86,7 +85,7 @@
           <label>Reason for logging?</label>
           <div class="reasons">
             <label><input type="checkbox" name="is_issue" checked /> New Issue</label>
-            <label><input type="checkbox" name="is_existing_upper_env" /> Issue in
+            <label><input type="checkbox" name="is_existing_upper_env" /> Issue already in
               Production</label>
             <label><input type="checkbox" name="is_annoyance" /> Annoyance</label>
             <label><input type="checkbox" name="is_not_sure_how_to_test" /> Not
@@ -104,7 +103,7 @@
     </div>
     <div class="right">
       <div class="right-header">
-        <h2 class="section-title" style="margin:0;">All Issues Reported by Team</h2>
+        <h2 class="section-title" style="margin:0;">Issues Reported by All Testers</h2>
         <div class="right-header-controls" style="display:flex; align-items:center; gap:12px;">
           <div class="issues-filter">
             <label for="issuesFilter" class="filter-label">Filter</label>
@@ -112,6 +111,7 @@
               <option value="all">All</option>
               <option value="mine">Only mine</option>
               <option value="theirs">Only theirs</option>
+              <option value="no-placeholders">No placeholders</option>
             </select>
           </div>
         </div>
