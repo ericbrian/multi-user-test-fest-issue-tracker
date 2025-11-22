@@ -9,7 +9,8 @@ Real-time multi-user issue tracker for Test Fests. Left pane: submit issues. Rig
 - Rooms: Created by a Groupier; members join and report issues
 - Groupier can tag issues (duplicate, as-designed, low-priority)
 - Issues with duplicate/as-designed fade visually
-- Upload images with each issue
+- Upload images with each issue (5MB max, images only, validated)
+- Comprehensive file upload security (MIME type validation, size limits)
 - “Send to Jira” button (requires Jira config)
 
 ## Tech
