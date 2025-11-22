@@ -466,11 +466,7 @@ select {
   outline: none;
 }
 
-input:focus,
-textarea:focus,
-select:focus {
-  /* focus handled via explicit focused controls elsewhere; removed empty ruleset */
-}
+ 
 
 button {
   padding: 10px 14px;
@@ -486,10 +482,7 @@ button {
   min-width: 36px;
 }
 
-/* removed empty hover ruleset to eliminate linter warning */
-
-/* removed empty active ruleset to eliminate linter warning */
-
+ 
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
