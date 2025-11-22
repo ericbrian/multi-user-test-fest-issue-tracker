@@ -162,7 +162,7 @@ body {
   font-size: 11px;
   font-weight: 600;
   padding: 3px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
@@ -405,13 +405,13 @@ select {
 input:focus,
 textarea:focus,
 select:focus {
-  /* No focus effects */
+  /* focus handled via explicit focused controls elsewhere; removed empty ruleset */
 }
 
 button {
   padding: 10px 14px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--accent);
   color: white;
   cursor: pointer;
@@ -422,13 +422,9 @@ button {
   min-width: 36px;
 }
 
-button:hover {
-  /* No hover effects */
-}
+/* removed empty hover ruleset to eliminate linter warning */
 
-button:active {
-  /* No active effects */
-}
+/* removed empty active ruleset to eliminate linter warning */
 
 button:disabled {
   opacity: 0.6;
@@ -441,7 +437,7 @@ button:disabled {
   border: 1px solid var(--border);
   box-shadow: none;
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
 }
 
@@ -595,7 +591,7 @@ button:disabled {
   margin-top: 6px;
   padding: 6px 8px;
   font-size: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: none;
   background: rgba(185, 28, 28, 0.12);
   color: #ffdddd;
@@ -1053,7 +1049,7 @@ input[type="submit"]:focus,
   background: var(--accent);
   color: white;
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   font-size: 12px;
   font-weight: 600;
   flex-shrink: 0;
@@ -1193,7 +1189,7 @@ input[type="submit"]:focus,
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
