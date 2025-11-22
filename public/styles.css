@@ -977,6 +977,21 @@ input[type="submit"]:focus,
   color: var(--text);
 }
 
+/* When using the icon-only variant, match the compact icon button sizing */
+#changeRoomBtn.icon-btn {
+  padding: 6px;
+  width: 40px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#changeRoomBtn.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* Icon-only create button should be compact and square */
 .icon-btn {
   padding: 6px;
