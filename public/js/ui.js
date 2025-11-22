@@ -21,7 +21,11 @@ export const elements = {
   progressFill: document.getElementById("testProgress") ? document.getElementById("testProgress").querySelector(".progress-fill") : null,
   testScriptLinesContainer: document.getElementById('testScriptLinesContainer'),
   imagesInput: document.getElementById('images'),
+  togglePlaceholders: document.getElementById('togglePlaceholders'),
 };
+
+// Cache last rendered issues list so toggling placeholders can re-render locally
+let _lastRenderedIssues = [];
 
 export function updateVisibility() {
   const isLoggedIn = Boolean(store.state.me);
@@ -408,11 +412,13 @@ async function onTestScriptLineCheckboxClick(e) {
 }
 
 export function renderIssues(list) {
-  const sortedList = list.sort((a, b) => {
+  const sortedList = (list || []).slice().sort((a, b) => {
     const scriptIdA = parseInt(a.script_id) || 0;
     const scriptIdB = parseInt(b.script_id) || 0;
     return scriptIdA - scriptIdB;
   });
+  // Cache last list for re-render when toggles change
+  _lastRenderedIssues = list || [];
   elements.issuesEl.innerHTML = "";
   sortedList.forEach((i) => addOrUpdateIssue(i, true));
 
@@ -421,6 +427,8 @@ export function renderIssues(list) {
   // entry on the right for each line that isn't represented by an issue.
   try {
     const lines = store.state.testScriptLines || [];
+    // Respect user preference to hide placeholders
+    if (!store.state.showPlaceholders) return;
     if (lines && lines.length) {
       const issueScriptIds = new Set((list || []).map(x => String(x.script_id)));
       lines.forEach(line => {
@@ -901,3 +909,28 @@ function enableImageDragDrop() {
 
 // Initialize drag & drop wiring after module load
 enableImageDragDrop();
+
+// Wire placeholder toggle control: update store and re-render issues locally
+(() => {
+  const toggle = elements.togglePlaceholders || document.getElementById('togglePlaceholders');
+  if (!toggle) return;
+
+  // Initialize toggle from store
+  try { toggle.checked = !!store.state.showPlaceholders; } catch (e) { /* ignore */ }
+
+  toggle.addEventListener('change', (e) => {
+    const val = !!e.target.checked;
+    try {
+      store.setState({ showPlaceholders: val });
+    } catch (err) {
+      console.error('Failed to set showPlaceholders state:', err);
+    }
+    // Re-render issues using cached list so change is instant and local
+    try {
+      renderIssues(_lastRenderedIssues || []);
+    } catch (err) {
+      console.error('Failed to re-render issues after toggling placeholders:', err);
+    }
+  });
+
+})();

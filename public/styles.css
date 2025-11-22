@@ -267,6 +267,36 @@ body {
   min-height: 0;
 }
 
+/* Right header (keeps title and controls aligned) */
+.right-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+.placeholders-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.placeholders-toggle label {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.placeholders-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 /* Keep the right panel title visible when the panel scrolls.
    Use a non-child selector so the title keeps its background even if
    the DOM structure changes slightly (e.g., wrapped or moved). */
