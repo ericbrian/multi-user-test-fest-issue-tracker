@@ -396,7 +396,7 @@ select {
   max-width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: rgba(0, 0, 0, 0.2);
   color: var(--text);
   outline: none;
@@ -508,7 +508,7 @@ button:disabled {
 #images::-webkit-file-upload-button {
   padding: 10px 14px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--accent);
   color: white;
   cursor: pointer;
@@ -538,14 +538,14 @@ button:disabled {
 #images.drag-over {
   outline: 2px dashed var(--accent-2);
   outline-offset: 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: rgba(6, 182, 212, 0.03);
 }
 
 /* Dropzone */
 .images-dropzone {
   border: 1px dashed var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 14px;
   color: var(--muted);
   text-align: center;
