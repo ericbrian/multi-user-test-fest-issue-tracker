@@ -1,5 +1,11 @@
 import { store } from './state.js';
 
+function getCsrfToken() {
+  return document.cookie.split('; ')
+    .find(row => row.startsWith('XSRF-TOKEN='))
+    ?.split('=')[1];
+}
+
 export async function fetchMe() {
   try {
     const res = await fetch("/me");
@@ -42,7 +48,10 @@ export async function fetchScriptLibrary() {
 export async function createRoom(data) {
   const res = await fetch('/api/rooms', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-XSRF-TOKEN': getCsrfToken()
+    },
     body: JSON.stringify(data),
   });
   if (!res.ok) {
@@ -55,7 +64,10 @@ export async function createRoom(data) {
 export async function joinRoomApi(roomId) {
   const res = await fetch("/api/rooms/" + roomId + "/join", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      'X-XSRF-TOKEN': getCsrfToken()
+    },
     body: JSON.stringify({}),
   });
   if (!res.ok) throw new Error("Failed to join room");
@@ -77,7 +89,10 @@ export async function fetchTestScriptLines(roomId) {
 export async function updateTestScriptLineProgress(lineId, isChecked) {
   const res = await fetch(`/api/test-script-lines/${lineId}/progress`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-XSRF-TOKEN': getCsrfToken()
+    },
     body: JSON.stringify({ is_checked: isChecked })
   });
   if (!res.ok) {
@@ -90,7 +105,10 @@ export async function updateTestScriptLineProgress(lineId, isChecked) {
 export async function updateIssueStatus(id, status, roomId) {
   const res = await fetch(`/api/issues/${id}/status`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      'X-XSRF-TOKEN': getCsrfToken()
+    },
     body: JSON.stringify({ status, roomId }),
   });
   if (!res.ok) {
@@ -103,7 +121,10 @@ export async function updateIssueStatus(id, status, roomId) {
 export async function sendToJira(id, roomId) {
   const res = await fetch(`/api/issues/${id}/jira`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      'X-XSRF-TOKEN': getCsrfToken()
+    },
     body: JSON.stringify({ roomId }),
   });
   if (!res.ok) throw new Error("Failed to create Jira issue");
@@ -111,7 +132,12 @@ export async function sendToJira(id, roomId) {
 }
 
 export async function deleteIssue(id) {
-  const res = await fetch(`/api/issues/${id}`, { method: "DELETE" });
+  const res = await fetch(`/api/issues/${id}`, {
+    method: "DELETE",
+    headers: {
+      'X-XSRF-TOKEN': getCsrfToken()
+    }
+  });
   if (!res.ok) throw new Error("Failed to delete");
   return true;
 }
@@ -119,6 +145,9 @@ export async function deleteIssue(id) {
 export async function submitIssue(roomId, formData) {
   const res = await fetch(`/api/rooms/${roomId}/issues`, {
     method: "POST",
+    headers: {
+      'X-XSRF-TOKEN': getCsrfToken()
+    },
     body: formData,
   });
   if (!res.ok) {
@@ -130,5 +159,10 @@ export async function submitIssue(roomId, formData) {
 }
 
 export async function logout() {
-  await fetch("/auth/logout", { method: "POST" });
+  await fetch("/auth/logout", {
+    method: "POST",
+    headers: {
+      'X-XSRF-TOKEN': getCsrfToken()
+    }
+  });
 }

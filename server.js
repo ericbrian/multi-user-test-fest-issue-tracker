@@ -11,6 +11,7 @@ const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const passport = require('passport');
 const helmet = require('helmet');
+const csurf = require('csurf');
 const { Issuer, Strategy } = require('openid-client');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./src/swagger');
@@ -254,6 +255,15 @@ async function setupOIDC() {
 app.use(passport.initialize());
 app.use(passport.session());
 
+// CSRF Protection
+app.use(csurf());
+app.use((req, res, next) => {
+  const token = req.csrfToken();
+  res.cookie('XSRF-TOKEN', token);
+  res.locals.csrfToken = token;
+  next();
+});
+
 // In dev mode with SSO disabled, automatically attach a dev user to the request
 const { createDevAutoAuthMiddleware } = require('./src/middleware');
 app.use(createDevAutoAuthMiddleware({ DISABLE_SSO, DEV_USER_EMAIL, DEV_USER_NAME }));
@@ -283,6 +293,14 @@ registerRoutes(app, {
   DISABLE_SSO,
   passport,
   GROUPIER_EMAILS,
+});
+
+// CSRF Error Handler
+app.use((err, req, res, next) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    return res.status(403).json({ error: 'Invalid CSRF token' });
+  }
+  next(err);
 });
 
 // Socket.io logic
