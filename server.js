@@ -190,6 +190,12 @@ app.use(
 // Passport OIDC with Entra ID
 let oidcClient;
 async function setupOIDC() {
+  // Skip OIDC setup in test mode
+  if (process.env.NODE_ENV === 'test') {
+    console.warn('⚠️  TEST MODE: Skipping OIDC setup (NODE_ENV=test)');
+    return;
+  }
+
   if (!ENTRA_ISSUER || !ENTRA_CLIENT_ID || !ENTRA_CLIENT_SECRET) {
     console.error('Entra ID OIDC not fully configured. Set ENTRA_ISSUER, ENTRA_CLIENT_ID, ENTRA_CLIENT_SECRET.');
     throw new Error('SSO configuration is required');
@@ -257,6 +263,13 @@ app.use((req, res, next) => {
   res.locals.csrfToken = token;
   next();
 });
+
+// Test mode authentication (NODE_ENV=test only)
+if (process.env.NODE_ENV === 'test') {
+  const { createTestAuthMiddleware } = require('./src/middleware');
+  app.use(createTestAuthMiddleware());
+  console.warn('⚠️  TEST MODE: Using test authentication (NODE_ENV=test)');
+}
 
 // Apply no-cache middleware
 const { noCache } = require('./src/middleware');

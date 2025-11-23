@@ -42,13 +42,17 @@ function validateConfig() {
     errors.push('PORT must be a valid port number (1-65535)');
   }
 
-  // SSO Configuration validation - SSO is now always required
+  // SSO Configuration validation - SSO is required except in test mode
   const ENTRA_ISSUER = process.env.ENTRA_ISSUER;
   const ENTRA_CLIENT_ID = process.env.ENTRA_CLIENT_ID;
   const ENTRA_CLIENT_SECRET = process.env.ENTRA_CLIENT_SECRET;
 
-  if (!ENTRA_ISSUER || !ENTRA_CLIENT_ID || !ENTRA_CLIENT_SECRET) {
-    errors.push('Entra ID SSO configuration is required. Please configure ENTRA_ISSUER, ENTRA_CLIENT_ID, and ENTRA_CLIENT_SECRET');
+  if (process.env.NODE_ENV !== 'test') {
+    if (!ENTRA_ISSUER || !ENTRA_CLIENT_ID || !ENTRA_CLIENT_SECRET) {
+      errors.push('Entra ID SSO configuration is required. Please configure ENTRA_ISSUER, ENTRA_CLIENT_ID, and ENTRA_CLIENT_SECRET');
+    }
+  } else {
+    console.warn('⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)');
   }
 
   // Jira configuration validation (optional but warn if partially configured)

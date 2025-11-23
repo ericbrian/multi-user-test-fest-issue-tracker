@@ -148,6 +148,7 @@ if (response.status !== 200) throw new Error(`Expected 200, got ${response.statu
 const json = response.body;
 if (json.length > 0) {
   client.global.set('testScriptLineId', json[0].id);
+  client.global.set('scriptLineNum', json[0].test_script_line_id);
 }
 %}
 
@@ -176,14 +177,33 @@ if (response.status !== 200) throw new Error(`Expected 200, got ${response.statu
 ### Issues - Create Issue (form-data)
 POST http://localhost:3000/api/rooms/{{roomId}}/issues
 X-XSRF-TOKEN: {{csrfToken}}
-Content-Type: multipart/form-data
+Content-Type: multipart/form-data; boundary=WebKitFormBoundary7MA4YWxkTrZu0gW
 
-scriptId=1
-description=Test issue created via httpyac
-is_issue=true
-is_annoyance=false
-is_existing_upper_env=false
-is_not_sure_how_to_test=false
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="scriptId"
+
+{{scriptLineNum}}
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="description"
+
+Test issue created via httpyac
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="is_issue"
+
+true
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="is_annoyance"
+
+false
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="is_existing_upper_env"
+
+false
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="is_not_sure_how_to_test"
+
+false
+--WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 > {%
 if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
@@ -205,14 +225,33 @@ if (m) {
 ### Issues - Create Issue with Images (skipped file upload in automated test)
 POST http://localhost:3000/api/rooms/{{roomId}}/issues
 X-XSRF-TOKEN: {{csrfToken}}
-Content-Type: multipart/form-data
+Content-Type: multipart/form-data; boundary=WebKitFormBoundary7MA4YWxkTrZu0gW
 
-scriptId=2
-description=Issue with screenshot attachments
-is_issue=true
-is_annoyance=false
-is_existing_upper_env=false
-is_not_sure_how_to_test=false
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="scriptId"
+
+{{scriptLineNum}}
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="description"
+
+Issue with screenshot attachments
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="is_issue"
+
+true
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="is_annoyance"
+
+false
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="is_existing_upper_env"
+
+false
+--WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="is_not_sure_how_to_test"
+
+false
+--WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 > {%
 if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);

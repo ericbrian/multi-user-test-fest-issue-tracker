@@ -81,10 +81,43 @@ function noCache(req, res, next) {
   next();
 }
 
+// Test-only authentication middleware
+// IMPORTANT: Only works when NODE_ENV=test, never in production or development
+function createTestAuthMiddleware() {
+  return async function testAuth(req, res, next) {
+    // Only enable in test environment
+    if (process.env.NODE_ENV !== 'test') return next();
+    if (req.user) return next();
+
+    try {
+      const { v4: uuidv4 } = require("uuid");
+      const sub = "test-user";
+      const prisma = getPrisma();
+      let user = await prisma.user.findUnique({ where: { sub } });
+
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            id: uuidv4(),
+            sub,
+            name: process.env.TEST_USER_NAME || 'Test User',
+            email: process.env.TEST_USER_EMAIL || 'test@example.com',
+          },
+        });
+      }
+      req.user = user;
+    } catch (e) {
+      console.error("Test auto-auth error:", e);
+    }
+    next();
+  };
+}
+
 module.exports = {
   requireAuth,
   requireGroupierByRoom,
   requireIssueAndMembership,
   requireGroupierOrCreator,
-  noCache
+  noCache,
+  createTestAuthMiddleware
 };
