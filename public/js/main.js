@@ -1,7 +1,8 @@
-import { store, LS_KEY_LAST_ROOM } from './state.js';
+import { store, LS_KEY_SELECTED_SCRIPT } from './state.js';
 import * as api from './api.js';
 import * as ui from './ui.js';
-import * as socket from './socket.js';
+import { initSocket } from './socket.js';
+import { toast } from './toast.js';
 
 // Subscribe to state changes to update UI visibility
 store.subscribe(() => {
@@ -60,7 +61,7 @@ ui.elements.createRoomBtn.addEventListener("click", async () => {
         await joinRoom(created.id);
       }
     } catch (error) {
-      alert(`Failed to create room: ${error.message}`);
+      toast.error(`Failed to create room: ${error.message}`);
     }
   });
 });
@@ -91,17 +92,17 @@ ui.elements.roomSelect.addEventListener("change", async () => {
 
 ui.elements.issueForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!store.state.currentRoomId) return alert("Select a Test");
+  if (!store.state.currentRoomId) return toast.warn("Please select a Test Fest first");
 
   const scriptVal = (document.getElementById("scriptId").value || "").trim();
   if (!/^\d+$/.test(scriptVal)) {
-    alert("Test Script ID must be a numeric value");
+    toast.warn("Test Script ID must be a numeric value");
     return;
   }
 
   const descVal = (document.getElementById("description").value || "").trim();
   if (!descVal) {
-    alert("Issue Description is required");
+    toast.warn("Issue Description is required");
     return;
   }
 
@@ -109,8 +110,9 @@ ui.elements.issueForm.addEventListener("submit", async (e) => {
   try {
     await api.submitIssue(store.state.currentRoomId, formData);
     ui.elements.issueForm.reset();
+    toast.success("Issue submitted successfully");
   } catch (error) {
-    alert(`Failed to submit: ${error.message}`);
+    toast.error(`Failed to submit: ${error.message}`);
   }
 });
 

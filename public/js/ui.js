@@ -1,5 +1,6 @@
 import { store, LS_KEY_SELECTED_SCRIPT } from './state.js';
 import * as api from './api.js';
+import { toast } from './toast.js';
 
 // DOM Elements
 export const elements = {
@@ -464,7 +465,7 @@ async function onTestScriptLineCheckboxClick(e) {
   } catch (error) {
     console.error('Error updating test script line progress:', error);
     checkbox.checked = !isChecked;
-    alert(error.message);
+    toast.error(error.message);
   }
 }
 
@@ -659,7 +660,7 @@ async function onIssueButtonClick(e) {
     try {
       await api.updateIssueStatus(id, status, store.state.currentRoomId);
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     }
   }
   if (action === "toJira") {
@@ -682,9 +683,10 @@ async function onIssueButtonClick(e) {
         btn.textContent = "Sent";
         btn.disabled = true;
       } catch (err) { /* ignore */ }
+      toast.success("Jira issue created successfully");
       // The UI will also update automatically via socket event
     } catch (error) {
-      alert("Failed to create Jira issue: " + error.message);
+      toast.error("Failed to create Jira issue: " + error.message);
       const btn = e.target;
       btn.disabled = false;
       btn.textContent = "Send to Jira";
@@ -694,8 +696,9 @@ async function onIssueButtonClick(e) {
     if (!confirm("Are you sure you want to delete this issue? This action cannot be undone.")) return;
     try {
       await api.deleteIssue(id);
+      toast.success("Issue deleted");
     } catch (error) {
-      alert("Failed to delete");
+      toast.error("Failed to delete");
     }
   }
   if (action === "clearStatus") {
@@ -798,7 +801,7 @@ export function showCreateRoomModal(scriptLibrary, onSubmit) {
     };
 
     if (!data.name) {
-      alert('Test Fest Name is required');
+      toast.warn('Test Fest Name is required');
       return;
     }
 
@@ -813,7 +816,7 @@ export function showCreateRoomModal(scriptLibrary, onSubmit) {
   if (joinBtn && chooser && elements.roomSelect) {
     joinBtn.addEventListener('click', () => {
       const val = chooser.value;
-      if (!val) return alert('Please select a test to join.');
+      if (!val) return toast.warn('Please select a test to join.');
       // propagate selection to the main room select which main.js listens to
       elements.roomSelect.value = val;
       elements.roomSelect.dispatchEvent(new Event('change'));
