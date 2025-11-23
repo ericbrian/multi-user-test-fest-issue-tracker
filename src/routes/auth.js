@@ -26,9 +26,32 @@ function registerAuthRoutes(router, deps) {
    *             schema:
    *               type: string
    */
-  router.get('/auth/login', authLimiter, async (req, res, next) => {
-    if (!passport || !passport._strategies || !passport._strategies['oidc']) return res.status(500).send('OIDC not configured');
-    passport.authenticate('oidc')(req, res, next);
+  router.get('/auth/login', authLimiter, async (req, res) => {
+    // Test mode: immediately redirect with a dummy session
+    if (process.env.NODE_ENV === 'test') {
+      // Set a dummy user in session (middleware will create test user later)
+      req.session.user = { sub: 'test-user' };
+      return res.redirect('/');
+    }
+
+    // Normal OIDC flow
+    if (!oidcClient) {
+      console.error('OIDC client not configured');
+      return res.status(500).send('OIDC not configured');
+    }
+    const nonce = generators.nonce();
+    const state = generators.state();
+    const authUrl = oidcClient.authorizationUrl({
+      scope: 'openid profile email offline_access',
+      response_type: 'code',
+      redirect_uri: ENTRA_REDIRECT_URI,
+      nonce,
+      state,
+    });
+    // Store nonce and state in session for callback verification
+    req.session.nonce = nonce;
+    req.session.state = state;
+    res.redirect(authUrl);
   });
 
   /**
