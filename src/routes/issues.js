@@ -472,8 +472,7 @@ function registerIssueRoutes(router, deps) {
 
       // Emit update
       const issue = req.issue;
-      const issues = await issueService.getRoomIssues(issue.room_id);
-      io.to(issue.room_id).emit('issues:update', issues);
+      io.to(issue.room_id).emit('issue:delete', { id: issue.id });
 
       res.json({ ok: true });
     } catch (error) {
