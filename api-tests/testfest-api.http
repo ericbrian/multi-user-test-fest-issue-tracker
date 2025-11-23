@@ -1,5 +1,15 @@
+### Init - fetch CSRF token
+GET http://localhost:3000/
+Accept: text/html
+
+> {%
+const setCookie = response.headers.get('set-cookie') || '';
+const m = setCookie.match(/XSRF-TOKEN=([^;]+)/);
+if (m) setEnvironmentVariable('csrfToken', decodeURIComponent(m[1]));
+%}
+
 ### System - Health Check
-GET {{baseUrl}}/health
+GET http://localhost:3000/health
 Accept: application/json
 
 > {%
@@ -9,7 +19,7 @@ if (response.status !== 200) {
 %}
 
 ### Auth - Get Current User
-GET {{baseUrl}}/me
+GET http://localhost:3000/me
 Accept: application/json
 
 > {%
@@ -19,7 +29,7 @@ if (response.status !== 200) {
 %}
 
 ### Auth - SSO Login (redirect)
-GET {{baseUrl}}/auth/login
+GET http://localhost:3000/auth/login
 
 > {%
 if (response.status !== 302) {
@@ -28,7 +38,7 @@ if (response.status !== 302) {
 %}
 
 ### Auth - Logout
-POST {{baseUrl}}/auth/logout
+POST http://localhost:3000/auth/logout
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrfToken}}
 
@@ -41,7 +51,7 @@ if (!body.ok) throw new Error('Logout did not return ok');
 %}
 
 ### Rooms - Get Script Library
-GET {{baseUrl}}/api/script-library
+GET http://localhost:3000/api/script-library
 Accept: application/json
 
 > {%
@@ -49,7 +59,7 @@ if (response.status !== 200) throw new Error(`Expected 200, got ${response.statu
 %}
 
 ### Rooms - Get All Rooms
-GET {{baseUrl}}/api/rooms
+GET http://localhost:3000/api/rooms
 Accept: application/json
 
 > {%
@@ -57,7 +67,7 @@ if (response.status !== 200) throw new Error(`Expected 200, got ${response.statu
 %}
 
 ### Rooms - Create Room
-POST {{baseUrl}}/api/rooms
+POST http://localhost:3000/api/rooms
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrfToken}}
 
@@ -75,7 +85,7 @@ setEnvironmentVariable('roomId', json.id);
 %}
 
 ### Rooms - Join Room
-POST {{baseUrl}}/api/rooms/{{roomId}}/join
+POST http://localhost:3000/api/rooms/{{roomId}}/join
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrfToken}}
 
@@ -86,7 +96,7 @@ if (response.status !== 200) throw new Error(`Expected 200, got ${response.statu
 %}
 
 ### Rooms - Get Test Script Lines
-GET {{baseUrl}}/api/rooms/{{roomId}}/test-script-lines
+GET http://localhost:3000/api/rooms/{{roomId}}/test-script-lines
 Accept: application/json
 
 > {%
@@ -94,7 +104,7 @@ if (response.status !== 200) throw new Error(`Expected 200, got ${response.statu
 %}
 
 ### Rooms - Update Test Script Progress
-POST {{baseUrl}}/api/test-script-lines/{{testScriptLineId}}/progress
+POST http://localhost:3000/api/test-script-lines/{{testScriptLineId}}/progress
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrfToken}}
 
@@ -108,7 +118,7 @@ if (response.status !== 200) throw new Error(`Expected 200, got ${response.statu
 %}
 
 ### Issues - Get Room Issues
-GET {{baseUrl}}/api/rooms/{{roomId}}/issues
+GET http://localhost:3000/api/rooms/{{roomId}}/issues
 Accept: application/json
 
 > {%
@@ -116,7 +126,7 @@ if (response.status !== 200) throw new Error(`Expected 200, got ${response.statu
 %}
 
 ### Issues - Create Issue (form-data)
-POST {{baseUrl}}/api/rooms/{{roomId}}/issues
+POST http://localhost:3000/api/rooms/{{roomId}}/issues
 X-XSRF-TOKEN: {{csrfToken}}
 Content-Type: multipart/form-data
 
@@ -135,7 +145,7 @@ setEnvironmentVariable('issueId', json.id);
 %}
 
 ### Issues - Create Issue with Images (skipped file upload in automated test)
-POST {{baseUrl}}/api/rooms/{{roomId}}/issues
+POST http://localhost:3000/api/rooms/{{roomId}}/issues
 X-XSRF-TOKEN: {{csrfToken}}
 Content-Type: multipart/form-data
 
@@ -151,7 +161,7 @@ if (response.status !== 200) throw new Error(`Expected 200, got ${response.statu
 %}
 
 ### Issues - Update Issue Status
-POST {{baseUrl}}/api/issues/{{issueId}}/status
+POST http://localhost:3000/api/issues/{{issueId}}/status
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrfToken}}
 
@@ -165,7 +175,7 @@ if (response.status !== 200) throw new Error(`Expected 200, got ${response.statu
 %}
 
 ### Issues - Clear Issue Status
-POST {{baseUrl}}/api/issues/{{issueId}}/status
+POST http://localhost:3000/api/issues/{{issueId}}/status
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrfToken}}
 
@@ -179,7 +189,7 @@ if (response.status !== 200) throw new Error(`Expected 200, got ${response.statu
 %}
 
 ### Issues - Create Jira Ticket
-POST {{baseUrl}}/api/issues/{{issueId}}/jira
+POST http://localhost:3000/api/issues/{{issueId}}/jira
 Content-Type: application/json
 X-XSRF-TOKEN: {{csrfToken}}
 
@@ -192,7 +202,7 @@ if (response.status !== 200) throw new Error(`Expected 200, got ${response.statu
 %}
 
 ### Issues - Delete Issue
-DELETE {{baseUrl}}/api/issues/{{issueId}}
+DELETE http://localhost:3000/api/issues/{{issueId}}
 X-XSRF-TOKEN: {{csrfToken}}
 
 > {%
