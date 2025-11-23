@@ -3,9 +3,18 @@ GET http://localhost:3000/
 Accept: text/html
 
 > {%
-const setCookie = response.headers.get('set-cookie') || '';
+let headers = response.headers;
+if (headers && headers.headers) headers = headers.headers;
+let cookies = headers['set-cookie'];
+if (Array.isArray(cookies)) cookies = cookies.join(';');
+const setCookie = cookies || '';
 const m = setCookie.match(/XSRF-TOKEN=([^;]+)/);
-if (m) setEnvironmentVariable('csrfToken', decodeURIComponent(m[1]));
+if (m) {
+  client.global.set('csrfToken', decodeURIComponent(m[1]));
+} else {
+  console.log('CSRF Token not found in cookies:', setCookie);
+}
+client.global.set('timestamp', Date.now().toString());
 %}
 
 ### System - Health Check
@@ -29,6 +38,7 @@ if (response.status !== 200) {
 %}
 
 ### Auth - SSO Login (redirect)
+# @no-redirect
 GET http://localhost:3000/auth/login
 
 > {%
@@ -46,7 +56,7 @@ X-XSRF-TOKEN: {{csrfToken}}
 
 > {%
 if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
-const body = await response.json();
+const body = response.body;
 if (!body.ok) throw new Error('Logout did not return ok');
 %}
 
@@ -56,6 +66,10 @@ Accept: application/json
 
 > {%
 if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+const json = response.body;
+if (json.length > 0) {
+  client.global.set('scriptId', json[0].id);
+}
 %}
 
 ### Rooms - Get All Rooms
@@ -64,6 +78,16 @@ Accept: application/json
 
 > {%
 if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+
+let headers = response.headers;
+if (headers && headers.headers) headers = headers.headers;
+let cookies = headers['set-cookie'];
+if (Array.isArray(cookies)) cookies = cookies.join(';');
+const setCookie = cookies || '';
+const m = setCookie.match(/XSRF-TOKEN=([^;]+)/);
+if (m) {
+  client.global.set('csrfToken', decodeURIComponent(m[1]));
+}
 %}
 
 ### Rooms - Create Room
@@ -74,14 +98,24 @@ X-XSRF-TOKEN: {{csrfToken}}
 {
   "name": "Test Room {{timestamp}}",
   "description": "API test room created via httpyac",
-  "scriptId": null
+  "scriptId": "{{scriptId}}"
 }
 
 > {%
 if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
-const json = await response.json();
+const json = response.body;
 if (!json.id) throw new Error('Expected room id in response');
-setEnvironmentVariable('roomId', json.id);
+client.global.set('roomId', json.id);
+
+let headers = response.headers;
+if (headers && headers.headers) headers = headers.headers;
+let cookies = headers['set-cookie'];
+if (Array.isArray(cookies)) cookies = cookies.join(';');
+const setCookie = cookies || '';
+const m = setCookie.match(/XSRF-TOKEN=([^;]+)/);
+if (m) {
+  client.global.set('csrfToken', decodeURIComponent(m[1]));
+}
 %}
 
 ### Rooms - Join Room
@@ -93,6 +127,16 @@ X-XSRF-TOKEN: {{csrfToken}}
 
 > {%
 if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+
+let headers = response.headers;
+if (headers && headers.headers) headers = headers.headers;
+let cookies = headers['set-cookie'];
+if (Array.isArray(cookies)) cookies = cookies.join(';');
+const setCookie = cookies || '';
+const m = setCookie.match(/XSRF-TOKEN=([^;]+)/);
+if (m) {
+  client.global.set('csrfToken', decodeURIComponent(m[1]));
+}
 %}
 
 ### Rooms - Get Test Script Lines
@@ -101,6 +145,10 @@ Accept: application/json
 
 > {%
 if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+const json = response.body;
+if (json.length > 0) {
+  client.global.set('testScriptLineId', json[0].id);
+}
 %}
 
 ### Rooms - Update Test Script Progress
@@ -139,9 +187,19 @@ is_not_sure_how_to_test=false
 
 > {%
 if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
-const json = await response.json();
+const json = response.body;
 if (!json.id) throw new Error('Expected issue id');
-setEnvironmentVariable('issueId', json.id);
+client.global.set('issueId', json.id);
+
+let headers = response.headers;
+if (headers && headers.headers) headers = headers.headers;
+let cookies = headers['set-cookie'];
+if (Array.isArray(cookies)) cookies = cookies.join(';');
+const setCookie = cookies || '';
+const m = setCookie.match(/XSRF-TOKEN=([^;]+)/);
+if (m) {
+  client.global.set('csrfToken', decodeURIComponent(m[1]));
+}
 %}
 
 ### Issues - Create Issue with Images (skipped file upload in automated test)
@@ -207,6 +265,6 @@ X-XSRF-TOKEN: {{csrfToken}}
 
 > {%
 if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
-const json = await response.json();
+const json = response.body;
 if (!json.ok) throw new Error('Delete did not return ok');
 %}
