@@ -1,0 +1,570 @@
+[
+    {
+        "_id": "req_health_check",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_system",
+        "name": "Health Check",
+        "url": "{{baseUrl}}/health",
+        "method": "GET",
+        "sortNum": 10000,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [],
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "json-query",
+                "value": "status",
+                "path": "status"
+            }
+        ]
+    },
+    {
+        "_id": "req_get_me",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_auth",
+        "name": "Get Current User",
+        "url": "{{baseUrl}}/me",
+        "method": "GET",
+        "sortNum": 20000,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [],
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "res-header",
+                "value": "application/json",
+                "key": "content-type"
+            }
+        ]
+    },
+    {
+        "_id": "req_auth_login",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_auth",
+        "name": "SSO Login",
+        "url": "{{baseUrl}}/auth/login",
+        "method": "GET",
+        "sortNum": 20100,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [],
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "302"
+            }
+        ]
+    },
+    {
+        "_id": "req_auth_logout",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_auth",
+        "name": "Logout",
+        "url": "{{baseUrl}}/auth/logout",
+        "method": "POST",
+        "sortNum": 20200,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [
+            {
+                "name": "Content-Type",
+                "value": "application/json"
+            },
+            {
+                "name": "X-XSRF-TOKEN",
+                "value": "{{csrfToken}}"
+            }
+        ],
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "json-query",
+                "value": "true",
+                "path": "ok"
+            }
+        ]
+    },
+    {
+        "_id": "req_get_script_library",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_rooms",
+        "name": "Get Script Library",
+        "url": "{{baseUrl}}/api/script-library",
+        "method": "GET",
+        "sortNum": 30000,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [],
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "res-header",
+                "value": "application/json",
+                "key": "content-type"
+            }
+        ]
+    },
+    {
+        "_id": "req_get_rooms",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_rooms",
+        "name": "Get All Rooms",
+        "url": "{{baseUrl}}/api/rooms",
+        "method": "GET",
+        "sortNum": 30100,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [],
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "res-header",
+                "value": "application/json",
+                "key": "content-type"
+            }
+        ]
+    },
+    {
+        "_id": "req_create_room",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_rooms",
+        "name": "Create Room",
+        "url": "{{baseUrl}}/api/rooms",
+        "method": "POST",
+        "sortNum": 30200,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [
+            {
+                "name": "Content-Type",
+                "value": "application/json"
+            },
+            {
+                "name": "X-XSRF-TOKEN",
+                "value": "{{csrfToken}}"
+            }
+        ],
+        "body": {
+            "type": "json",
+            "raw": "{\n  \"name\": \"Test Room {{timestamp}}\",\n  \"description\": \"API test room created via ThunderClient\",\n  \"scriptId\": null\n}",
+            "form": []
+        },
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "set-env-var",
+                "value": "json.id",
+                "key": "roomId"
+            }
+        ]
+    },
+    {
+        "_id": "req_join_room",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_rooms",
+        "name": "Join Room",
+        "url": "{{baseUrl}}/api/rooms/{{roomId}}/join",
+        "method": "POST",
+        "sortNum": 30300,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [
+            {
+                "name": "Content-Type",
+                "value": "application/json"
+            },
+            {
+                "name": "X-XSRF-TOKEN",
+                "value": "{{csrfToken}}"
+            }
+        ],
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "json-query",
+                "value": "{{roomId}}",
+                "path": "room_id"
+            }
+        ]
+    },
+    {
+        "_id": "req_get_test_script_lines",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_rooms",
+        "name": "Get Test Script Lines",
+        "url": "{{baseUrl}}/api/rooms/{{roomId}}/test-script-lines",
+        "method": "GET",
+        "sortNum": 30400,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [],
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "res-header",
+                "value": "application/json",
+                "key": "content-type"
+            }
+        ]
+    },
+    {
+        "_id": "req_update_test_script_progress",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_rooms",
+        "name": "Update Test Script Progress",
+        "url": "{{baseUrl}}/api/test-script-lines/{{testScriptLineId}}/progress",
+        "method": "POST",
+        "sortNum": 30500,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [
+            {
+                "name": "Content-Type",
+                "value": "application/json"
+            },
+            {
+                "name": "X-XSRF-TOKEN",
+                "value": "{{csrfToken}}"
+            }
+        ],
+        "body": {
+            "type": "json",
+            "raw": "{\n  \"is_checked\": true,\n  \"notes\": \"Test completed successfully\"\n}",
+            "form": []
+        },
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "json-query",
+                "value": "true",
+                "path": "is_checked"
+            }
+        ]
+    },
+    {
+        "_id": "req_get_room_issues",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_issues",
+        "name": "Get Room Issues",
+        "url": "{{baseUrl}}/api/rooms/{{roomId}}/issues",
+        "method": "GET",
+        "sortNum": 40000,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [],
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "res-header",
+                "value": "application/json",
+                "key": "content-type"
+            }
+        ]
+    },
+    {
+        "_id": "req_create_issue",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_issues",
+        "name": "Create Issue",
+        "url": "{{baseUrl}}/api/rooms/{{roomId}}/issues",
+        "method": "POST",
+        "sortNum": 40100,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [
+            {
+                "name": "X-XSRF-TOKEN",
+                "value": "{{csrfToken}}"
+            }
+        ],
+        "body": {
+            "type": "formdata",
+            "raw": "",
+            "form": [
+                {
+                    "name": "scriptId",
+                    "value": "1"
+                },
+                {
+                    "name": "description",
+                    "value": "Test issue created via ThunderClient API"
+                },
+                {
+                    "name": "is_issue",
+                    "value": "true"
+                },
+                {
+                    "name": "is_annoyance",
+                    "value": "false"
+                },
+                {
+                    "name": "is_existing_upper_env",
+                    "value": "false"
+                },
+                {
+                    "name": "is_not_sure_how_to_test",
+                    "value": "false"
+                }
+            ],
+            "files": []
+        },
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "set-env-var",
+                "value": "json.id",
+                "key": "issueId"
+            },
+            {
+                "type": "json-query",
+                "value": "1",
+                "path": "script_id"
+            }
+        ]
+    },
+    {
+        "_id": "req_create_issue_with_images",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_issues",
+        "name": "Create Issue with Images",
+        "url": "{{baseUrl}}/api/rooms/{{roomId}}/issues",
+        "method": "POST",
+        "sortNum": 40150,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [
+            {
+                "name": "X-XSRF-TOKEN",
+                "value": "{{csrfToken}}"
+            }
+        ],
+        "body": {
+            "type": "formdata",
+            "raw": "",
+            "form": [
+                {
+                    "name": "scriptId",
+                    "value": "2"
+                },
+                {
+                    "name": "description",
+                    "value": "Issue with screenshot attachments"
+                },
+                {
+                    "name": "is_issue",
+                    "value": "true"
+                },
+                {
+                    "name": "is_annoyance",
+                    "value": "false"
+                },
+                {
+                    "name": "is_existing_upper_env",
+                    "value": "false"
+                },
+                {
+                    "name": "is_not_sure_how_to_test",
+                    "value": "false"
+                }
+            ],
+            "files": [
+                {
+                    "name": "images",
+                    "value": ""
+                }
+            ]
+        },
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            }
+        ]
+    },
+    {
+        "_id": "req_update_issue_status",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_issues",
+        "name": "Update Issue Status",
+        "url": "{{baseUrl}}/api/issues/{{issueId}}/status",
+        "method": "POST",
+        "sortNum": 40200,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [
+            {
+                "name": "Content-Type",
+                "value": "application/json"
+            },
+            {
+                "name": "X-XSRF-TOKEN",
+                "value": "{{csrfToken}}"
+            }
+        ],
+        "body": {
+            "type": "json",
+            "raw": "{\n  \"status\": \"duplicate\",\n  \"roomId\": \"{{roomId}}\"\n}",
+            "form": []
+        },
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "json-query",
+                "value": "duplicate",
+                "path": "status"
+            }
+        ]
+    },
+    {
+        "_id": "req_clear_issue_status",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_issues",
+        "name": "Clear Issue Status",
+        "url": "{{baseUrl}}/api/issues/{{issueId}}/status",
+        "method": "POST",
+        "sortNum": 40250,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [
+            {
+                "name": "Content-Type",
+                "value": "application/json"
+            },
+            {
+                "name": "X-XSRF-TOKEN",
+                "value": "{{csrfToken}}"
+            }
+        ],
+        "body": {
+            "type": "json",
+            "raw": "{\n  \"status\": \"clear-status\",\n  \"roomId\": \"{{roomId}}\"\n}",
+            "form": []
+        },
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            }
+        ]
+    },
+    {
+        "_id": "req_create_jira_ticket",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_issues",
+        "name": "Create Jira Ticket",
+        "url": "{{baseUrl}}/api/issues/{{issueId}}/jira",
+        "method": "POST",
+        "sortNum": 40300,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [
+            {
+                "name": "Content-Type",
+                "value": "application/json"
+            },
+            {
+                "name": "X-XSRF-TOKEN",
+                "value": "{{csrfToken}}"
+            }
+        ],
+        "body": {
+            "type": "json",
+            "raw": "{\n  \"roomId\": \"{{roomId}}\"\n}",
+            "form": []
+        },
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "json-query",
+                "value": "",
+                "path": "jira_key"
+            }
+        ]
+    },
+    {
+        "_id": "req_delete_issue",
+        "colId": "tc_testfest_api",
+        "containerId": "tf_issues",
+        "name": "Delete Issue",
+        "url": "{{baseUrl}}/api/issues/{{issueId}}",
+        "method": "DELETE",
+        "sortNum": 40400,
+        "created": "2025-11-23T19:40:15.000Z",
+        "modified": "2025-11-23T19:40:15.000Z",
+        "headers": [
+            {
+                "name": "X-XSRF-TOKEN",
+                "value": "{{csrfToken}}"
+            }
+        ],
+        "params": [],
+        "tests": [
+            {
+                "type": "res-code",
+                "value": "200"
+            },
+            {
+                "type": "json-query",
+                "value": "true",
+                "path": "ok"
+            }
+        ]
+    }
+]
