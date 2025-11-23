@@ -1,7 +1,7 @@
 import { store, LS_KEY_SELECTED_SCRIPT } from './state.js';
 import * as api from './api.js';
 import * as ui from './ui.js';
-import { initSocket } from './socket.js';
+import * as socket from './socket.js';
 import { toast } from './toast.js';
 
 // Subscribe to state changes to update UI visibility

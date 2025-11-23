@@ -164,7 +164,8 @@ app.use('/uploads', express.static(uploadsDir));
 app.use('/static', express.static(path.join(__dirname, 'public')));
 
 // Apply rate limiting to API routes
-app.use('/api/', apiLimiter);
+// Apply rate limiting to API routes - moved to below middleware import
+// app.use('/api/', apiLimiter);
 
 // Routes are now in src/routes.js
 
@@ -265,8 +266,13 @@ app.use((req, res, next) => {
 });
 
 // In dev mode with SSO disabled, automatically attach a dev user to the request
-const { createDevAutoAuthMiddleware } = require('./src/middleware');
+const { createDevAutoAuthMiddleware, noCache } = require('./src/middleware');
 app.use(createDevAutoAuthMiddleware({ DISABLE_SSO, DEV_USER_EMAIL, DEV_USER_NAME }));
+
+// Apply rate limiting and no-cache to API routes
+// Split into separate calls to avoid potential issues and ensure correct order
+// app.use('/api/', apiLimiter);
+app.use('/api/', noCache);
 
 // Swagger API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
