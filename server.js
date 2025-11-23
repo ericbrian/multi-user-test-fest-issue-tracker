@@ -119,8 +119,41 @@ const io = require('socket.io')(server, {
 // Rate limiting
 const { apiLimiter } = require('./src/rateLimiter');
 
+// Security headers with Content Security Policy
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP for now to avoid breaking inline scripts/styles if any
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        // Allow Socket.IO which is served from /socket.io/
+      ],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'", // Required for inline styles in HTML (minimal usage)
+      ],
+      imgSrc: [
+        "'self'",
+        "data:", // Allow data: URIs for images
+        "blob:", // Allow blob: URIs for images
+      ],
+      connectSrc: [
+        "'self'",
+        "ws:", // WebSocket for Socket.IO (development)
+        "wss:", // Secure WebSocket for Socket.IO (production)
+      ],
+      fontSrc: ["'self'", "data:"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"], // Prevent clickjacking
+      upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Allow loading resources from same origin
+  crossOriginResourcePolicy: { policy: "same-origin" },
 }));
 app.use(morgan('dev'));
 app.use(cookieParser());

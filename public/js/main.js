@@ -35,6 +35,14 @@ ui.elements.loginBtn.addEventListener("click", () => {
   window.location.href = "/auth/login";
 });
 
+// Handle center login button (on auth screen)
+const loginCenterBtn = document.getElementById('loginCenterBtn');
+if (loginCenterBtn) {
+  loginCenterBtn.addEventListener("click", () => {
+    window.location.href = "/auth/login";
+  });
+}
+
 ui.elements.logoutBtn.addEventListener("click", async () => {
   await api.logout();
   window.location.reload();
