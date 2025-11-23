@@ -24,7 +24,7 @@
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:studio": "prisma studio",
-    "api:test": "httpyac run thunder-tests/rest --env thunder-tests/.httpyac.env.json"
+    "api:test": "httpyac run api-tests/rest --env api-tests/.httpyac.env.json"
   },
   "repository": {
     "type": "git",
