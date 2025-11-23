@@ -1,0 +1,202 @@
+### System - Health Check
+GET {{baseUrl}}/health
+Accept: application/json
+
+> {%
+if (response.status !== 200) {
+  throw new Error(`Expected 200, got ${response.status}`);
+}
+%}
+
+### Auth - Get Current User
+GET {{baseUrl}}/me
+Accept: application/json
+
+> {%
+if (response.status !== 200) {
+  throw new Error(`Expected 200, got ${response.status}`);
+}
+%}
+
+### Auth - SSO Login (redirect)
+GET {{baseUrl}}/auth/login
+
+> {%
+if (response.status !== 302) {
+  throw new Error(`Expected 302 redirect, got ${response.status}`);
+}
+%}
+
+### Auth - Logout
+POST {{baseUrl}}/auth/logout
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
+
+{}
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+const body = await response.json();
+if (!body.ok) throw new Error('Logout did not return ok');
+%}
+
+### Rooms - Get Script Library
+GET {{baseUrl}}/api/script-library
+Accept: application/json
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+%}
+
+### Rooms - Get All Rooms
+GET {{baseUrl}}/api/rooms
+Accept: application/json
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+%}
+
+### Rooms - Create Room
+POST {{baseUrl}}/api/rooms
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
+
+{
+  "name": "Test Room {{timestamp}}",
+  "description": "API test room created via httpyac",
+  "scriptId": null
+}
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+const json = await response.json();
+if (!json.id) throw new Error('Expected room id in response');
+setEnvironmentVariable('roomId', json.id);
+%}
+
+### Rooms - Join Room
+POST {{baseUrl}}/api/rooms/{{roomId}}/join
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
+
+{}
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+%}
+
+### Rooms - Get Test Script Lines
+GET {{baseUrl}}/api/rooms/{{roomId}}/test-script-lines
+Accept: application/json
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+%}
+
+### Rooms - Update Test Script Progress
+POST {{baseUrl}}/api/test-script-lines/{{testScriptLineId}}/progress
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
+
+{
+  "is_checked": true,
+  "notes": "Test completed successfully"
+}
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+%}
+
+### Issues - Get Room Issues
+GET {{baseUrl}}/api/rooms/{{roomId}}/issues
+Accept: application/json
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+%}
+
+### Issues - Create Issue (form-data)
+POST {{baseUrl}}/api/rooms/{{roomId}}/issues
+X-XSRF-TOKEN: {{csrfToken}}
+Content-Type: multipart/form-data
+
+scriptId=1
+description=Test issue created via httpyac
+is_issue=true
+is_annoyance=false
+is_existing_upper_env=false
+is_not_sure_how_to_test=false
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+const json = await response.json();
+if (!json.id) throw new Error('Expected issue id');
+setEnvironmentVariable('issueId', json.id);
+%}
+
+### Issues - Create Issue with Images (skipped file upload in automated test)
+POST {{baseUrl}}/api/rooms/{{roomId}}/issues
+X-XSRF-TOKEN: {{csrfToken}}
+Content-Type: multipart/form-data
+
+scriptId=2
+description=Issue with screenshot attachments
+is_issue=true
+is_annoyance=false
+is_existing_upper_env=false
+is_not_sure_how_to_test=false
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+%}
+
+### Issues - Update Issue Status
+POST {{baseUrl}}/api/issues/{{issueId}}/status
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
+
+{
+  "status": "duplicate",
+  "roomId": "{{roomId}}"
+}
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+%}
+
+### Issues - Clear Issue Status
+POST {{baseUrl}}/api/issues/{{issueId}}/status
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
+
+{
+  "status": "clear-status",
+  "roomId": "{{roomId}}"
+}
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+%}
+
+### Issues - Create Jira Ticket
+POST {{baseUrl}}/api/issues/{{issueId}}/jira
+Content-Type: application/json
+X-XSRF-TOKEN: {{csrfToken}}
+
+{
+  "roomId": "{{roomId}}"
+}
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+%}
+
+### Issues - Delete Issue
+DELETE {{baseUrl}}/api/issues/{{issueId}}
+X-XSRF-TOKEN: {{csrfToken}}
+
+> {%
+if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+const json = await response.json();
+if (!json.ok) throw new Error('Delete did not return ok');
+%}
