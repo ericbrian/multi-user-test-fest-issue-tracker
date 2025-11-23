@@ -2,13 +2,27 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Prisma schema for the multi-user test fest issue tracker.
+// - Contains the Prisma Client generator and the PostgreSQL datasource.
+// - Application data is stored in the `testfest` Postgres schema (see @@schema on models).
+// - Tables are mapped explicitly using @@map to match the existing DB migration names.
+// Keep comments brief — refer to docs/ or migrations for historical details.
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
   schemas  = ["testfest", "public"]
 }
 
+// Datasource notes:
+// - `DATABASE_URL` should point to a PostgreSQL database.
+// - The `schemas` array lists Postgres schemas used by the app; models below use `testfest`.
+
 model User {
+  // Authenticated user: represents a person who signs into the app.
+  // - `sub` is the unique subject from the identity provider and is enforced as unique.
+  // - Optional profile fields: `name`, `email`.
+  // Relations: created rooms, room membership, created issues, and test script progress.
   id    String  @id @db.Uuid
   sub   String  @unique
   name  String?
@@ -17,13 +31,16 @@ model User {
   rooms                  Room[]                   @relation("RoomCreatedBy")
   roomMembers            RoomMember[]
   issues                 Issue[]                  @relation("IssueCreatedBy")
-  testScriptLineProgress TestScriptLineProgress[]
+  testScriptLineProgress RoomScriptLineProgress[]
 
   @@map("users")
   @@schema("testfest")
 }
 
 model Room {
+  // Room: a collaborative space where issues and test scripts live.
+  // - `created_by` references `User.id` (nullable) and is set to NULL when the user is removed.
+  // - `created_at` is set on creation.
   id         String   @id @db.Uuid
   name       String
   created_by String?  @db.Uuid
@@ -32,13 +49,16 @@ model Room {
   createdBy   User?        @relation("RoomCreatedBy", fields: [created_by], references: [id], onDelete: SetNull)
   members     RoomMember[]
   issues      Issue[]
-  testScripts TestScript[]
+  testScripts RoomScript[]
 
   @@map("rooms")
   @@schema("testfest")
 }
 
 model RoomMember {
+  // RoomMember: join table linking `User` and `Room`.
+  // - Composite primary key on [room_id, user_id].
+  // - `is_groupier` marks a user that can perform group actions in the room.
   room_id     String  @db.Uuid
   user_id     String  @db.Uuid
   is_groupier Boolean @default(false)
@@ -52,6 +72,10 @@ model RoomMember {
 }
 
 model Issue {
+  // Issue: represents a reported problem, annoyance, or observation within a `Room`.
+  // - `room_id` is required and cascades on room deletion.
+  // - `created_by` is nullable and set to NULL if the creating user is removed.
+  // - `images` stored as JSON to allow multiple image URLs/metadata.
   id                      String   @id @db.Uuid
   room_id                 String   @db.Uuid
   created_by              String?  @db.Uuid
@@ -74,6 +98,8 @@ model Issue {
 }
 
 model Session {
+  // Session: application session store (serialized session JSON).
+  // - `sid` is the session id key used by the session store.
   sid    String   @id @db.VarChar(255)
   sess   Json
   expire DateTime @db.Timestamp(6)
@@ -82,7 +108,9 @@ model Session {
   @@schema("testfest")
 }
 
-model TestScript {
+model RoomScript {
+  // RoomScript: a set of ordered RoomScriptLine entries for a Room.
+  // - `script_id` is an integer identifier unique within a room (composite unique constraint).
   id          String   @id @db.Uuid
   room_id     String   @db.Uuid
   script_id   Int
@@ -90,15 +118,17 @@ model TestScript {
   description String?
   created_at  DateTime @default(now())
 
-  room  Room             @relation(fields: [room_id], references: [id], onDelete: Cascade)
-  lines TestScriptLine[]
+  room  Room               @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  lines RoomScriptLine[]
 
   @@unique([room_id, script_id])
   @@map("test_script")
   @@schema("testfest")
 }
 
-model TestScriptLine {
+model RoomScriptLine {
+  // RoomScriptLine: individual step/line within a `RoomScript`.
+  // - `test_script_line_id` is an integer position identifier within the parent script.
   id                  String   @id @db.Uuid
   test_script_id      String   @db.Uuid
   test_script_line_id Int
@@ -107,14 +137,17 @@ model TestScriptLine {
   notes               String?
   created_at          DateTime @default(now())
 
-  testScript TestScript               @relation(fields: [test_script_id], references: [id], onDelete: Cascade)
-  progress   TestScriptLineProgress[]
+  testScript RoomScript               @relation(fields: [test_script_id], references: [id], onDelete: Cascade)
+  progress   RoomScriptLineProgress[]
 
   @@map("test_script_line")
   @@schema("testfest")
 }
 
-model TestScriptLineProgress {
+model RoomScriptLineProgress {
+  // RoomScriptLineProgress: per-user completion state for a RoomScriptLine.
+  // - Unique constraint enforces one progress row per (user, test script line).
+  // - `is_checked` and `checked_at` record completion status and timestamp.
   id                  String    @id @db.Uuid
   user_id             String    @db.Uuid
   test_script_line_id String    @db.Uuid
@@ -124,15 +157,17 @@ model TestScriptLineProgress {
   created_at          DateTime  @default(now())
   updated_at          DateTime  @updatedAt
 
-  user           User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  testScriptLine TestScriptLine @relation(fields: [test_script_line_id], references: [id], onDelete: Cascade)
+  user           User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  testScriptLine RoomScriptLine      @relation(fields: [test_script_line_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, test_script_line_id])
   @@map("test_script_line_progress")
   @@schema("testfest")
 }
 
-model ScriptLibrary {
+model ScriptTemplate {
+  // ScriptTemplate: templates of test scripts that can be imported into rooms.
+  // - `is_active` indicates availability for import.
   id          String   @id @db.Uuid
   name        String
   description String?
@@ -140,13 +175,15 @@ model ScriptLibrary {
   is_active   Boolean  @default(true)
   created_at  DateTime @default(now())
 
-  lines ScriptLibraryLine[]
+  lines ScriptTemplateLine[]
 
   @@map("script_library")
   @@schema("testfest")
 }
 
-model ScriptLibraryLine {
+model ScriptTemplateLine {
+  // ScriptTemplateLine: a single line/step belonging to a ScriptTemplate entry.
+  // - `line_number` represents the ordering for display or import.
   id          String  @id @db.Uuid
   script_id   String  @db.Uuid
   line_number Int
@@ -154,7 +191,7 @@ model ScriptLibraryLine {
   description String?
   notes       String?
 
-  script ScriptLibrary @relation(fields: [script_id], references: [id], onDelete: Cascade)
+  script ScriptTemplate @relation(fields: [script_id], references: [id], onDelete: Cascade)
 
   @@map("script_library_line")
   @@schema("testfest")

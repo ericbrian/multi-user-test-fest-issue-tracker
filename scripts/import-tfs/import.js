@@ -42,7 +42,7 @@ async function importTestScriptLines(roomId) {
     console.log(`Found ${dataLines.length} data rows to import`);
 
     // Look for existing test script in this room
-    let testScript = await prisma.testScript.findFirst({
+    let testScript = await prisma.roomScript.findFirst({
       where: { room_id: roomId }
     });
 
@@ -50,13 +50,13 @@ async function importTestScriptLines(roomId) {
       console.log('No test script found for this room, creating a new one...');
 
       // Get the next script_id for this room
-      const lastScript = await prisma.testScript.findFirst({
+      const lastScript = await prisma.roomScript.findFirst({
         where: { room_id: roomId },
         orderBy: { script_id: 'desc' }
       });
       const nextScriptId = lastScript ? lastScript.script_id + 1 : 1;
 
-      testScript = await prisma.testScript.create({
+      testScript = await prisma.roomScript.create({
         data: {
           id: uuidv4(),
           room_id: roomId,
@@ -104,7 +104,7 @@ async function importTestScriptLines(roomId) {
     // Bulk insert all lines
     console.log(`Importing ${importedLines.length} test script lines...`);
 
-    const result = await prisma.testScriptLine.createMany({
+    const result = await prisma.roomScriptLine.createMany({
       data: importedLines,
       skipDuplicates: true
     });

@@ -32,8 +32,8 @@ function registerRoomRoutes(router, deps) {
    *           application/json:
    *             schema:
    *               type: array
-   *               items:
-   *                 $ref: '#/components/schemas/TestScript'
+    *               items:
+    *                 $ref: '#/components/schemas/ScriptTemplate'
    *       500:
    *         description: Server error
    *         content:
@@ -244,8 +244,8 @@ function registerRoomRoutes(router, deps) {
    *           application/json:
    *             schema:
    *               type: array
-   *               items:
-   *                 $ref: '#/components/schemas/TestScriptLine'
+    *               items:
+    *                 $ref: '#/components/schemas/RoomScriptLine'
    *       500:
    *         description: Server error
    *         content:

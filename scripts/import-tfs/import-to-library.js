@@ -50,7 +50,7 @@ async function importToScriptLibrary() {
 
     // Create the script library entry
     const scriptId = uuidv4();
-    await prisma.scriptLibrary.create({
+    await prisma.scriptTemplate.create({
       data: {
         id: scriptId,
         name: scriptName,
@@ -84,7 +84,7 @@ async function importToScriptLibrary() {
             notes: notes || null
           };
 
-          await prisma.scriptLibraryLine.create({
+          await prisma.scriptTemplateLine.create({
             data: scriptLibraryLine
           });
 

@@ -21,8 +21,8 @@ OpenAPI configuration file containing:
   - User
   - Room
   - Issue
-  - TestScript
-  - TestScriptLine
+   - ScriptTemplate
+   - RoomScriptLine
   - Error
 
 #### `/docs/API_DOCUMENTATION.md`

@@ -36,7 +36,7 @@ The codebase is a well-structured Node.js/Express application using Prisma and P
 ### Database (Prisma)
 
 * **Schema:** The schema is normalized and makes good use of PostgreSQL features (UUIDs, JSON types).
-* **Relations:** Relationships between `User`, `Room`, `Issue`, and `TestScript` are correctly defined with appropriate cascading delete rules.
+* **Relations:** Relationships between `User`, `Room`, `Issue`, and `RoomScript` are correctly defined with appropriate cascading delete rules.
 
 ### Frontend Structure
 

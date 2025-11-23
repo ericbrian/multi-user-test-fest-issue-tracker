@@ -168,7 +168,7 @@ const options = {
                         },
                     },
                 },
-                TestScript: {
+                ScriptTemplate: {
                     type: 'object',
                     properties: {
                         id: {
@@ -187,7 +187,7 @@ const options = {
                         },
                     },
                 },
-                TestScriptLine: {
+                RoomScriptLine: {
                     type: 'object',
                     properties: {
                         id: {

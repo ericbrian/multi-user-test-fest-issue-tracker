@@ -62,14 +62,14 @@ class RoomService {
 
     if (scriptId) {
       // User selected a script from the library
-      const libraryScript = await this.prisma.scriptLibrary.findUnique({
+      const libraryScript = await this.prisma.scriptTemplate.findUnique({
         where: { id: scriptId },
         include: { lines: { orderBy: { line_number: 'asc' } } },
       });
 
       if (libraryScript) {
         // Create test script with library script name and description
-        await this.prisma.testScript.create({
+        await this.prisma.roomScript.create({
           data: {
             id: testScriptId,
             room_id: roomId,
@@ -81,7 +81,7 @@ class RoomService {
 
         // Copy lines from library script
         for (const libraryLine of libraryScript.lines) {
-          await this.prisma.testScriptLine.create({
+          await this.prisma.roomScriptLine.create({
             data: {
               id: uuidv4(),
               test_script_id: testScriptId,
@@ -97,7 +97,7 @@ class RoomService {
     }
 
     // Create empty test script (fallback or no script selected)
-    await this.prisma.testScript.create({
+    await this.prisma.roomScript.create({
       data: {
         id: testScriptId,
         room_id: roomId,
@@ -184,7 +184,7 @@ class RoomService {
    * @returns {Promise<Array>} - Array of scripts with line counts
    */
   async getScriptLibrary() {
-    const scripts = await this.prisma.scriptLibrary.findMany({
+    const scripts = await this.prisma.scriptTemplate.findMany({
       where: { is_active: true },
       orderBy: { name: 'asc' },
       include: {
@@ -204,7 +204,7 @@ class RoomService {
    * @returns {Promise<Array>} - Array of test script lines with progress
    */
   async getTestScriptLines(roomId, userId) {
-    const testScriptLines = await this.prisma.testScriptLine.findMany({
+    const testScriptLines = await this.prisma.roomScriptLine.findMany({
       where: {
         testScript: {
           room_id: roomId
@@ -242,7 +242,7 @@ class RoomService {
    */
   async updateTestScriptLineProgress(lineId, userId, isChecked, notes) {
     // Verify line exists and get room_id
-    const testScriptLine = await this.prisma.testScriptLine.findUnique({
+    const testScriptLine = await this.prisma.roomScriptLine.findUnique({
       where: { id: lineId },
       include: { testScript: true }
     });
@@ -264,7 +264,7 @@ class RoomService {
       updated_at: new Date()
     };
 
-    const existingProgress = await this.prisma.testScriptLineProgress.findUnique({
+    const existingProgress = await this.prisma.roomScriptLineProgress.findUnique({
       where: {
         user_id_test_script_line_id: {
           user_id: userId,
@@ -275,7 +275,7 @@ class RoomService {
 
     let progress;
     if (existingProgress) {
-      progress = await this.prisma.testScriptLineProgress.update({
+      progress = await this.prisma.roomScriptLineProgress.update({
         where: {
           user_id_test_script_line_id: {
             user_id: userId,
@@ -285,7 +285,7 @@ class RoomService {
         data: progressData
       });
     } else {
-      progress = await this.prisma.testScriptLineProgress.create({
+      progress = await this.prisma.roomScriptLineProgress.create({
         data: {
           id: uuidv4(),
           user_id: userId,

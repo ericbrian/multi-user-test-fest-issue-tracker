@@ -77,8 +77,8 @@ The script library uses two new tables:
 
 ### When Room is Created with Library Script
 
-1. A new `TestScript` is created with the library script's name and description
-2. All `TestScriptLine` entries are copied from the library script
+1. A new `RoomScript` is created with the library script's name and description
+2. All `RoomScriptLine` entries are copied from the library script
 3. Users can then track progress on these test steps as normal
 
 ## Benefits
