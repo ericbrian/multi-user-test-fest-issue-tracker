@@ -4,6 +4,7 @@ const xss = require('xss');
 const { getPrisma } = require('../prismaClient');
 const { requireAuth } = require('../middleware');
 const { RoomService } = require('../services/roomService');
+const { ApiError } = require('../utils/apiResponse');
 
 function registerRoomRoutes(router, deps) {
   const {
@@ -48,7 +49,7 @@ function registerRoomRoutes(router, deps) {
       res.json(result);
     } catch (error) {
       console.error('Error fetching script library:', error);
-      res.status(500).json({ error: 'Failed to fetch script library' });
+      return ApiError.database(res, 'Failed to fetch script library');
     }
   });
 
@@ -84,7 +85,7 @@ function registerRoomRoutes(router, deps) {
       res.json(result);
     } catch (error) {
       console.error('Error fetching rooms:', error);
-      res.status(500).json({ error: 'Failed to fetch rooms' });
+      return ApiError.database(res, 'Failed to fetch rooms');
     }
   });
 
@@ -154,7 +155,7 @@ function registerRoomRoutes(router, deps) {
       res.json(room);
     } catch (error) {
       console.error('Error creating room:', error);
-      res.status(500).json({ error: 'Failed to create room' });
+      return ApiError.internal(res, 'Failed to create room', error.message);
     }
   });
 
@@ -216,7 +217,7 @@ function registerRoomRoutes(router, deps) {
       res.json(result);
     } catch (error) {
       console.error('Error joining room:', error);
-      res.status(500).json({ error: 'Failed to join room' });
+      return ApiError.internal(res, 'Failed to join room', error.message);
     }
   });
 
@@ -263,7 +264,7 @@ function registerRoomRoutes(router, deps) {
       res.json(result);
     } catch (error) {
       console.error('Error fetching test script lines:', error);
-      res.status(500).json({ error: 'Failed to fetch test script lines' });
+      return ApiError.database(res, 'Failed to fetch test script lines');
     }
   });
 
@@ -369,12 +370,12 @@ function registerRoomRoutes(router, deps) {
     } catch (error) {
       console.error('Error updating test script line progress:', error);
       if (error.message === 'Test script line not found') {
-        return res.status(404).json({ error: error.message });
+        return ApiError.notFound(res, 'Test script line');
       }
       if (error.message === 'You must be a member of this room to update test progress') {
-        return res.status(403).json({ error: error.message });
+        return ApiError.insufficientPermissions(res, error.message);
       }
-      res.status(500).json({ error: 'Failed to update progress' });
+      return ApiError.internal(res, 'Failed to update progress', error.message);
     }
   });
 }

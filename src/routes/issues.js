@@ -9,6 +9,7 @@ const { requireAuth, requireGroupierByRoom, requireIssueAndMembership } = requir
 const { issueCreationLimiter, uploadLimiter } = require('../rateLimiter');
 const { IssueService } = require('../services/issueService');
 const { JiraService } = require('../services/jiraService');
+const { ApiError } = require('../utils/apiResponse');
 
 function registerIssueRoutes(router, deps) {
   const {
@@ -75,7 +76,7 @@ function registerIssueRoutes(router, deps) {
       res.json(issues);
     } catch (error) {
       console.error('Error fetching issues:', error);
-      res.status(500).json({ error: 'Failed to fetch issues' });
+      return ApiError.database(res, 'Failed to fetch issues');
     }
   });
 
@@ -173,10 +174,10 @@ function registerIssueRoutes(router, deps) {
       const description = req.body.description ? xss(String(req.body.description).trim()) : '';
 
       if (!scriptId || !/^\d+$/.test(String(scriptId))) {
-        return res.status(400).json({ error: 'Script ID is required and must be numeric' });
+        return ApiError.invalidInput(res, 'Script ID is required and must be numeric', { field: 'scriptId' });
       }
       if (!description || description.length === 0) {
-        return res.status(400).json({ error: 'Issue Description is required' });
+        return ApiError.missingField(res, 'description');
       }
 
       const scriptNum = parseInt(String(scriptId), 10);
@@ -212,7 +213,7 @@ function registerIssueRoutes(router, deps) {
         console.error('Error during file cleanup:', cleanupError);
       }
 
-      res.status(500).json({ error: 'Failed to create issue' });
+      return ApiError.internal(res, 'Failed to create issue', error.message);
     }
   });
 
@@ -284,7 +285,7 @@ function registerIssueRoutes(router, deps) {
       const { status: requestedStatus, roomId } = req.body;
 
       if (requestedStatus !== 'clear-status' && !TAGS.includes(requestedStatus)) {
-        return res.status(400).json({ error: 'Invalid status' });
+        return ApiError.invalidInput(res, 'Invalid status', { validStatuses: [...TAGS, 'clear-status'] });
       }
 
       const out = await issueService.updateStatus(id, requestedStatus);
@@ -293,7 +294,7 @@ function registerIssueRoutes(router, deps) {
       res.json(out);
     } catch (error) {
       console.error('Error updating issue status:', error);
-      res.status(500).json({ error: 'Failed to update issue status' });
+      return ApiError.internal(res, 'Failed to update issue status', error.message);
     }
   });
 
@@ -379,12 +380,12 @@ function registerIssueRoutes(router, deps) {
       const issue = req.issue;
       const membership = req.membership;
       const isGroupier = membership && membership.is_groupier;
-      const isCreator = issue && issue.created_by === req.user.id;
+      const isCreator = issue.created_by === req.user.id;
 
-      if (!isGroupier && !isCreator) return res.status(403).json({ error: 'Forbidden' });
+      if (!isGroupier && !isCreator) return ApiError.insufficientPermissions(res, 'Only issue creator or groupiers can create Jira tickets');
 
       if (!jiraService.isConfigured()) {
-        return res.status(500).json({ error: 'Jira not configured' });
+        return ApiError.jira.notConfigured(res);
       } if (issue.jira_key) {
         return res.json({ jira_key: issue.jira_key });
       }
@@ -402,18 +403,18 @@ function registerIssueRoutes(router, deps) {
         console.error('Jira API error:', jiraError.message);
         if (jiraError.response) {
           if (jiraError.response.status === 401) {
-            return res.status(500).json({ error: 'Jira authentication failed. Please check credentials.' });
+            return ApiError.jira.authenticationFailed(res);
           } else if (jiraError.response.status === 403) {
-            return res.status(500).json({ error: 'Insufficient Jira permissions.' });
+            return ApiError.jira.insufficientPermissions(res);
           } else if (jiraError.response.status === 400) {
-            return res.status(500).json({ error: 'Invalid Jira request. Please check project configuration.' });
+            return ApiError.jira.invalidRequest(res);
           }
         }
-        return res.status(500).json({ error: 'Failed to create Jira issue. Please try again later.' });
+        return ApiError.jira.failed(res);
       }
     } catch (error) {
       console.error('Error in Jira integration:', error);
-      res.status(500).json({ error: 'Internal server error while creating Jira issue' });
+      return ApiError.internal(res, 'Internal server error while creating Jira issue', error.message);
     }
   });
 
@@ -479,7 +480,7 @@ function registerIssueRoutes(router, deps) {
       res.json({ ok: true });
     } catch (error) {
       console.error('Error deleting issue:', error);
-      res.status(500).json({ error: 'Failed to delete issue' });
+      return ApiError.internal(res, 'Failed to delete issue', error.message);
     }
   });
 }
