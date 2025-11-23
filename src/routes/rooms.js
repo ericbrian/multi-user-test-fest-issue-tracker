@@ -9,9 +9,7 @@ const { ApiError } = require('../utils/apiResponse');
 function registerRoomRoutes(router, deps) {
   const {
     io,
-    GROUPIER_EMAILS_LIST // I'll need to pass this or parse it from env again.
-    // Actually, in the original code it parsed process.env.GROUPIER_EMAILS inside the route.
-    // I'll stick to that for now or pass it in deps if available.
+    GROUPIER_EMAILS
   } = deps;
 
   const prisma = getPrisma();
@@ -210,8 +208,8 @@ function registerRoomRoutes(router, deps) {
       const userId = req.user.id;
       const userEmail = req.user.email;
 
-      // Use passed list or fallback to env
-      const groupierEmails = GROUPIER_EMAILS_LIST || (process.env.GROUPIER_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      // Use passed list
+      const groupierEmails = GROUPIER_EMAILS || [];
 
       const result = await roomService.joinRoom(roomId, userId, groupierEmails, userEmail);
       res.json(result);

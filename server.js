@@ -282,6 +282,7 @@ registerRoutes(app, {
   JIRA_ISSUE_TYPE,
   DISABLE_SSO,
   passport,
+  GROUPIER_EMAILS,
 });
 
 // Socket.io logic
