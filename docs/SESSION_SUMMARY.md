@@ -169,6 +169,33 @@ Today we completed **FIVE major improvements** to the Test Fest Issue Tracker ap
 
 ---
 
+## 6. ✅ Code Duplication Reduction (COMPLETE)
+
+### What Was Done
+- Created reusable `requireGroupierOrCreator` middleware
+- Refactored `POST /api/issues/:id/jira` and `DELETE /api/issues/:id`
+- Standardized error handling in middleware layer
+- Removed duplicated permission checking logic
+
+### Impact
+- **Lines Removed**: ~20 lines of duplication
+- **New Middleware**: 1 reusable function
+- **Routes Refactored**: 2 endpoints
+- **Code Review Status**: 🟡 Medium → ✅ Resolved
+
+### Files Modified
+- ✅ `src/middleware.js` (added middleware)
+- ✅ `src/routes/issues.js` (refactored routes)
+- ✅ `docs/CODE_DUPLICATION_REDUCTION.md` (comprehensive guide)
+
+### Benefits
+- ✅ Reduced code duplication
+- ✅ Consistent permission logic
+- ✅ Improved maintainability
+- ✅ Cleaner route handlers
+
+---
+
 ## 📊 Overall Metrics
 
 ### Code Changes
