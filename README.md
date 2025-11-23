@@ -20,6 +20,22 @@ Real-time multi-user issue tracker for Test Fests. Left pane: submit issues. Rig
 - Passport + openid-client for Entra ID
 - Multer for uploads
 
+## AWS Deployment
+
+Deploy to AWS with the smallest possible footprint (~$46/month):
+
+- **[Quick Start Guide](docs/AWS_QUICK_START.md)** - One-command deployment
+- **[Deployment Script](scripts/deploy-to-aws.sh)** - Automated setup
+- **[Cost Breakdown](docs/AWS_COST_BREAKDOWN.md)** - Detailed pricing & optimization
+- **[Full Deployment Guide](docs/AWS_DEPLOYMENT_MINIMAL.md)** - Manual setup instructions
+- **[Troubleshooting](docs/AWS_TROUBLESHOOTING.md)** - Common issues & solutions
+
+```bash
+# Quick deploy (requires AWS CLI & Docker)
+./scripts/deploy-to-aws.sh
+```
+
+
 ## Setup
 
 1. Prerequisites (local dev)
