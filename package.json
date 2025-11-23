@@ -13,7 +13,7 @@
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:studio": "prisma studio",
-    "api:test": "httpyac run api-tests/testfest-api.http -a --env api-tests/.httpyac.env.json"
+    "api:test": "httpyac run api-tests/testfest-api.http --all --env api-tests/.httpyac.env.json"
   },
   "repository": {
     "type": "git",
