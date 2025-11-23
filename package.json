@@ -12,19 +12,8 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev --name init",
-    "prisma:studio": "prisma studio"
-  },
-  "scripts": {
-    "test": "jest --coverage",
-    "test:watch": "jest --watch",
-    "test:unit": "jest --testPathPattern=unit",
-    "start": "node server.js",
-    "dev": "nodemon --watch server.js --watch src --watch public --ignore uploads --ext js,css,html server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:push": "prisma db push",
-    "prisma:migrate": "prisma migrate dev --name init",
     "prisma:studio": "prisma studio",
-    "api:test": "httpyac run api-tests/rest --env api-tests/.httpyac.env.json"
+    "api:test": "httpyac run api-tests/testfest-api.http -a --env api-tests/.httpyac.env.json"
   },
   "repository": {
     "type": "git",
