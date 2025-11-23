@@ -10,5 +10,6 @@
     "testfest",
     "tokenset",
     "uuidv"
-  ]
+  ],
+  "prisma.pinToPrisma6": true
 }
