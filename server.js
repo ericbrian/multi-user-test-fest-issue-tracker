@@ -26,9 +26,6 @@ const {
   SESSION_SECRET,
   DATABASE_URL,
   SCHEMA,
-  DISABLE_SSO,
-  DEV_USER_EMAIL,
-  DEV_USER_NAME,
   ENTRA_ISSUER,
   ENTRA_CLIENT_ID,
   ENTRA_CLIENT_SECRET,
@@ -193,13 +190,9 @@ app.use(
 // Passport OIDC with Entra ID
 let oidcClient;
 async function setupOIDC() {
-  if (DISABLE_SSO) {
-    console.warn('SSO disabled by DISABLE_SSO=true; using dev auto-auth.');
-    return;
-  }
   if (!ENTRA_ISSUER || !ENTRA_CLIENT_ID || !ENTRA_CLIENT_SECRET) {
-    console.warn('Entra ID OIDC not fully configured. Set ENTRA_ISSUER, ENTRA_CLIENT_ID, ENTRA_CLIENT_SECRET.');
-    return;
+    console.error('Entra ID OIDC not fully configured. Set ENTRA_ISSUER, ENTRA_CLIENT_ID, ENTRA_CLIENT_SECRET.');
+    throw new Error('SSO configuration is required');
   }
   const issuer = await Issuer.discover(ENTRA_ISSUER);
   oidcClient = new issuer.Client({
@@ -265,9 +258,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// In dev mode with SSO disabled, automatically attach a dev user to the request
-const { createDevAutoAuthMiddleware, noCache } = require('./src/middleware');
-app.use(createDevAutoAuthMiddleware({ DISABLE_SSO, DEV_USER_EMAIL, DEV_USER_NAME }));
+// Apply no-cache middleware
+const { noCache } = require('./src/middleware');
 
 // Apply rate limiting and no-cache to API routes
 // Split into separate calls to avoid potential issues and ensure correct order
@@ -296,7 +288,6 @@ registerRoutes(app, {
   JIRA_API_TOKEN,
   JIRA_PROJECT_KEY,
   JIRA_ISSUE_TYPE,
-  DISABLE_SSO,
   passport,
   GROUPIER_EMAILS,
 });

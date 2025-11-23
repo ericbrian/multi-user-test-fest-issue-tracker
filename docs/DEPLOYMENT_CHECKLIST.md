@@ -17,12 +17,10 @@ Use this checklist before deploying to production.
   
 - [ ] **PORT** is set appropriately for your environment
   
-- [ ] **DISABLE_SSO** is set to `false` for production (use real auth)
-
 - [ ] **NODE_ENV** is set to `production` and `COOKIE_SECURE`/`HTTPS` are enabled
   - Note: `server.js` sets session cookie `secure: false` for local/dev; in production behind TLS set `cookie.secure: true` (or use a `COOKIE_SECURE=true` env var) and ensure `app.set('trust proxy', 1)` when behind a proxy/load balancer.
 
-- [ ] If using SSO, all Entra ID variables are configured:
+- [ ] SSO configuration is complete - all Entra ID variables are configured:
   - [ ] ENTRA_ISSUER
   - [ ] ENTRA_CLIENT_ID
   - [ ] ENTRA_CLIENT_SECRET

@@ -50,11 +50,6 @@ ENTRA_CLIENT_ID=
 ENTRA_CLIENT_SECRET=
 ENTRA_REDIRECT_URI=http://localhost:3000/auth/callback
 
-# Local dev: disable SSO and auto-auth a dev user
-DISABLE_SSO=true
-DEV_USER_EMAIL=dev@example.com
-DEV_USER_NAME=Dev User
-
 # Comma-separated list of emails with Groupier powers (creator is groupier by default)
 GROUPIER_EMAILS=
 

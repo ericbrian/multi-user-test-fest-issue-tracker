@@ -33,64 +33,6 @@ describe('Middleware', () => {
     });
   });
 
-  describe('createDevAutoAuthMiddleware', () => {
-    let mockPrisma;
-
-    let createDevAutoAuthMiddleware;
-
-    beforeEach(() => {
-      // Mock getPrisma
-      mockPrisma = {
-        user: {
-          findUnique: jest.fn(),
-          create: jest.fn(),
-        },
-      };
-      jest.mock('../../src/prismaClient', () => ({ getPrisma: () => mockPrisma }));
-      // Re-require middleware after mocking prisma client
-      createDevAutoAuthMiddleware = require('../../src/middleware').createDevAutoAuthMiddleware;
-    });
-
-    afterEach(() => {
-      jest.resetModules();
-    });
-
-    test('should skip if SSO is not disabled', async () => {
-      const middleware = createDevAutoAuthMiddleware({
-        DISABLE_SSO: false,
-        DEV_USER_EMAIL: 'dev@example.com',
-        DEV_USER_NAME: 'Dev User',
-      });
-
-      const req = {};
-      const res = {};
-      const next = jest.fn();
-
-      await middleware(req, res, next);
-
-      expect(next).toHaveBeenCalled();
-      expect(req.user).toBeUndefined();
-    });
-
-    test('should skip if user already exists', async () => {
-      const middleware = createDevAutoAuthMiddleware({
-        DISABLE_SSO: true,
-        DEV_USER_EMAIL: 'dev@example.com',
-        DEV_USER_NAME: 'Dev User',
-      });
-
-      const existingUser = { id: '123', email: 'test@example.com' };
-      const req = { user: existingUser };
-      const res = {};
-      const next = jest.fn();
-
-      await middleware(req, res, next);
-
-      expect(next).toHaveBeenCalled();
-      expect(req.user).toBe(existingUser);
-    });
-  });
-
   describe('requireGroupierByRoom', () => {
     let mockPrisma;
 

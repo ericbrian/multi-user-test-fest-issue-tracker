@@ -236,7 +236,6 @@ SESSION_SECRET=<use-at-least-32-character-random-string>
 # Optional but recommended
 PORT=3000
 DB_SCHEMA=testfest
-DISABLE_SSO=true  # For local dev
 
 # Jira (optional)
 JIRA_BASE_URL=https://your-domain.atlassian.net

@@ -3,7 +3,6 @@ const { authLimiter } = require('../rateLimiter');
 
 function registerAuthRoutes(router, deps) {
   const {
-    DISABLE_SSO,
     passport,
     TAGS,
     JIRA_BASE_URL,
@@ -16,10 +15,10 @@ function registerAuthRoutes(router, deps) {
    *     tags:
    *       - Authentication
    *     summary: Initiate SSO login
-   *     description: Redirects to Microsoft Entra ID (Azure AD) for OIDC authentication. If SSO is disabled, redirects to home page.
+   *     description: Redirects to Microsoft Entra ID (Azure AD) for OIDC authentication.
    *     responses:
    *       302:
-   *         description: Redirect to OIDC provider or home page
+   *         description: Redirect to OIDC provider
    *       500:
    *         description: OIDC not configured
    *         content:
@@ -28,7 +27,6 @@ function registerAuthRoutes(router, deps) {
    *               type: string
    */
   router.get('/auth/login', authLimiter, async (req, res, next) => {
-    if (DISABLE_SSO) return res.redirect('/');
     if (!passport || !passport._strategies || !passport._strategies['oidc']) return res.status(500).send('OIDC not configured');
     passport.authenticate('oidc')(req, res, next);
   });

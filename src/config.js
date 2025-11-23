@@ -42,16 +42,13 @@ function validateConfig() {
     errors.push('PORT must be a valid port number (1-65535)');
   }
 
-  // SSO Configuration validation
-  const DISABLE_SSO = process.env.DISABLE_SSO === 'true';
-  if (!DISABLE_SSO) {
-    const ENTRA_ISSUER = process.env.ENTRA_ISSUER;
-    const ENTRA_CLIENT_ID = process.env.ENTRA_CLIENT_ID;
-    const ENTRA_CLIENT_SECRET = process.env.ENTRA_CLIENT_SECRET;
+  // SSO Configuration validation - SSO is now always required
+  const ENTRA_ISSUER = process.env.ENTRA_ISSUER;
+  const ENTRA_CLIENT_ID = process.env.ENTRA_CLIENT_ID;
+  const ENTRA_CLIENT_SECRET = process.env.ENTRA_CLIENT_SECRET;
 
-    if (!ENTRA_ISSUER || !ENTRA_CLIENT_ID || !ENTRA_CLIENT_SECRET) {
-      warnings.push('Entra ID SSO is not fully configured. Set DISABLE_SSO=true for dev mode, or configure ENTRA_ISSUER, ENTRA_CLIENT_ID, and ENTRA_CLIENT_SECRET');
-    }
+  if (!ENTRA_ISSUER || !ENTRA_CLIENT_ID || !ENTRA_CLIENT_SECRET) {
+    errors.push('Entra ID SSO configuration is required. Please configure ENTRA_ISSUER, ENTRA_CLIENT_ID, and ENTRA_CLIENT_SECRET');
   }
 
   // Jira configuration validation (optional but warn if partially configured)
@@ -94,9 +91,6 @@ function validateConfig() {
     SESSION_SECRET,
     DATABASE_URL,
     SCHEMA,
-    DISABLE_SSO,
-    DEV_USER_EMAIL: process.env.DEV_USER_EMAIL || 'dev@example.com',
-    DEV_USER_NAME: process.env.DEV_USER_NAME || 'Dev User',
     ENTRA_ISSUER: process.env.ENTRA_ISSUER,
     ENTRA_CLIENT_ID: process.env.ENTRA_CLIENT_ID,
     ENTRA_CLIENT_SECRET: process.env.ENTRA_CLIENT_SECRET,
