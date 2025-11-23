@@ -373,33 +373,29 @@ function registerIssueRoutes(router, deps) {
    *                 value:
    *                   error: "Invalid Jira request. Please check project configuration."
    */
-  router.post('/api/issues/:id/jira', requireAuth, requireIssueAndMembership(), async (req, res) => {
+  router.post('/api/issues/:id/jira', requireAuth, requireIssueAndMembership(), requireGroupierOrCreator(), async (req, res) => {
     try {
-      const { id } = req.params;
-      const { roomId } = req.body;
       const issue = req.issue;
-      const membership = req.membership;
-      const isGroupier = membership && membership.is_groupier;
-      const isCreator = issue.created_by === req.user.id;
-
-      if (!isGroupier && !isCreator) return ApiError.insufficientPermissions(res, 'Only issue creator or groupiers can create Jira tickets');
 
       if (!jiraService.isConfigured()) {
         return ApiError.jira.notConfigured(res);
-      } if (issue.jira_key) {
+      }
+
+      if (issue.jira_key) {
         return res.json({ jira_key: issue.jira_key });
       }
 
-      // Fetch room name for Jira labels
-      const room = await prisma.room.findUnique({ where: { id: issue.room_id } });
-      const roomName = room?.name || '';
+      const jiraKey = await jiraService.createIssue(issue, req.user);
 
-      try {
-        const jiraKey = await jiraService.createIssue(issue, roomName);
-        const updated = await issueService.updateJiraKey(id, jiraKey);
-        io.to(roomId).emit('issue:update', updated);
-        res.json({ jira_key: jiraKey });
-      } catch (jiraError) {
+      // Update issue with Jira key
+      await issueService.updateJiraKey(issue.id, jiraKey);
+
+      io.to(issue.room_id).emit('issue:update', { ...issue, jira_key: jiraKey });
+      res.json({ jira_key: jiraKey });
+    } catch (error) {
+      // Check if it's a Jira API error
+      if (error.response) {
+        const jiraError = error;
         console.error('Jira API error:', jiraError.message);
         if (jiraError.response) {
           if (jiraError.response.status === 401) {
@@ -412,7 +408,7 @@ function registerIssueRoutes(router, deps) {
         }
         return ApiError.jira.failed(res);
       }
-    } catch (error) {
+
       console.error('Error in Jira integration:', error);
       return ApiError.internal(res, 'Internal server error while creating Jira issue', error.message);
     }
@@ -466,17 +462,19 @@ function registerIssueRoutes(router, deps) {
    *             schema:
    *               $ref: '#/components/schemas/Error'
    */
-  router.delete('/api/issues/:id', requireAuth, requireIssueAndMembership(), async (req, res) => {
+  router.delete('/api/issues/:id', requireAuth, requireIssueAndMembership(), requireGroupierOrCreator(), async (req, res) => {
     try {
+      const { id } = req.params;
+
+      // Permission check handled by middleware
+
+      await issueService.deleteIssue(id);
+
+      // Emit update
       const issue = req.issue;
-      const membership = req.membership;
-      const isGroupier = Boolean(membership && membership.is_groupier);
-      const isCreator = issue.created_by === req.user.id;
-      if (!isGroupier && !isCreator) return res.status(403).json({ error: 'Forbidden' });
+      const issues = await issueService.getRoomIssues(issue.room_id);
+      io.to(issue.room_id).emit('issues:update', issues);
 
-      await issueService.deleteIssue(issue.id);
-
-      io.to(issue.room_id).emit('issue:delete', { id: issue.id });
       res.json({ ok: true });
     } catch (error) {
       console.error('Error deleting issue:', error);

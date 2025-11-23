@@ -1,8 +1,9 @@
 const { v4: uuidv4 } = require("uuid");
 const { getPrisma } = require("./prismaClient");
+const { ApiError } = require("./utils/apiResponse");
 
 function requireAuth(req, res, next) {
-  if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+  if (!req.user) return ApiError.unauthorized(res);
   next();
 }
 
@@ -41,15 +42,18 @@ function requireGroupierByRoom() {
   return async function (req, res, next) {
     try {
       const roomId = (req.body && req.body.roomId) || (req.params && req.params.roomId) || (req.query && req.query.roomId) || null;
-      if (!roomId) return res.status(400).json({ error: 'roomId is required' });
+      if (!roomId) return ApiError.missingField(res, 'roomId');
+
       const prisma = getPrisma();
       const membership = await prisma.roomMember.findUnique({ where: { room_id_user_id: { room_id: roomId, user_id: req.user.id } } });
-      if (!membership || !membership.is_groupier) return res.status(403).json({ error: 'Forbidden' });
+
+      if (!membership || !membership.is_groupier) return ApiError.forbidden(res);
+
       req.membership = membership;
       next();
     } catch (e) {
       console.error('requireGroupierByRoom error:', e);
-      res.status(500).json({ error: 'Internal server error' });
+      return ApiError.internal(res, 'Internal server error', e.message);
     }
   };
 }
@@ -59,19 +63,47 @@ function requireIssueAndMembership() {
   return async function (req, res, next) {
     try {
       const { id } = req.params;
-      if (!id) return res.status(400).json({ error: 'Issue id is required' });
+      if (!id) return ApiError.missingField(res, 'id');
+
       const prisma = getPrisma();
       const issue = await prisma.issue.findUnique({ where: { id }, include: { createdBy: true } });
-      if (!issue) return res.status(404).json({ error: 'Issue not found' });
+
+      if (!issue) return ApiError.notFound(res, 'Issue');
+
       req.issue = issue;
       const membership = await prisma.roomMember.findUnique({ where: { room_id_user_id: { room_id: issue.room_id, user_id: req.user.id } } });
       req.membership = membership || null;
       next();
     } catch (e) {
       console.error('requireIssueAndMembership error:', e);
-      res.status(500).json({ error: 'Internal server error' });
+      return ApiError.internal(res, 'Internal server error', e.message);
     }
   };
 }
 
-module.exports = { requireAuth, createDevAutoAuthMiddleware, requireGroupierByRoom, requireIssueAndMembership };
+// Middleware: require user to be either the creator of the issue or a groupier
+// Must be used AFTER requireIssueAndMembership
+function requireGroupierOrCreator() {
+  return function (req, res, next) {
+    if (!req.issue) {
+      return ApiError.internal(res, 'Middleware configuration error: requireIssueAndMembership must be used before requireGroupierOrCreator');
+    }
+
+    const isGroupier = req.membership && req.membership.is_groupier;
+    const isCreator = req.issue.created_by === req.user.id;
+
+    if (!isGroupier && !isCreator) {
+      return ApiError.insufficientPermissions(res, 'Only issue creator or groupiers can perform this action');
+    }
+
+    next();
+  };
+}
+
+module.exports = {
+  requireAuth,
+  createDevAutoAuthMiddleware,
+  requireGroupierByRoom,
+  requireIssueAndMembership,
+  requireGroupierOrCreator
+};
