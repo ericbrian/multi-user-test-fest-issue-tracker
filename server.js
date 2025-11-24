@@ -170,11 +170,13 @@ app.use('/static', express.static(path.join(__dirname, 'public')));
 app.set('trust proxy', 1);
 app.use(
   session({
-    store: new pgSession({
-      pool,
-      tableName: 'session',
-      createTableIfMissing: true,
-    }),
+    store: process.env.NODE_ENV === 'test'
+      ? new (require('connect-sqlite3')(session))({ db: 'test-session.sqlite', dir: '.' })
+      : new pgSession({
+        pool,
+        tableName: 'session',
+        createTableIfMissing: true,
+      }),
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
