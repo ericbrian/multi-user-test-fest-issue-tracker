@@ -2,6 +2,9 @@
 FROM node:20-alpine
 
 ENV NODE_ENV=production
+
+# OPTIONAL: You can hardcode values here, but using --env-file at runtime is more secure.
+# ENV DATABASE_URL="postgres://username:password@host.docker.internal:5432/test_fest_tracker"
 WORKDIR /usr/src/app
 
 # Install deps
@@ -21,5 +24,3 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=20s CMD wget -qO- http://
 
 USER node
 CMD ["node", "server.js"]
-
-
