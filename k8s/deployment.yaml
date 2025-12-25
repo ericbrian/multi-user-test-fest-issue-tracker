@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: testfest-tracker
+  labels:
+    app: testfest-tracker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: testfest-tracker
+  template:
+    metadata:
+      labels:
+        app: testfest-tracker
+    spec:
+      containers:
+        - name: app
+          image: <YOUR_ACCOUNT_ID>.dkr.ecr.<YOUR_REGION>.amazonaws.com/testfest-repo:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: testfest-config
+            - secretRef:
+                name: testfest-secrets
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "1024Mi"
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          # Optional: Volume for uploads if using EFS or local storage
+          # volumeMounts:
+          # - name: uploads
+          #   mountPath: /usr/src/app/uploads
+      # volumes:
+      # - name: uploads
+      #   persistentVolumeClaim:
+      #     claimName: efs-claim

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: testfest-config
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  SCHEMA: "testfest"
+  ENTRA_ISSUER: "https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0"
+  ENTRA_CLIENT_ID: "YOUR_CLIENT_ID"
+  ENTRA_REDIRECT_URI: "https://issues.yourdomain.com/auth/callback"
+  # Optional Jira config
+  # JIRA_BASE_URL: ""
+  # JIRA_PROJECT_KEY: ""
+  # JIRA_ISSUE_TYPE: "Bug"
