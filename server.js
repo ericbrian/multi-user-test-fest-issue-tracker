@@ -45,6 +45,15 @@ const { Pool } = pg;
 // Prisma has its own connection pool
 const pool = new Pool({
   connectionString: DATABASE_URL,
+  ...(isProduction
+    ? {
+        ssl: {
+          // Hosted Postgres providers often require TLS; certificate validation can vary.
+          // If your provider supports full verification, set DATABASE_SSL_REJECT_UNAUTHORIZED=true
+          rejectUnauthorized: String(process.env.DATABASE_SSL_REJECT_UNAUTHORIZED || '').toLowerCase() === 'true',
+        },
+      }
+    : {}),
   max: 10, // Limit to 10 connections for session management
   idleTimeoutMillis: 30000,
 });

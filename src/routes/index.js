@@ -47,6 +47,10 @@ function registerRoutes(app, deps) {
   app.use((error, req, res, next) => {
     console.error('Unhandled error:', error);
 
+    if (res.headersSent) {
+      return next(error);
+    }
+
     // Handle Multer file upload errors
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({

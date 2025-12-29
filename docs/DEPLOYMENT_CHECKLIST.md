@@ -14,9 +14,9 @@ Use this checklist before deploying to production.
 - [ ] **DATABASE_URL** is set correctly for production database
 - [ ] **DB_SCHEMA** is set (default: `testfest`)
 - [ ] **PORT** is set appropriately for your environment
-- [ ] **NODE_ENV** is set to `production` and `COOKIE_SECURE`/`HTTPS` are enabled
+- [ ] **NODE_ENV** is set to `production` and HTTPS is enabled
 
-  - Note: `server.js` sets session cookie `secure: false` for local/dev; in production behind TLS set `cookie.secure: true` (or use a `COOKIE_SECURE=true` env var) and ensure `app.set('trust proxy', 1)` when behind a proxy/load balancer.
+  - Note: `server.js` enables `cookie.secure` automatically when `NODE_ENV=production` and trusts the proxy (`app.set('trust proxy', 1)`), which is required on Heroku.
 
 - [ ] SSO configuration is complete - all Entra ID variables are configured:
 
@@ -65,6 +65,12 @@ Use this checklist before deploying to production.
   - Ensure `httpOnly: true`, `sameSite` is appropriate (`'lax'` is recommended), and `secure: true` in production.
 - [ ] Secrets management
   - Do not commit `.env` to source control. Use secret management (Heroku Config Vars, Azure Key Vault, HashiCorp Vault) for `SESSION_SECRET`, `ENTRA_CLIENT_SECRET`, `DATABASE_URL`, `JIRA_API_TOKEN`, etc.
+
+- [ ] Heroku config vars are set from `.env.production`
+
+  ```bash
+  ./scripts/heroku-set-config-from-env-production.sh <heroku-app-name>
+  ```
 
 ## ✅ Database
 
@@ -186,7 +192,7 @@ Use this checklist before deploying to production.
 
 - [ ] OIDC logout and CSP
   - Ensure the app logout flow optionally calls the OIDC provider `end_session_endpoint` to fully sign users out.
-  - Enable a Content Security Policy for production (the app currently disables CSP in `helmet`); document required script/style exceptions or use nonces/hashes.
+  - Content Security Policy is enabled via `helmet` in `server.js`; if you add external assets later, update CSP directives accordingly.
 - [ ] Socket.IO CORS & proxy settings
   - Confirm Socket.IO CORS origin(s) are configured correctly and WebSocket proxying is enabled if using a reverse proxy. The server currently uses `cors: { origin: false }` so update in production if necessary.
 - [ ] Session store & scaling
