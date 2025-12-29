@@ -28,7 +28,7 @@ describe('Middleware', () => {
       requireAuth(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Authentication required' }));
       expect(next).not.toHaveBeenCalled();
     });
   });
@@ -59,7 +59,7 @@ describe('Middleware', () => {
       const mw = requireGroupierByRoom();
       await mw(req, res, next);
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: 'roomId is required' });
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Missing required field: roomId' }));
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -71,7 +71,7 @@ describe('Middleware', () => {
       const mw = requireGroupierByRoom();
       await mw(req, res, next);
       expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Forbidden' });
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'You do not have permission to access this resource' }));
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -112,7 +112,7 @@ describe('Middleware', () => {
       const mw = requireIssueAndMembership();
       await mw(req, res, next);
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Issue id is required' });
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Missing required field: id' }));
       expect(next).not.toHaveBeenCalled();
     });
 
@@ -124,7 +124,7 @@ describe('Middleware', () => {
       const mw = requireIssueAndMembership();
       await mw(req, res, next);
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Issue not found' });
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Issue not found' }));
       expect(next).not.toHaveBeenCalled();
     });
 

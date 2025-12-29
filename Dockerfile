@@ -14,7 +14,7 @@ RUN npm install --omit=dev && npm cache clean --force
 # Copy app
 COPY . .
 
-# Create uploads dir (mounted volume in ECS if desired)
+# Create uploads dir
 RUN mkdir -p /usr/src/app/uploads && chown -R node:node /usr/src/app
 
 EXPOSE 3000

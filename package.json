@@ -13,7 +13,11 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev --name init",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "heroku-postbuild": "npm run prisma:generate"
+  },
+  "engines": {
+    "node": "20.x"
   },
   "repository": {
     "type": "git",

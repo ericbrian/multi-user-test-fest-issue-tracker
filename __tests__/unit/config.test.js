@@ -15,14 +15,20 @@ describe('Config Validation', () => {
     // Save original env
     originalEnv = { ...process.env };
     
+    // Mock process.exit
+    jest.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('process.exit called');
+    });
+    
     // Clear require cache to get fresh module
     jest.resetModules();
-    validateConfig = require('../src/config').validateConfig;
+    validateConfig = require('../../src/config').validateConfig;
   });
 
   afterEach(() => {
     // Restore original env
     process.env = originalEnv;
+    jest.restoreAllMocks();
   });
 
   describe('Required variables', () => {
@@ -94,14 +100,12 @@ describe('Config Validation', () => {
       expect(config.SCHEMA).toBe('testfest');
     });
 
-    test('should accept public schema', () => {
+    test('should reject public schema', () => {
       process.env.DATABASE_URL = 'postgresql://localhost/test';
       process.env.SESSION_SECRET = 'a'.repeat(32);
       process.env.DB_SCHEMA = 'public';
       
-      const config = validateConfig();
-      
-      expect(config.SCHEMA).toBe('public');
+      expect(() => validateConfig()).toThrow();
     });
 
     test('should reject invalid schema', () => {

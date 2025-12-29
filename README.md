@@ -20,21 +20,16 @@ Real-time multi-user issue tracker for Test Fests. Left pane: submit issues. Rig
 - Passport + openid-client for Entra ID
 - Multer for uploads
 
-## AWS Deployment
+## Heroku Deployment
 
-Deploy to AWS with the smallest possible footprint (~$46/month):
+To deploy to Heroku:
 
-- **[Quick Start Guide](docs/AWS_QUICK_START.md)** - One-command deployment
-- **[Deployment Script](scripts/deploy-to-aws.sh)** - Automated setup
-- **[Cost Breakdown](docs/AWS_COST_BREAKDOWN.md)** - Detailed pricing & optimization
-- **[Full Deployment Guide](docs/AWS_DEPLOYMENT_MINIMAL.md)** - Manual setup instructions
-- **[Troubleshooting](docs/AWS_TROUBLESHOOTING.md)** - Common issues & solutions
+1.  **Create a Heroku App**: Run `heroku create test-fest-tracker`.
+2.  **Add Postgres**: Run `heroku addons:create heroku-postgresql:essential-0`.
+3.  **Configure Env Vars**: Set `ENTRA_ISSUER`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`, etc., using `heroku config:set`.
+4.  **Deploy**: Run `git push heroku main`.
 
-```bash
-# Quick deploy (requires AWS CLI & Docker)
-./scripts/deploy-to-aws.sh
-```
-
+For detailed instructions, see [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md).
 
 ## Setup
 
@@ -107,6 +102,7 @@ http://localhost:3000/api-docs
 ```
 
 The documentation includes:
+
 - Complete endpoint reference for all REST API routes
 - Request/response schemas and examples
 - Authentication details
@@ -148,16 +144,3 @@ Build locally:
 docker build -t test-fest-tracker:local .
 docker run --env-file .env -p 3000:3000 test-fest-tracker:local
 ```
-
-## Bitbucket Pipelines (AWS ECR)
-
-`bitbucket-pipelines.yml` builds the image and pushes to AWS ECR repository `testfest-repo` on branch `main`.
-
-Set these Bitbucket Repository Variables (Repository settings → Pipelines → Repository variables):
-
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `AWS_ACCOUNT_ID` (e.g., 123456789012)
-- `AWS_DEFAULT_REGION` (e.g., us-east-1)
-
-The pipeline will tag the image with the commit hash and `latest`.

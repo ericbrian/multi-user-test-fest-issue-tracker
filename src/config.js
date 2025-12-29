@@ -32,7 +32,7 @@ function validateConfig() {
 
   // Schema validation
   const SCHEMA = ((process.env.DB_SCHEMA || 'testfest').replace(/[^a-zA-Z0-9_]/g, '')) || 'testfest';
-  const ALLOWED_SCHEMAS = ['testfest', 'public'];
+  const ALLOWED_SCHEMAS = ['testfest'];
   if (!ALLOWED_SCHEMAS.includes(SCHEMA)) {
     errors.push(`DB_SCHEMA must be one of: ${ALLOWED_SCHEMAS.join(', ')} (got: ${SCHEMA})`);
   }

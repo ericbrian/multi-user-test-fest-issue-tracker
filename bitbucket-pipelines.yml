@@ -43,30 +43,6 @@ pipelines:
             - export IMAGE="${REPOSITORY}:${TAG_COMMIT}"
             - snyk auth ${SNYK_TOKEN}
             - snyk container test ${IMAGE} --file=Dockerfile --severity-threshold=${SNYK_SEVERITY_THRESHOLD:-medium}
-      - step:
-          name: Push Docker image to AWS ECR
-          services:
-            - docker
-          caches:
-            - docker
-          script:
-            - pip3 install --user awscli
-            - export PATH=$PATH:/root/.local/bin
-            - export AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}
-            - export AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
-            - export REPOSITORY="testfest-repo"
-            - export REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-            - docker load -i image.tar
-            - export TAG_COMMIT=${BITBUCKET_COMMIT}
-            - export IMAGE_LOCAL="${REPOSITORY}:${TAG_COMMIT}"
-            - export IMAGE_REMOTE_COMMIT="${REGISTRY}/${REPOSITORY}:${TAG_COMMIT}"
-            - export IMAGE_REMOTE_LATEST="${REGISTRY}/${REPOSITORY}:latest"
-            - aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${REGISTRY}
-            - aws ecr describe-repositories --repository-names ${REPOSITORY} --region ${AWS_DEFAULT_REGION} >/dev/null 2>&1 || aws ecr create-repository --repository-name ${REPOSITORY} --region ${AWS_DEFAULT_REGION}
-            - docker tag ${IMAGE_LOCAL} ${IMAGE_REMOTE_COMMIT}
-            - docker tag ${IMAGE_LOCAL} ${IMAGE_REMOTE_LATEST}
-            - docker push ${IMAGE_REMOTE_COMMIT}
-            - docker push ${IMAGE_REMOTE_LATEST}
 
 definitions:
   caches:
