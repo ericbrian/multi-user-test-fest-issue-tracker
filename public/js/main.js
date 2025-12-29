@@ -61,6 +61,28 @@ if (ui.elements.leaderboardBtn) {
   });
 }
 
+if (ui.elements.copyRoomLinkBtn) {
+  ui.elements.copyRoomLinkBtn.addEventListener('click', async () => {
+    if (!store.state.currentRoomId) return toast.warn('Please select a Test Fest first');
+
+    const url = `${window.location.origin}/fest/${store.state.currentRoomId}`;
+
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(url);
+        toast.success('Test Fest link copied');
+        return;
+      }
+    } catch (_) {
+      // fall back to prompt
+    }
+
+    // Fallback for older browsers / denied clipboard permissions
+    const result = window.prompt('Copy this Test Fest link:', url);
+    if (result !== null) toast.success('Test Fest link ready to copy');
+  });
+}
+
 ui.elements.createRoomBtn.addEventListener("click", async () => {
   const scriptLibrary = await api.fetchScriptLibrary();
   ui.showCreateRoomModal(scriptLibrary, async (data, closeModal) => {

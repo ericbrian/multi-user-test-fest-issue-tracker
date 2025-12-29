@@ -12,6 +12,7 @@ export const elements = {
   roomSelect: document.getElementById("roomSelect"),
   createRoomBtn: document.getElementById("createRoomBtn"),
   changeRoomBtn: document.getElementById("changeRoomBtn"),
+  copyRoomLinkBtn: document.getElementById("copyRoomLinkBtn"),
   roomLabel: document.getElementById("roomLabel"),
   currentRoomName: document.getElementById("currentRoomName"),
   tagLegend: document.getElementById("tagLegend"),
@@ -81,6 +82,7 @@ export function updateVisibility() {
   if (elements.roomSelect) elements.roomSelect.style.display = shouldShow ? "none" : "inline-block";
   if (elements.roomLabel) elements.roomLabel.style.display = shouldShow ? "none" : "inline-block";
   if (elements.changeRoomBtn) elements.changeRoomBtn.style.display = shouldShow ? "inline-block" : "none";
+  if (elements.copyRoomLinkBtn) elements.copyRoomLinkBtn.style.display = shouldShow ? "inline-flex" : "none";
 
   if (elements.currentRoomName) {
     elements.currentRoomName.style.display = shouldShow ? "inline-block" : "none";
