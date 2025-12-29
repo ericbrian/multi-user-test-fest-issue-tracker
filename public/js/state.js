@@ -31,6 +31,7 @@ const initialState = {
   socket: null,
   isGroupier: false,
   testScriptLines: [],
+  hideCheckedLines: false,
   issuesFilter: 'all',
   jiraBaseUrl: null,
 };

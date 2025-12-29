@@ -309,7 +309,32 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
     return;
   }
 
-  const linesHtml = store.state.testScriptLines.map(line => {
+  // If a scriptId is already set (hidden input), mark that line as selected.
+  // If not present in the input, try to restore from localStorage (persisted selection).
+  let currentScriptId = (document.getElementById('scriptId') || {}).value || null;
+  if (!currentScriptId) {
+    try {
+      currentScriptId = localStorage.getItem(LS_KEY_SELECTED_SCRIPT) || null;
+      if (currentScriptId) {
+        const scriptInput = document.getElementById('scriptId');
+        if (scriptInput) scriptInput.value = currentScriptId;
+      }
+    } catch (e) {
+      currentScriptId = null;
+    }
+  }
+
+  const hideChecked = Boolean(store.state.hideCheckedLines);
+  const linesToRender = hideChecked
+    ? store.state.testScriptLines.filter((line) => {
+        if (!line.is_checked) return true;
+        // Keep the selected line visible even if it is checked so the hidden
+        // script selection doesn't become invisible/confusing.
+        return currentScriptId && String(line.test_script_line_id) === String(currentScriptId);
+      })
+    : store.state.testScriptLines;
+
+  const linesHtml = linesToRender.map(line => {
     const isChecked = line.is_checked;
     const checkedClass = isChecked ? 'checked' : '';
     const databaseNotesHtml = line.notes ?
@@ -336,22 +361,6 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
   // Ensure the title sits above the container as a separate element
   ensureTestScriptTitle(container.parentNode, 'Test Script');
   container.innerHTML = `${linesHtml}`;
-
-  // If a scriptId is already set (hidden input), mark that line as selected
-  // If a scriptId is already set (hidden input), mark that line as selected.
-  // If not present in the input, try to restore from localStorage (persisted selection).
-  let currentScriptId = (document.getElementById('scriptId') || {}).value || null;
-  if (!currentScriptId) {
-    try {
-      currentScriptId = localStorage.getItem(LS_KEY_SELECTED_SCRIPT) || null;
-      if (currentScriptId) {
-        const scriptInput = document.getElementById('scriptId');
-        if (scriptInput) scriptInput.value = currentScriptId;
-      }
-    } catch (e) {
-      currentScriptId = null;
-    }
-  }
 
   if (currentScriptId) {
     setTimeout(() => {
@@ -409,6 +418,28 @@ function scrollToFirstUncheckedLine(container) {
 // before the container. If one already exists, update its text.
 function ensureTestScriptTitle(insertParent, text) {
   if (!insertParent) return;
+  const toggleId = 'hideCheckedLinesToggle';
+
+  const attachToggle = (titleEl) => {
+    // Toggle: hide checked lines
+    const wrap = document.createElement('label');
+    wrap.className = 'test-script-hide-checked';
+    wrap.htmlFor = toggleId;
+    wrap.innerHTML = `
+      <input id="${toggleId}" type="checkbox" ${store.state.hideCheckedLines ? 'checked' : ''} />
+      <span>Hide checked</span>
+    `;
+    titleEl.appendChild(wrap);
+
+    const toggle = wrap.querySelector('input');
+    if (toggle) {
+      toggle.addEventListener('change', () => {
+        store.setState({ hideCheckedLines: Boolean(toggle.checked) });
+        renderTestScriptLines(false);
+      });
+    }
+  };
+
   // If a dedicated title element exists, update it
   let titleEl = document.getElementById('testScriptLinesTitle');
   if (titleEl) {
@@ -432,6 +463,7 @@ function ensureTestScriptTitle(insertParent, text) {
       `;
     }
     titleEl.appendChild(prog);
+    attachToggle(titleEl);
     // keep a reference on the exported elements map so other code can find it
     try { elements.testProgress = prog; } catch (e) { /* ignore */ }
     // make sure it's directly before our container
@@ -459,6 +491,7 @@ function ensureTestScriptTitle(insertParent, text) {
     </div>
   `;
   titleEl.appendChild(prog);
+  attachToggle(titleEl);
   try { elements.testProgress = prog; } catch (e) { /* ignore */ }
   // insert before the container if present, otherwise append to parent
   const container = document.getElementById('testScriptLinesContainer');
@@ -508,27 +541,7 @@ function formatNotesWithLineBreaks(text) {
 function onTestScriptLineClick(e) {
   if (e.target.type === 'checkbox') return;
   const lineEl = e.currentTarget;
-  const scriptLineId = lineEl.getAttribute('data-script-line-id');
-  const scriptIdInput = document.getElementById('scriptId');
-  if (scriptIdInput) {
-    scriptIdInput.value = scriptLineId;
-  }
-
-  // Update visual selection state
-  const container = document.getElementById('testScriptLinesContainer');
-  if (container) {
-    container.querySelectorAll('.test-script-line.selected').forEach(el => el.classList.remove('selected'));
-    lineEl.classList.add('selected');
-  }
-  // Update visible badge with the chosen script ID
-  updateSelectedScriptBadge(scriptLineId);
-
-  // Persist selection so it can be restored across reloads
-  try {
-    localStorage.setItem(LS_KEY_SELECTED_SCRIPT, scriptLineId);
-  } catch (err) {
-    // ignore storage errors
-  }
+  const scriptLineId = selectTestScriptLine(lineEl);
 
   // Scroll the right-hand issues panel to the item matching this script ID
   try {
@@ -550,6 +563,34 @@ function onTestScriptLineClick(e) {
   }
 }
 
+function selectTestScriptLine(lineEl) {
+  if (!lineEl) return null;
+  const scriptLineId = lineEl.getAttribute('data-script-line-id');
+  const scriptIdInput = document.getElementById('scriptId');
+  if (scriptIdInput) {
+    scriptIdInput.value = scriptLineId;
+  }
+
+  // Update visual selection state
+  const container = document.getElementById('testScriptLinesContainer');
+  if (container) {
+    container.querySelectorAll('.test-script-line.selected').forEach(el => el.classList.remove('selected'));
+    lineEl.classList.add('selected');
+  }
+
+  // Update visible badge with the chosen script ID
+  updateSelectedScriptBadge(scriptLineId);
+
+  // Persist selection so it can be restored across reloads
+  try {
+    localStorage.setItem(LS_KEY_SELECTED_SCRIPT, scriptLineId);
+  } catch (err) {
+    // ignore storage errors
+  }
+
+  return scriptLineId;
+}
+
 export function updateSelectedScriptBadge(scriptId) {
   const badge = document.getElementById('selectedScriptBadge');
   if (!badge) return;
@@ -566,6 +607,9 @@ async function onTestScriptLineCheckboxClick(e) {
   e.stopPropagation();
   const checkbox = e.target;
   const lineEl = checkbox.closest('.test-script-line');
+  // Checking a line is also a strong signal of intent; keep the script selection
+  // in sync so "Save Issue" doesn't fail with a Script ID warning.
+  selectTestScriptLine(lineEl);
   const lineId = lineEl.getAttribute('data-line-id');
   const isChecked = checkbox.checked;
 
@@ -582,6 +626,9 @@ async function onTestScriptLineCheckboxClick(e) {
       line.checked_at = isChecked ? new Date().toISOString() : null;
     }
     updateTestProgress();
+    if (store.state.hideCheckedLines) {
+      renderTestScriptLines(false);
+    }
   } catch (error) {
     console.error('Error updating test script line progress:', error);
     checkbox.checked = !isChecked;

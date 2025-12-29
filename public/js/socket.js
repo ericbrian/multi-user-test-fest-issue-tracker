@@ -41,7 +41,9 @@ export function initSocket(roomId) {
       ui.renderTestScriptLines();
       try {
         const actor = payload && payload.userId && store.state.me && payload.userId === store.state.me.id ? 'You' : 'A tester';
-        const msg = payload && payload.is_checked ? `${actor} checked a test line` : `${actor} unchecked a test line`;
+        const msg = payload && payload.is_checked
+          ? `${actor} checked off a test script line`
+          : `${actor} unchecked a test script line`;
         showNotification('success', 'Test progress', msg);
       } catch (e) { /* ignore */ }
     }
