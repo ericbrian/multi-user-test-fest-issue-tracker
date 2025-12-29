@@ -1,5 +1,6 @@
 const express = require('express');
 const request = require('supertest');
+const multer = require('multer');
 
 // Mocks
 jest.mock('../../src/prismaClient');
@@ -21,12 +22,9 @@ const mockPrisma = {
   issue: { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
 };
 
-const uploadMock = {
-  array: () => (req, res, next) => {
-    req.files = [];
-    next();
-  }
-};
+// Use real multer parsing for multipart/form-data requests.
+// Memory storage avoids writing to disk during tests.
+const uploadMock = multer({ storage: multer.memoryStorage() });
 
 let mockIssueServiceInstance;
 let mockJiraServiceInstance;

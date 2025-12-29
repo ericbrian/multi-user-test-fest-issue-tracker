@@ -53,11 +53,11 @@ __tests__/
 
 ## Coverage Goals
 
-The project aims for the following coverage thresholds:
-- **Branches**: 50%
-- **Functions**: 50%
-- **Lines**: 50%
-- **Statements**: 50%
+Current enforced Jest coverage thresholds:
+- **Branches**: 35%
+- **Functions**: 30%
+- **Lines**: 40%
+- **Statements**: 40%
 
 ## Writing Tests
 

@@ -291,9 +291,17 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
   if (currentScriptId) {
     setTimeout(() => {
       const selectedEl = container.querySelector(`.test-script-line[data-script-line-id="${currentScriptId}"]`);
-      if (selectedEl) selectedEl.classList.add('selected');
-      // Update the visible badge for the selected script
-      updateSelectedScriptBadge(currentScriptId);
+      if (selectedEl) {
+        selectedEl.classList.add('selected');
+        // Update the visible badge for the selected script
+        updateSelectedScriptBadge(currentScriptId);
+      } else {
+        // Selection might be from another room; clear it to avoid confusing/stale UI.
+        const scriptInput = document.getElementById('scriptId');
+        if (scriptInput) scriptInput.value = '';
+        updateSelectedScriptBadge(null);
+        try { localStorage.removeItem(LS_KEY_SELECTED_SCRIPT); } catch (e) { /* ignore */ }
+      }
     }, 0);
   }
 
@@ -881,12 +889,8 @@ export function showCreateRoomModal(scriptLibrary, onSubmit) {
 // Clear selected badge & selection when the issue form is reset
 if (elements.issueForm) {
   elements.issueForm.addEventListener('reset', () => {
-    const scriptIdInput = document.getElementById('scriptId');
-    if (scriptIdInput) scriptIdInput.value = '';
-    updateSelectedScriptBadge(null);
-    const container = document.getElementById('testScriptLinesContainer');
-    if (container) container.querySelectorAll('.test-script-line.selected').forEach(el => el.classList.remove('selected'));
-    try { localStorage.removeItem(LS_KEY_SELECTED_SCRIPT); } catch (e) { /* ignore */ }
+    // Preserve script selection across submits (main.js triggers a form reset after submit).
+    // If you ever need an explicit "clear selection" action, handle it separately from reset.
   });
 }
 
