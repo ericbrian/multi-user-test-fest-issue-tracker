@@ -24,10 +24,10 @@ Real-time multi-user issue tracker for Test Fests. Left pane: submit issues. Rig
 
 To deploy to Heroku:
 
-1.  **Create a Heroku App**: Run `heroku create test-fest-tracker`.
-2.  **Add Postgres**: Run `heroku addons:create heroku-postgresql:essential-0`.
-3.  **Configure Env Vars**: Set `ENTRA_ISSUER`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`, etc., using `heroku config:set`.
-4.  **Deploy**: Run `git push heroku main`.
+1. **Create a Heroku App**: Run `heroku create test-fest-tracker`.
+1. **Add Postgres**: Run `heroku addons:create heroku-postgresql:essential-0`.
+1. **Configure Env Vars**: Set `ENTRA_ISSUER`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`, etc., using `heroku config:set`.
+1. **Deploy**: Run `git push heroku main`.
 
 For detailed instructions, see [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md).
 
@@ -35,10 +35,8 @@ For detailed instructions, see [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CH
 
 1. Prerequisites (local dev)
 
-```
 - Node.js 20+
 - Postgres 13+ with psql CLI
-```
 
 2. Install dependencies
 
@@ -97,7 +95,7 @@ Open `http://localhost:3000`.
 
 Interactive API documentation is available via Swagger UI at:
 
-```
+```text
 http://localhost:3000/api-docs
 ```
 

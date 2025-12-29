@@ -1,0 +1,20 @@
+{
+  "config": {
+    "default": true,
+
+    "MD013": false,
+    "MD029": false,
+    "MD033": false
+  },
+  "globs": ["**/*.md"],
+  "ignores": [
+    ".agent/**",
+    ".github/skills/**",
+    "docs/IMPLEMENTATION_SUMMARY.md",
+    "docs/SESSION_SUMMARY.md",
+    "node_modules/**",
+    "coverage/**",
+    "prisma/migrations/**",
+    "uploads/**"
+  ]
+}

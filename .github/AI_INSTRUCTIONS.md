@@ -31,16 +31,15 @@ This document orients future AI/code assistants to continue development efficien
   - `DATABASE_URL` (Postgres connection string)
   - `DB_SCHEMA` (default `testfest`)
 - Entra ID (OIDC)
-  - `ENTRA_ISSUER` (e.g., https://login.microsoftonline.com/<tenant-id>/v2.0)
+  - `ENTRA_ISSUER` (e.g., <https://login.microsoftonline.com/**tenant-id_here**}**/v2.0>)
   - `ENTRA_CLIENT_ID`
   - `ENTRA_CLIENT_SECRET`
-  - `ENTRA_REDIRECT_URI` (default http://localhost:3000/auth/callback)
+  - `ENTRA_REDIRECT_URI` (default <http://localhost:3000/auth/callback>)
 - Roles/Tags
-  - `GROUPIER_EMAILS` (comma-separated emails; creators are groupiers by default)
+- Dev mode: `npm run dev` (Nodemon). Visit `http://localhost:3000`
   - `TAGS` (comma-separated, default: duplicate,as-designed,low-priority)
 - Jira (optional)
-  - `JIRA_BASE_URL` (e.g., https://your-domain.atlassian.net)
-  - `JIRA_EMAIL`
+  - `JIRA_BASE_URL` (e.g., <https://your-domain.atlassian.net>)
   - `JIRA_API_TOKEN`
   - `JIRA_PROJECT_KEY`
   - `JIRA_ISSUE_TYPE` (default: Bug)
@@ -128,7 +127,7 @@ This document orients future AI/code assistants to continue development efficien
 
 ## Development
 
-- Dev mode: `npm run dev` (Nodemon). Visit http://localhost:3000
+- Dev mode: `npm run dev` (Nodemon). Visit <http://localhost:3000>
 - SSO is required in dev; for automated tests use `NODE_ENV=test`.
 - Pre-provision DB: `createdb test_fest_tracker || true && psql "$DATABASE_URL" -f db/schema.sql`
 
@@ -149,7 +148,7 @@ This document orients future AI/code assistants to continue development efficien
 
 - Always update this file (`AI_INSTRUCTIONS.md`) and `README.md` whenever you change operational setup or configuration.
 - Also update related sources when applicable:
-  - `.env.example` for new/changed env vars (defaults, formats, flags like `DISABLE_SSO`).
+  - `.env.example` for new/changed env vars (defaults, formats, flags).
   - `db/schema.sql` and any DB notes when schema/tables/columns/indexes or sort rules change.
   - `bitbucket-pipelines.yml` and `Dockerfile` sections in docs when CI/CD or container behavior changes (e.g., Snyk, ECR repo, build args).
   - Frontend docs when UI/UX behavior changes (room gating, Script ID sorting, tag semantics like `clear-status`, fade rules, footer/Jira behavior, lightbox).

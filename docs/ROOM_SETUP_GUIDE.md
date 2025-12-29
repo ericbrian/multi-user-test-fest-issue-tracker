@@ -26,6 +26,7 @@ If you have an existing test script in CSV format, you can import it into your t
 
 1. **Create a Test Fest (Room)** first using the web interface
 2. **Prepare your CSV file** with the following format:
+
    ```csv
    Section,Item under Test,Description
    Header,Header,NOTE: With the release of the REST API...
@@ -33,11 +34,6 @@ If you have an existing test script in CSV format, you can import it into your t
    Navigation,Left Hand Navigation Bar,
    ```
 
-### CSV Format Requirements
-
-Your CSV file should have three columns:
-
-- **Section** (Column 1): The section or category name
 - **Item under Test** (Column 2): The specific item being tested
 - **Description** (Column 3): Additional notes or description for the test item
 

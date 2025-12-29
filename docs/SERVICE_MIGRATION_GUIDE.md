@@ -5,11 +5,13 @@ The business logic has been extracted into service classes, but the routes still
 ## Current State
 
 ✅ **Service classes created**:
+
 - `src/services/jiraService.js`
 - `src/services/issueService.js`
 - `src/services/roomService.js`
 
 ❌ **Routes still contain inline logic**:
+
 - `src/routes.js` has not been refactored yet
 
 ## Benefits of Completing Migration
@@ -24,6 +26,7 @@ The business logic has been extracted into service classes, but the routes still
 ### Example: Refactoring Room Creation
 
 **Before** (current code in routes.js):
+
 ```javascript
 app.post('/api/rooms', requireAuth, async (req, res) => {
   try {
@@ -50,6 +53,7 @@ app.post('/api/rooms', requireAuth, async (req, res) => {
 ```
 
 **After** (using RoomService):
+
 ```javascript
 app.post('/api/rooms', requireAuth, async (req, res) => {
   try {
@@ -76,6 +80,7 @@ app.post('/api/rooms', requireAuth, async (req, res) => {
 ### Example: Refactoring Jira Integration
 
 **Before** (current code in routes.js, ~100 lines):
+
 ```javascript
 app.post('/api/issues/:id/jira', requireAuth, async (req, res) => {
   try {
@@ -91,6 +96,7 @@ app.post('/api/issues/:id/jira', requireAuth, async (req, res) => {
 ```
 
 **After** (using JiraService):
+
 ```javascript
 app.post('/api/issues/:id/jira', requireAuth, async (req, res) => {
   try {
@@ -169,15 +175,18 @@ function registerRoutes(app, deps) {
 Start with simpler routes and work toward more complex ones:
 
 #### Easy (Start Here)
+
 1. `GET /api/rooms` → Use `roomService.getAllRooms()`
 2. `GET /api/rooms/:roomId/issues` → Use `issueService.getRoomIssues()`
 3. `DELETE /api/issues/:id` → Use `issueService.deleteIssue()`
 
 #### Medium
+
 4. `POST /api/rooms/:roomId/join` → Use `roomService.joinRoom()`
 5. `POST /api/issues/:id/status` → Use `issueService.updateStatus()`
 
 #### Complex
+
 6. `POST /api/rooms` → Use `roomService.createRoom()`
 7. `POST /api/rooms/:roomId/issues` → Use `issueService.createIssue()`
 8. `POST /api/issues/:id/jira` → Use `jiraService.createIssue()`
@@ -240,11 +249,11 @@ describe('RoomService', () => {
 ## Testing Strategy
 
 1. **Before Refactoring**: Ensure current functionality works
-2. **During Refactoring**: 
+2. **During Refactoring**:
    - Write/update unit tests for service methods
    - Write/update integration tests for routes
    - Test manually in development
-3. **After Refactoring**: 
+3. **After Refactoring**:
    - Run full test suite
    - Verify all functionality still works
    - Check for any edge cases
@@ -252,6 +261,7 @@ describe('RoomService', () => {
 ## Common Patterns
 
 ### Error Handling
+
 ```javascript
 try {
   const result = await service.someMethod(data);
@@ -265,6 +275,7 @@ try {
 ```
 
 ### Authorization
+
 ```javascript
 // Check groupier status
 const isGroupier = await roomService.isGroupier(roomId, req.user.id);
@@ -280,6 +291,7 @@ if (!isMember) {
 ```
 
 ### Socket.IO Emission
+
 ```javascript
 // After updating data, emit to room
 const result = await service.updateSomething(id, data);

@@ -3,11 +3,16 @@
     "*.sql": "pgsql"
   },
   "cSpell.words": [
+    "createdb",
     "Entra",
     "ENTRA",
     "Groupier",
+    "groupiers",
+    "Healthcheck",
     "httpyac",
+    "lightbox",
     "PKCE",
+    "psql",
     "testfest",
     "tokenset",
     "uuidv"
