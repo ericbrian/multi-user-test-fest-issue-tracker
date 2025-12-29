@@ -2,43 +2,24 @@ const express = require('express');
 const request = require('supertest');
 
 // Mocks
-const mockPrisma = {
-  roomMember: { findUnique: jest.fn() },
-  room: { findUnique: jest.fn() },
-  issue: { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
-};
-
-const mockIssueServiceInstance = {
-  getRoomIssues: jest.fn(),
-  createIssue: jest.fn(),
-  updateStatus: jest.fn(),
-  updateJiraKey: jest.fn(),
-  deleteIssue: jest.fn(),
-  cleanupFiles: jest.fn(),
-};
-
-const mockJiraServiceInstance = {
-  isConfigured: jest.fn(),
-  createIssue: jest.fn(),
-};
-
-jest.mock('../../src/prismaClient', () => ({
-  getPrisma: () => mockPrisma,
-}));
-
-jest.mock('../../src/services/issueService', () => ({
-  IssueService: jest.fn().mockImplementation(() => mockIssueServiceInstance),
-}));
-
-jest.mock('../../src/services/jiraService', () => ({
-  JiraService: jest.fn().mockImplementation(() => mockJiraServiceInstance),
-}));
-
+jest.mock('../../src/prismaClient');
+jest.mock('../../src/services/issueService');
+jest.mock('../../src/services/jiraService');
 jest.mock('../../src/rateLimiter', () => ({
   issueCreationLimiter: (req, res, next) => next(),
   uploadLimiter: (req, res, next) => next(),
   apiLimiter: (req, res, next) => next(),
 }));
+
+const { getPrisma } = require('../../src/prismaClient');
+const { IssueService } = require('../../src/services/issueService');
+const { JiraService } = require('../../src/services/jiraService');
+
+const mockPrisma = {
+  roomMember: { findUnique: jest.fn() },
+  room: { findUnique: jest.fn() },
+  issue: { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
+};
 
 const uploadMock = {
   array: () => (req, res, next) => {
@@ -47,36 +28,45 @@ const uploadMock = {
   }
 };
 
+let mockIssueServiceInstance;
+let mockJiraServiceInstance;
+
 beforeEach(() => {
   jest.clearAllMocks();
   
-  mockIssueServiceInstance.getRoomIssues.mockResolvedValue([
-    { id: 'issue-1', script_id: 1, description: 'Test issue', created_by: 'user-1' }
-  ]);
-  mockIssueServiceInstance.createIssue.mockResolvedValue({
-    id: 'issue-2',
-    script_id: 42,
-    description: 'New test issue',
-    is_issue: true,
-    created_by: 'user-1',
-    files: []
-  });
-  mockIssueServiceInstance.updateStatus.mockResolvedValue({ id: 'issue-1', status: 'closed' });
-  mockIssueServiceInstance.updateJiraKey.mockResolvedValue({ id: 'issue-1', jira_key: 'PROJ-1' });
-  mockIssueServiceInstance.deleteIssue.mockResolvedValue(true);
-  
-  mockJiraServiceInstance.isConfigured.mockReturnValue(true);
-  mockJiraServiceInstance.createIssue.mockResolvedValue('PROJ-1');
+  getPrisma.mockReturnValue(mockPrisma);
+
+  mockIssueServiceInstance = {
+    getRoomIssues: jest.fn().mockResolvedValue([
+      { id: 'issue-1', script_id: 1, description: 'Test issue', created_by: 'user-1' }
+    ]),
+    createIssue: jest.fn().mockResolvedValue({
+      id: 'issue-2',
+      script_id: 42,
+      description: 'New test issue',
+      is_issue: true,
+      created_by: 'user-1',
+      files: []
+    }),
+    updateStatus: jest.fn().mockResolvedValue({ id: 'issue-1', status: 'closed' }),
+    updateJiraKey: jest.fn().mockResolvedValue({ id: 'issue-1', jira_key: 'PROJ-1' }),
+    deleteIssue: jest.fn().mockResolvedValue(true),
+    cleanupFiles: jest.fn(),
+  };
+  IssueService.mockImplementation(() => mockIssueServiceInstance);
+
+  mockJiraServiceInstance = {
+    isConfigured: jest.fn().mockReturnValue(true),
+    createIssue: jest.fn().mockResolvedValue('PROJ-1'),
+  };
+  JiraService.mockImplementation(() => mockJiraServiceInstance);
 });
 
-afterEach(() => {
-  jest.resetModules();
-});
+const registerIssueRoutes = require('../../src/routes/issues');
 
 describe('Issues API Integration Tests', () => {
   describe('GET /api/rooms/:roomId/issues', () => {
     test('returns issues for a room', async () => {
-      const registerIssueRoutes = require('../../src/routes/issues');
       const app = express();
       app.use(express.json());
 
@@ -164,6 +154,7 @@ describe('Issues API Integration Tests', () => {
         .field('description', 'Test issue description')
         .field('is_issue', 'true');
 
+      if (res.status !== 200) console.log('DEBUG ERROR:', JSON.stringify(res.body, null, 2));
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('id', 'issue-2');
       expect(mockIssueServiceInstance.createIssue).toHaveBeenCalledWith(
