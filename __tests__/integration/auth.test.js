@@ -1,48 +1,53 @@
-/**
- * Integration tests for authentication endpoints
- */
-
+const express = require('express');
 const request = require('supertest');
 
-// Note: These are example integration tests
-// In a real scenario, you would need to set up a test database and mock authentication
+const registerAuthRoutes = require('../../src/routes/auth');
 
 describe('Authentication Endpoints', () => {
   describe('GET /me', () => {
-    test('should return user info when authenticated', async () => {
-      // This is a placeholder - actual implementation would require test setup
-      expect(true).toBe(true);
+    test('returns user info when authenticated', async () => {
+      const app = express();
+
+      app.use((req, res, next) => {
+        req.user = { id: 'user-1', email: 'dev@example.com', name: 'Dev' };
+        next();
+      });
+
+      registerAuthRoutes(app, {
+        passport: {
+          authenticate: () => (req, res, next) => next(),
+        },
+        TAGS: ['duplicate', 'as-designed'],
+        JIRA_BASE_URL: 'https://example.atlassian.net/',
+      });
+
+      const res = await request(app).get('/me');
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        user: { id: 'user-1', email: 'dev@example.com', name: 'Dev' },
+        tags: ['duplicate', 'as-designed'],
+        jiraBaseUrl: 'https://example.atlassian.net',
+      });
     });
 
-    test('should return null user when not authenticated', async () => {
-      // This is a placeholder - actual implementation would require test setup
-      expect(true).toBe(true);
-    });
-  });
+    test('returns null user when not authenticated', async () => {
+      const app = express();
 
-  describe('POST /auth/logout', () => {
-    test('should clear session on logout', async () => {
-      // This is a placeholder - actual implementation would require test setup
-      expect(true).toBe(true);
-    });
-  });
-});
+      registerAuthRoutes(app, {
+        passport: {
+          authenticate: () => (req, res, next) => next(),
+        },
+        TAGS: [],
+        JIRA_BASE_URL: null,
+      });
 
-describe('Authorization Checks', () => {
-  describe('Protected endpoints', () => {
-    test('should return 401 for unauthenticated requests to /api/rooms', async () => {
-      // This is a placeholder - actual implementation would require test setup
-      expect(true).toBe(true);
-    });
-
-    test('should return 403 for non-groupier trying to update issue status', async () => {
-      // This is a placeholder - actual implementation would require test setup
-      expect(true).toBe(true);
-    });
-
-    test('should allow groupier to update issue status', async () => {
-      // This is a placeholder - actual implementation would require test setup
-      expect(true).toBe(true);
+      const res = await request(app).get('/me');
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        user: null,
+        tags: [],
+        jiraBaseUrl: null,
+      });
     });
   });
 });

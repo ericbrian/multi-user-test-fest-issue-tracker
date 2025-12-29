@@ -91,6 +91,12 @@ function createTestAuthMiddleware() {
     // If a user is already attached (e.g., from a previous request), skip
     if (req.user) return next();
 
+    // Reuse session-stored user if present (stable identity across requests)
+    if (req.session && req.session.user) {
+      req.user = req.session.user;
+      return next();
+    }
+
     // Build a static mock user – no Prisma / DB calls
     const { v4: uuidv4 } = require('uuid');
     const mockUser = {

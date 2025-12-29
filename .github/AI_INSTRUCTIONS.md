@@ -26,8 +26,7 @@ This document orients future AI/code assistants to continue development efficien
 - Server
   - `PORT` (default 3000)
   - `SESSION_SECRET` (required in prod)
-  - `DISABLE_SSO` (dev convenience; `true` auto-auths a user)
-  - `DEV_USER_EMAIL`, `DEV_USER_NAME` (used if SSO disabled)
+  - Note: SSO is required in non-test environments.
 - Database
   - `DATABASE_URL` (Postgres connection string)
   - `DB_SCHEMA` (default `testfest`)
@@ -57,7 +56,8 @@ This document orients future AI/code assistants to continue development efficien
 ## Auth
 
 - Default: Entra ID OIDC using `openid-client` and Passport.
-- Dev mode: Set `DISABLE_SSO=true` to bypass SSO and auto-inject a dev user.
+- Test mode: `NODE_ENV=test` bypasses OIDC setup and injects a test user via middleware.
+  - Optional test-only vars: `TEST_USER_EMAIL`, `TEST_USER_NAME`
 - Session storage: `connect-pg-simple` backed by Postgres.
 
 ## Realtime
@@ -69,7 +69,7 @@ This document orients future AI/code assistants to continue development efficien
 ## HTTP API (selected)
 
 - Auth
-  - `GET /auth/login` → OIDC login (no-op redirect when `DISABLE_SSO=true`)
+  - `GET /auth/login` → OIDC login
   - `GET /auth/callback` → OIDC callback
   - `POST /auth/logout` → Logout
   - `GET /me` → `{ user, tags }`
@@ -129,7 +129,7 @@ This document orients future AI/code assistants to continue development efficien
 ## Development
 
 - Dev mode: `npm run dev` (Nodemon). Visit http://localhost:3000
-- To disable SSO in dev: `DISABLE_SSO=true` (optional `DEV_USER_EMAIL`, `DEV_USER_NAME`).
+- SSO is required in dev; for automated tests use `NODE_ENV=test`.
 - Pre-provision DB: `createdb test_fest_tracker || true && psql "$DATABASE_URL" -f db/schema.sql`
 
 ### UI/UX Preferences
