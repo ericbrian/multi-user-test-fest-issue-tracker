@@ -100,10 +100,57 @@ export function updateUserInfoDisplay() {
   const userName = store.state.me.name || store.state.me.email || "User";
 
   if (store.state.isGroupier) {
-    elements.userInfoHeader.innerHTML = `<span class="groupier-bubble">You are the Groupier</span> &nbsp; ${userName}`;
+    elements.userInfoHeader.innerHTML = `<span class="groupier-bubble" id="groupierBubble" role="button" tabindex="0" title="Click to learn what this means">You are the Groupier</span> &nbsp; ${userName}`;
+
+    // Add click listener for explanation
+    setTimeout(() => {
+      const bubble = document.getElementById('groupierBubble');
+      if (bubble) {
+        bubble.addEventListener('click', showGroupierExplanationDialog);
+      }
+    }, 0);
   } else {
     elements.userInfoHeader.textContent = userName;
   }
+}
+
+function showGroupierExplanationDialog() {
+  const modalHtml = `
+    <div class="room-modal-overlay">
+      <div class="room-modal">
+        <div class="room-modal-header">
+          <h2>Groupier Role</h2>
+          <button class="room-modal-close" id="closeGroupierModalBtn">&times;</button>
+        </div>
+        <div class="room-modal-body">
+          <p><strong>You are the current Groupier for this Test Fest.</strong></p>
+          <p>As a Groupier, you have special responsibilities:</p>
+          <ul style="margin-bottom: 1rem; padding-left: 1.5rem;">
+            <li>You lead the testing session.</li>
+            <li>You can <strong>delete issues</strong> reported by anyone.</li>
+            <li>You can <strong>update the status</strong> of issues using tags.</li>
+            <li>You should guide testers through the script and facilitate discussion.</li>
+          </ul>
+          <div class="form-actions" style="justify-content: flex-end;">
+            <button type="button" id="closeGroupierDialogBtn">Got it</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const modalContainer = document.createElement('div');
+  modalContainer.innerHTML = modalHtml;
+  document.body.appendChild(modalContainer);
+
+  const closeModal = () => {
+    if (modalContainer.parentElement) {
+      modalContainer.parentElement.removeChild(modalContainer);
+    }
+  };
+
+  document.getElementById('closeGroupierModalBtn').addEventListener('click', closeModal);
+  document.getElementById('closeGroupierDialogBtn').addEventListener('click', closeModal);
 }
 
 export function renderTags() {
