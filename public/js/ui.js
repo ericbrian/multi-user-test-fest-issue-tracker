@@ -1,4 +1,4 @@
-import { store, LS_KEY_SELECTED_SCRIPT } from './state.js';
+import { store, LS_KEY_SELECTED_SCRIPT, setHideCheckedLinesForRoom } from './state.js';
 import * as api from './api.js';
 import { toast } from './toast.js';
 
@@ -435,6 +435,7 @@ function ensureTestScriptTitle(insertParent, text) {
     if (toggle) {
       toggle.addEventListener('change', () => {
         store.setState({ hideCheckedLines: Boolean(toggle.checked) });
+        setHideCheckedLinesForRoom(store.state.currentRoomId, Boolean(toggle.checked));
         renderTestScriptLines(false);
       });
     }

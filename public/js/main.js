@@ -1,4 +1,4 @@
-import { store, LS_KEY_SELECTED_SCRIPT } from './state.js';
+import { store, LS_KEY_SELECTED_SCRIPT, getHideCheckedLinesForRoom } from './state.js';
 import * as api from './api.js';
 import * as ui from './ui.js';
 import * as socket from './socket.js';
@@ -175,6 +175,9 @@ async function loadRooms() {
 
 async function joinRoom(roomId) {
   store.setState({ currentRoomId: roomId });
+
+  // Restore per-room UI preferences (e.g., Hide checked lines)
+  store.setState({ hideCheckedLines: getHideCheckedLinesForRoom(roomId) });
 
   const selectedOption = Array.from(ui.elements.roomSelect.options).find(opt => opt.value === roomId);
   store.setState({ currentRoomNameValue: selectedOption ? selectedOption.textContent : "Unknown Room" });
