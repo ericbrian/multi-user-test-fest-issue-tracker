@@ -50,6 +50,10 @@ beforeEach(() => {
     updateJiraKey: jest.fn().mockResolvedValue({ id: 'issue-1', jira_key: 'PROJ-1' }),
     deleteIssue: jest.fn().mockResolvedValue(true),
     cleanupFiles: jest.fn(),
+    getRoomLeaderboard: jest.fn().mockResolvedValue([
+      { user_id: 'user-1', name: 'Dev', email: 'dev@example.com', count: 3 },
+      { user_id: 'user-2', name: 'QA', email: 'qa@example.com', count: 1 },
+    ]),
   };
   IssueService.mockImplementation(() => mockIssueServiceInstance);
 
@@ -121,6 +125,33 @@ describe('Issues API Integration Tests', () => {
       const res = await request(app).get('/api/rooms/room-1/issues');
       expect(res.status).toBe(500);
       expect(res.body).toHaveProperty('error', 'Failed to fetch issues');
+    });
+  });
+
+  describe('GET /api/rooms/:roomId/leaderboard', () => {
+    test('returns leaderboard entries for a room', async () => {
+      const app = express();
+      app.use(express.json());
+
+      app.use((req, res, next) => {
+        req.user = { id: 'user-1', email: 'dev@example.com', name: 'Dev' };
+        next();
+      });
+
+      const router = express.Router();
+      registerIssueRoutes(router, {
+        io: { to: () => ({ emit: jest.fn() }) },
+        upload: uploadMock,
+        uploadsDir: '/tmp/uploads',
+        TAGS: [],
+      });
+      app.use(router);
+
+      const res = await request(app).get('/api/rooms/room-1/leaderboard');
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body[0]).toHaveProperty('count');
+      expect(mockIssueServiceInstance.getRoomLeaderboard).toHaveBeenCalledWith('room-1');
     });
   });
 

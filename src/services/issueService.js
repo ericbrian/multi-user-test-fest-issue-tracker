@@ -14,6 +14,51 @@ class IssueService {
   }
 
   /**
+   * Get a leaderboard of test script lines checked off per user for a room.
+   * @param {string} roomId - Room UUID
+   * @returns {Promise<Array<{ user_id: string|null, name: string|null, email: string|null, count: number }>>}
+   */
+  async getRoomLeaderboard(roomId) {
+    const rows = await this.prisma.roomScriptLineProgress.findMany({
+      where: {
+        is_checked: true,
+        testScriptLine: {
+          testScript: {
+            room_id: roomId,
+          },
+        },
+      },
+      include: {
+        user: { select: { name: true, email: true } },
+      },
+    });
+
+    const byUser = new Map();
+    for (const row of rows) {
+      const userId = row.user_id || null;
+      const key = userId || '__unknown__';
+      const existing = byUser.get(key) || {
+        user_id: userId,
+        name: row.user?.name || null,
+        email: row.user?.email || null,
+        count: 0,
+      };
+      existing.count += 1;
+      // Keep best-known identity fields
+      existing.name = existing.name || row.user?.name || null;
+      existing.email = existing.email || row.user?.email || null;
+      byUser.set(key, existing);
+    }
+
+    return Array.from(byUser.values()).sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      const aLabel = (a.name || a.email || '').toLowerCase();
+      const bLabel = (b.name || b.email || '').toLowerCase();
+      return aLabel.localeCompare(bLabel);
+    });
+  }
+
+  /**
    * Format issue for client
    * @param {Object} issue - Issue from database
    * @returns {Object} - Formatted issue

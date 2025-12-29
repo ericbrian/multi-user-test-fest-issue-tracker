@@ -23,6 +23,7 @@ export const elements = {
   testScriptLinesContainer: document.getElementById('testScriptLinesContainer'),
   imagesInput: document.getElementById('images'),
   issuesFilter: document.getElementById('issuesFilter'),
+  leaderboardBtn: document.getElementById('leaderboardBtn'),
 };
 
 // Cache last rendered issues list so toggling placeholders can re-render locally
@@ -46,6 +47,10 @@ export function updateVisibility() {
   elements.issueForm.classList.toggle("hidden", !inRoom);
   elements.issuesEl.classList.toggle("hidden", !inRoom);
   elements.tagLegend.classList.toggle("hidden", !inRoom);
+
+  if (elements.leaderboardBtn) {
+    elements.leaderboardBtn.style.display = inRoom ? 'inline-flex' : 'none';
+  }
 
   // Handle test script lines container dynamically if it doesn't exist in initial DOM
   let container = document.getElementById('testScriptLinesContainer');
@@ -87,6 +92,66 @@ export function updateVisibility() {
 
   if (elements.loginBtn) elements.loginBtn.style.display = store.state.me ? "none" : "inline-block";
   if (elements.logoutBtn) elements.logoutBtn.style.display = store.state.me ? "inline-block" : "none";
+}
+
+export function showLeaderboardDialog(entries) {
+  const list = Array.isArray(entries) ? entries : [];
+
+  const rowsHtml = list.length
+    ? list
+        .map((x, idx) => {
+          const name = (x && (x.name || x.email)) ? escapeHtml(x.name || x.email) : 'Unknown';
+          const count = Number(x?.count) || 0;
+          return `
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--border);">
+              <div style="display:flex; gap:10px; align-items:center; min-width:0;">
+                <div style="color: var(--muted); width: 24px; text-align:right; flex: 0 0 auto;">${idx + 1}</div>
+                <div style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${name}</div>
+              </div>
+              <div style="font-variant-numeric: tabular-nums; font-weight:600;">${count}</div>
+            </div>
+          `;
+        })
+        .join('')
+    : `<div style="color: var(--muted); padding: 8px 0;">No progress yet.</div>`;
+
+  const modalHtml = `
+    <div class="room-modal-overlay" role="dialog" aria-modal="true" aria-label="Leaderboard">
+      <div class="room-modal">
+        <div class="room-modal-header">
+          <h2>Leaderboard (Lines Checked Off)</h2>
+          <button class="room-modal-close" aria-label="Close">×</button>
+        </div>
+        <div class="room-modal-body">
+          <div style="display:flex; justify-content:space-between; color: var(--muted); font-size: 12px; padding-bottom: 8px;">
+            <div>Tester</div>
+            <div>Lines</div>
+          </div>
+          ${rowsHtml}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const modalContainer = document.createElement('div');
+  modalContainer.innerHTML = modalHtml;
+  document.body.appendChild(modalContainer);
+
+  const overlay = modalContainer.querySelector('.room-modal-overlay');
+  const closeBtn = modalContainer.querySelector('.room-modal-close');
+
+  const close = () => {
+    if (modalContainer.parentElement) {
+      modalContainer.parentElement.removeChild(modalContainer);
+    }
+  };
+
+  if (closeBtn) closeBtn.addEventListener('click', close);
+  if (overlay) {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) close();
+    });
+  }
 }
 
 export function updateUserInfoDisplay() {

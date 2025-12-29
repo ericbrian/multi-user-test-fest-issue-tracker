@@ -49,6 +49,18 @@ ui.elements.logoutBtn.addEventListener("click", async () => {
   window.location.reload();
 });
 
+if (ui.elements.leaderboardBtn) {
+  ui.elements.leaderboardBtn.addEventListener('click', async () => {
+    if (!store.state.currentRoomId) return toast.warn('Please select a Test Fest first');
+    try {
+      const entries = await api.fetchLeaderboard(store.state.currentRoomId);
+      ui.showLeaderboardDialog(entries);
+    } catch (error) {
+      toast.error(`Failed to load leaderboard: ${error.message}`);
+    }
+  });
+}
+
 ui.elements.createRoomBtn.addEventListener("click", async () => {
   const scriptLibrary = await api.fetchScriptLibrary();
   ui.showCreateRoomModal(scriptLibrary, async (data, closeModal) => {

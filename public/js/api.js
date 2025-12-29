@@ -80,6 +80,12 @@ export async function fetchIssues(roomId) {
   return await res.json();
 }
 
+export async function fetchLeaderboard(roomId) {
+  const res = await fetch(`/api/rooms/${roomId}/leaderboard`);
+  if (!res.ok) throw new Error('Failed to fetch leaderboard');
+  return await res.json();
+}
+
 export async function fetchTestScriptLines(roomId) {
   const res = await fetch(`/api/rooms/${roomId}/test-script-lines`);
   if (!res.ok) throw new Error("Failed to fetch test script lines");

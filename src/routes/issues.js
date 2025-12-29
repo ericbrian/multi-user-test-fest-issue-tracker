@@ -82,6 +82,59 @@ function registerIssueRoutes(router, deps) {
 
   /**
    * @openapi
+   * /api/rooms/{roomId}/leaderboard:
+   *   get:
+   *     tags:
+   *       - Issues
+  *     summary: Get test progress leaderboard for a room
+  *     description: Returns a per-user count of test script lines checked off in the given room.
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: roomId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Room ID
+   *     responses:
+   *       200:
+   *         description: Leaderboard entries
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 type: object
+   *                 properties:
+   *                   user_id:
+   *                     type: string
+   *                     nullable: true
+   *                   name:
+   *                     type: string
+   *                     nullable: true
+   *                   email:
+   *                     type: string
+   *                     nullable: true
+   *                   count:
+   *                     type: integer
+   *       500:
+   *         description: Server error
+   */
+  router.get('/api/rooms/:roomId/leaderboard', requireAuth, async (req, res) => {
+    try {
+      const { roomId } = req.params;
+      const leaderboard = await issueService.getRoomLeaderboard(roomId);
+      res.json(leaderboard);
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      return ApiError.database(res, 'Failed to fetch leaderboard');
+    }
+  });
+
+  /**
+   * @openapi
    * /api/rooms/{roomId}/issues:
    *   post:
    *     tags:
