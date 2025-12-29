@@ -326,12 +326,7 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
 
   const hideChecked = Boolean(store.state.hideCheckedLines);
   const linesToRender = hideChecked
-    ? store.state.testScriptLines.filter((line) => {
-        if (!line.is_checked) return true;
-        // Keep the selected line visible even if it is checked so the hidden
-        // script selection doesn't become invisible/confusing.
-        return currentScriptId && String(line.test_script_line_id) === String(currentScriptId);
-      })
+    ? store.state.testScriptLines.filter((line) => !line.is_checked)
     : store.state.testScriptLines;
 
   const linesHtml = linesToRender.map(line => {
@@ -370,7 +365,19 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
         // Update the visible badge for the selected script
         updateSelectedScriptBadge(currentScriptId);
       } else {
-        // Selection might be from another room; clear it to avoid confusing/stale UI.
+        // If Hide checked is enabled, the currently selected line may simply be
+        // filtered out because it's already checked. In that case, keep the
+        // script selection (badge + hidden input) as-is.
+        const selectedLine = (store.state.testScriptLines || []).find(
+          (l) => String(l.test_script_line_id) === String(currentScriptId)
+        );
+
+        if (hideChecked && selectedLine && selectedLine.is_checked) {
+          updateSelectedScriptBadge(currentScriptId);
+          return;
+        }
+
+        // Otherwise selection might be from another room; clear it to avoid confusing/stale UI.
         const scriptInput = document.getElementById('scriptId');
         if (scriptInput) scriptInput.value = '';
         updateSelectedScriptBadge(null);
