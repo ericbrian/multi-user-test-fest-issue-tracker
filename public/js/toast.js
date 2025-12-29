@@ -8,7 +8,17 @@ let container = null;
 
 function ensureContainer() {
   if (container) return;
+
+  // Reuse the shared container used by real-time notifications so we don't
+  // end up with two fixed-position stacks overlapping each other.
+  const existing = document.getElementById('toastContainer');
+  if (existing) {
+    container = existing;
+    return;
+  }
+
   container = document.createElement('div');
+  container.id = 'toastContainer';
   container.className = 'toast-container';
   document.body.appendChild(container);
 }
@@ -34,10 +44,18 @@ export function showToast(message, type = 'info', title = '', duration = 3000) {
     else title = 'Info';
   }
 
-  toast.innerHTML = `
-    <div class="toast-title">${title}</div>
-    <div class="toast-msg">${message}</div>
-  `;
+  // Build DOM safely (avoid innerHTML so user-provided/server-provided strings
+  // can't inject markup).
+  const titleEl = document.createElement('div');
+  titleEl.className = 'toast-title';
+  titleEl.textContent = title;
+
+  const msgEl = document.createElement('div');
+  msgEl.className = 'toast-msg';
+  msgEl.textContent = message;
+
+  toast.appendChild(titleEl);
+  toast.appendChild(msgEl);
 
   // Click to dismiss
   toast.addEventListener('click', () => {
