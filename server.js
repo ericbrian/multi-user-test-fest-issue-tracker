@@ -114,45 +114,52 @@ const io = require('socket.io')(server, {
   cors: { origin: false },
 });
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 // Rate limiting
 const { apiLimiter } = require('./src/rateLimiter');
 
 // Security headers with Content Security Policy
+const cspDirectives = {
+  defaultSrc: ["'self'"],
+  scriptSrc: [
+    "'self'",
+    // Allow Socket.IO which is served from /socket.io/
+  ],
+  styleSrc: [
+    "'self'",
+    "'unsafe-inline'", // Required for inline styles in HTML (minimal usage)
+  ],
+  imgSrc: [
+    "'self'",
+    "data:",
+    "blob:",
+  ],
+  connectSrc: [
+    "'self'",
+    "ws:",
+    "wss:",
+  ],
+  fontSrc: ["'self'", "data:"],
+  objectSrc: ["'none'"],
+  mediaSrc: ["'self'"],
+  frameSrc: ["'none'"],
+  baseUri: ["'self'"],
+  formAction: ["'self'"],
+  frameAncestors: ["'none'"],
+};
+if (isProduction) {
+  cspDirectives.upgradeInsecureRequests = [];
+}
+
 app.use(helmet({
   contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: [
-        "'self'",
-        // Allow Socket.IO which is served from /socket.io/
-      ],
-      styleSrc: [
-        "'self'",
-        "'unsafe-inline'", // Required for inline styles in HTML (minimal usage)
-      ],
-      imgSrc: [
-        "'self'",
-        "data:", // Allow data: URIs for images
-        "blob:", // Allow blob: URIs for images
-      ],
-      connectSrc: [
-        "'self'",
-        "ws:", // WebSocket for Socket.IO (development)
-        "wss:", // Secure WebSocket for Socket.IO (production)
-      ],
-      fontSrc: ["'self'", "data:"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'none'"],
-      baseUri: ["'self'"],
-      formAction: ["'self'"],
-      frameAncestors: ["'none'"], // Prevent clickjacking
-      upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
-    },
+    directives: cspDirectives,
   },
-  crossOriginEmbedderPolicy: false, // Allow loading resources from same origin
-  crossOriginResourcePolicy: { policy: "same-origin" },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'same-origin' },
 }));
+app.disable('x-powered-by');
 app.use(morgan('dev'));
 app.use(cookieParser());
 app.use(express.json());
@@ -162,7 +169,7 @@ app.use('/static', express.static(path.join(__dirname, 'public')));
 
 // Apply rate limiting to API routes
 // Apply rate limiting to API routes - moved to below middleware import
-// app.use('/api/', apiLimiter);
+app.use('/api/', apiLimiter);
 
 // Routes are now in src/routes.js
 
@@ -180,8 +187,9 @@ app.use(
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    proxy: isProduction,
     cookie: {
-      secure: false,
+      secure: isProduction,
       httpOnly: true,
       sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 8,
@@ -261,7 +269,11 @@ app.use(passport.session());
 app.use(csurf());
 app.use((req, res, next) => {
   const token = req.csrfToken();
-  res.cookie('XSRF-TOKEN', token);
+  res.cookie('XSRF-TOKEN', token, {
+    httpOnly: false,
+    sameSite: 'lax',
+    secure: isProduction,
+  });
   res.locals.csrfToken = token;
   next();
 });
