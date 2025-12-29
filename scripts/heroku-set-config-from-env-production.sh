@@ -93,6 +93,25 @@ NODE
 # If .env.production still points at localhost, force redirect URI to match the Heroku app URL.
 JSON_PAYLOAD="$(JSON_IN="$JSON_PAYLOAD" WEB_URL="$WEB_URL" node -e "const base=JSON.parse(process.env.JSON_IN||'{}'); const cur=String(base.ENTRA_REDIRECT_URI||''); if (!cur || /localhost/i.test(cur)) { base.ENTRA_REDIRECT_URI=String(process.env.WEB_URL||'')+'auth/callback'; } process.stdout.write(JSON.stringify(base));")"
 
+# Safety guard: if a Heroku Postgres add-on is attached, Heroku may manage/override DATABASE_URL.
+# To avoid accidentally pointing the app at the wrong DB, refuse to set DATABASE_URL from .env.production
+# unless explicitly overridden.
+if node -e "const o=JSON.parse(process.env.P||'{}'); process.exit(o.DATABASE_URL ? 0 : 1)" P="$JSON_PAYLOAD"; then
+  HAS_HEROKU_POSTGRES="$(curl -s \
+    -H "Accept: application/vnd.heroku+json; version=3" \
+    -H "Authorization: Bearer $TOKEN" \
+    "https://api.heroku.com/apps/${APP_NAME}/addons" \
+    | node -e "let a=[]; try{a=JSON.parse(require('fs').readFileSync(0,'utf8'))||[]}catch(e){}; const has=a.some(x=>{const n=(x&&x.addon_service&&x.addon_service.name)||''; return /^heroku-postgresql/i.test(String(n));}); process.stdout.write(has?'true':'false');")"
+
+  if [[ "$HAS_HEROKU_POSTGRES" == "true" ]] && [[ "${ALLOW_DATABASE_URL_WITH_HEROKU_POSTGRES:-}" != "true" ]]; then
+    echo "Refusing to set DATABASE_URL because a Heroku Postgres add-on is attached to '$APP_NAME'." >&2
+    echo "This prevents accidental DB flips (Heroku add-ons can manage DATABASE_URL)." >&2
+    echo "If you really intend to use an external DATABASE_URL anyway, re-run with:" >&2
+    echo "  ALLOW_DATABASE_URL_WITH_HEROKU_POSTGRES=true $0 $APP_NAME" >&2
+    exit 2
+  fi
+fi
+
 STATUS="$(curl -s -o /dev/null -w "%{http_code}" -X PATCH \
   -H "Accept: application/vnd.heroku+json; version=3" \
   -H "Content-Type: application/json" \
