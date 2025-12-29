@@ -34,6 +34,23 @@ The following must be set on the Heroku app:
 - **Node Version**: Specified in `engines.node` in `package.json` (e.g., `20.x`).
 - **Postbuild**: The `heroku-postbuild` script runs `npm run prisma:generate` to generate the Prisma Client.
 
+## Shared Database Configuration (Important)
+
+This application is configured to share a Heroku Postgres instance with other apps safely via **Schema Isolation**.
+
+### 1. Schema Isolation
+
+- **Configuration**: The app uses a specific schema (`testfest`) defined in `prisma/schema.prisma` and `src/config.js`.
+- **Safety**: It does **not** access the `public` schema. This prevents table name collisions with other apps.
+- **Verification**: Ensure `DATABASE_URL` is correct. Prisma will automatically create the `testfest` schema on first run/migration.
+
+### 2. Connection Limits (Critical)
+
+- **The Issue**: Sharing a database means creating a new pool of connections.
+- **Limit**: Standard-0/Mini plans have limited connections (e.g., 20-120).
+- **Configuration**: Ensure the `pg` pool in `server.js` and Prisma connection pool do not exceed the database limit when combined with the other app's connections.
+- **Mitigation**: If "Too many connections" errors occur, reduce the `max` pool config in `server.js` or upgrade the database plan.
+
 ## Troubleshooting Common Issues
 
 ### 1. Express 5 Wildcard Routes
@@ -51,5 +68,5 @@ If the app fails to start with "Prisma Client could not be found", ensure `herok
 
 - "Check the Heroku logs for the latest deployment."
 - "Set a new environment variable on Heroku."
-- "Fix a routing issue that's causing 500 errors in production."
-- "Update the deployment process."
+- "Check if we are exceeding the database connection limit."
+- "Verify that tables are being created in the 'testfest' schema."
