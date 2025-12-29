@@ -19,6 +19,8 @@ const { registerRoutes } = require('./src/routes');
 const { getPrisma } = require('./src/prismaClient');
 const { validateConfig } = require('./src/config');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 // Validate and load configuration
 const config = validateConfig();
 const {
@@ -122,8 +124,6 @@ const server = http.createServer(app);
 const io = require('socket.io')(server, {
   cors: { origin: false },
 });
-
-const isProduction = process.env.NODE_ENV === 'production';
 
 // Rate limiting
 const { apiLimiter } = require('./src/rateLimiter');

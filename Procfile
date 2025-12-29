@@ -1,2 +1,2 @@
 web: npm start
-release: npm run prisma:migrate:deploy
+release: node scripts/heroku-release.js
