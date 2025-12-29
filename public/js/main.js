@@ -94,7 +94,12 @@ ui.elements.issueForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!store.state.currentRoomId) return toast.warn("Please select a Test Fest first");
 
-  const scriptVal = (document.getElementById("scriptId").value || "").trim();
+  const scriptIdEl = document.getElementById("scriptId");
+  const scriptVal = (scriptIdEl?.value || "").trim();
+  if (!scriptVal) {
+    toast.warn("Script ID is required");
+    return;
+  }
   if (!/^\d+$/.test(scriptVal)) {
     toast.warn("Test Script ID must be a numeric value");
     return;
@@ -109,7 +114,10 @@ ui.elements.issueForm.addEventListener("submit", async (e) => {
   const formData = new FormData(ui.elements.issueForm);
   try {
     await api.submitIssue(store.state.currentRoomId, formData);
+    // Keep the selected script ID; clearing it forces re-selection and triggers the numeric warning.
+    const preservedScriptId = scriptVal;
     ui.elements.issueForm.reset();
+    if (scriptIdEl) scriptIdEl.value = preservedScriptId;
     toast.success("Issue submitted successfully");
   } catch (error) {
     toast.error(`Failed to submit: ${error.message}`);

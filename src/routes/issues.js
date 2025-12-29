@@ -168,10 +168,11 @@ function registerIssueRoutes(router, deps) {
   router.post('/api/rooms/:roomId/issues', requireAuth, issueCreationLimiter, uploadLimiter, upload.array('images', 5), async (req, res) => {
     try {
       const { roomId } = req.params;
-      const { scriptId } = req.body;
+      const body = req.body || {};
+      const { scriptId } = body;
 
       // Sanitize description to prevent XSS using xss library
-      const description = req.body.description ? xss(String(req.body.description).trim()) : '';
+      const description = body.description ? xss(String(body.description).trim()) : '';
 
       if (!scriptId || !/^\d+$/.test(String(scriptId))) {
         return ApiError.invalidInput(res, 'Script ID is required and must be numeric', { field: 'scriptId' });
@@ -182,10 +183,10 @@ function registerIssueRoutes(router, deps) {
 
       const scriptNum = parseInt(String(scriptId), 10);
 
-      const isIssue = req.body.is_issue === 'on' || req.body.is_issue === 'true' || req.body.is_issue === true;
-      const isAnnoyance = req.body.is_annoyance === 'on' || req.body.is_annoyance === 'true' || req.body.is_annoyance === true;
-      const isExistingUpper = req.body.is_existing_upper_env === 'on' || req.body.is_existing_upper_env === 'true' || req.body.is_existing_upper_env === true;
-      const isNotSureHowToTest = req.body.is_not_sure_how_to_test === 'on' || req.body.is_not_sure_how_to_test === 'true' || req.body.is_not_sure_how_to_test === true;
+      const isIssue = body.is_issue === 'on' || body.is_issue === 'true' || body.is_issue === true;
+      const isAnnoyance = body.is_annoyance === 'on' || body.is_annoyance === 'true' || body.is_annoyance === true;
+      const isExistingUpper = body.is_existing_upper_env === 'on' || body.is_existing_upper_env === 'true' || body.is_existing_upper_env === true;
+      const isNotSureHowToTest = body.is_not_sure_how_to_test === 'on' || body.is_not_sure_how_to_test === 'true' || body.is_not_sure_how_to_test === true;
       const files = (req.files || []).map((f) => `/uploads/${path.basename(f.path)}`);
       const userId = req.user.id;
 
