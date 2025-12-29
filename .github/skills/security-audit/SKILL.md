@@ -45,11 +45,40 @@ This skill provides a systematic approach to identifying and addressing security
 - **Requirement**: Ensure `.env.example` documents keys like `ENTRA_CLIENT_SECRET` without values.
 - **Requirement**: Verify `.gitignore` ignores `*.env`.
 
-### 6. Web Security (Headers)
+### 6. Web Security (Helmet & CSP)
 
-- **Helmet**: Verify `helmet` is configured in `server.js` with appropriate CSP for allowed scripts/images.
+**Helmet** must be configured in `server.js` with comprehensive Content Security Policy (CSP):
 
-### 7. Rate Limiting
+```javascript
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"], // No unsafe-inline for scripts
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'", "ws:", "wss:"], // For Socket.IO
+        fontSrc: ["'self'", "data:"],
+        objectSrc: ["'none'"],
+        frameSrc: ["'none'"],
+        frameAncestors: ["'none'"], // Prevent Clickjacking
+      },
+    },
+  })
+);
+```
+
+### 7. File Upload Security
+
+Strict validation limits must be enforced via `multer`:
+
+- **Max Size**: 5MB per file (`5 * 1024 * 1024`).
+- **Max Files**: 5 files per upload.
+- **Allowed Types**: `image/jpeg`, `image/png`, `image/gif`, `image/webp`.
+- **Extension Check**: Must match MIME type.
+
+### 8. Rate Limiting
 
 - **General API**: 100 requests per 15 mins (`apiLimiter`).
 - **Authentication**: 5 attempts (`authLimiter`).
@@ -67,6 +96,7 @@ This skill provides a systematic approach to identifying and addressing security
 
 1. Inspect `src/routes/`.
 2. Ensure every API route has appropriate middleware (e.g., `requireAuth`).
+3. Verify input sanitization is present on all POST/PUT bodies.
 
 ## Example Requests
 
@@ -74,3 +104,4 @@ This skill provides a systematic approach to identifying and addressing security
 - "Check dependencies for critical vulnerabilities."
 - "Verify that the issue creation route is rate-limited."
 - "Review the Helmet CSP configuration."
+- "Audit file upload limits."
