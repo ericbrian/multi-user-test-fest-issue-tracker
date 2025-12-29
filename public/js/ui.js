@@ -1077,6 +1077,31 @@ function updateImagesPreview(fileList) {
   });
 }
 
+export function resetImagesUploadUI() {
+  // Clear internal selection state
+  _selectedFiles = [];
+
+  // Clear the underlying input
+  const input = elements.imagesInput || document.getElementById('images');
+  if (input) {
+    try {
+      input.value = '';
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  // Remove preview container (so the dropzone returns to its clean state)
+  const preview = document.getElementById('imagesPreview');
+  if (preview && preview.parentNode) {
+    preview.parentNode.removeChild(preview);
+  }
+
+  // Also clear any drag-over styling
+  const dropzone = document.getElementById('imagesDropzone');
+  if (dropzone) dropzone.classList.remove('drag-over');
+}
+
 function removeFileAtIndex(index) {
   if (index < 0 || index >= _selectedFiles.length) return;
   _selectedFiles.splice(index, 1);

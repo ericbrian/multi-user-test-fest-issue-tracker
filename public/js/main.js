@@ -130,6 +130,8 @@ ui.elements.issueForm.addEventListener("submit", async (e) => {
     const preservedScriptId = scriptVal;
     ui.elements.issueForm.reset();
     if (scriptIdEl) scriptIdEl.value = preservedScriptId;
+    // Also clear any selected images + preview UI after submit
+    ui.resetImagesUploadUI();
     toast.success("Issue submitted successfully");
   } catch (error) {
     toast.error(`Failed to submit: ${error.message}`);
