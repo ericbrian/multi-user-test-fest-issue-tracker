@@ -138,6 +138,9 @@ Use this checklist before deploying to production.
 - [ ] Set up alerts for application errors
 - [ ] Monitor rate limit rejections
 
+- [ ] Prometheus metrics endpoint is reachable: `/metrics`
+  - Optional: set `METRICS_TOKEN` and scrape with `Authorization: Bearer <token>`
+
 - [ ] Centralized logging and error monitoring
   - Integrate a log/monitoring service (Sentry, Datadog, Papertrail) to capture `uncaughtException` and `unhandledRejection` and application metrics.
 

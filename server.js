@@ -18,6 +18,7 @@ const swaggerSpec = require('./src/swagger');
 const { registerRoutes } = require('./src/routes');
 const { getPrisma } = require('./src/prismaClient');
 const { validateConfig } = require('./src/config');
+const { createMetrics } = require('./src/metrics');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -170,6 +171,20 @@ app.use(helmet({
 }));
 app.disable('x-powered-by');
 app.use(morgan('dev'));
+
+// Monitoring / Observability: Prometheus metrics
+const metrics = createMetrics({ appName: 'test_fest_tracker' });
+app.use(metrics.metricsMiddleware);
+app.get('/metrics', (req, res, next) => {
+  // Optional protection: set METRICS_TOKEN to require a bearer token.
+  const token = process.env.METRICS_TOKEN;
+  if (!token) return next();
+
+  const auth = String(req.headers.authorization || '');
+  if (auth === `Bearer ${token}`) return next();
+  return res.status(401).json({ error: 'Unauthorized' });
+}, metrics.metricsHandler);
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
