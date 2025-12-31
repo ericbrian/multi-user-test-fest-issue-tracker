@@ -15,6 +15,7 @@ jest.mock('../../src/rateLimiter', () => ({
 const { getPrisma } = require('../../src/prismaClient');
 const { IssueService } = require('../../src/services/issueService');
 const { JiraService } = require('../../src/services/jiraService');
+const { createMemoryCache } = require('../../src/cache');
 
 const mockPrisma = {
   roomMember: { findUnique: jest.fn() },
@@ -125,6 +126,60 @@ describe('Issues API Integration Tests', () => {
       const res = await request(app).get('/api/rooms/room-1/issues');
       expect(res.status).toBe(500);
       expect(res.body).toHaveProperty('error', 'Failed to fetch issues');
+    });
+
+    test('invalidates cached issues after creating an issue', async () => {
+      // Arrange: enable caching via in-memory cache
+      const cache = createMemoryCache({ defaultTtlSeconds: 3600 });
+      jest.spyOn(cache, 'del');
+
+      // First GET returns one issue; second GET should return a different issue if cache was invalidated.
+      mockIssueServiceInstance.getRoomIssues
+        .mockResolvedValueOnce([{ id: 'issue-1', script_id: 1, description: 'Cached issue', created_by: 'user-1' }])
+        .mockResolvedValueOnce([{ id: 'issue-99', script_id: 2, description: 'Fresh issue', created_by: 'user-1' }]);
+
+      const app = express();
+      app.use(express.json());
+      app.use(express.urlencoded({ extended: true }));
+
+      app.use((req, res, next) => {
+        req.user = { id: 'user-1', email: 'dev@example.com', name: 'Dev' };
+        next();
+      });
+
+      const router = express.Router();
+      registerIssueRoutes(router, {
+        io: { to: () => ({ emit: jest.fn() }) },
+        upload: uploadMock,
+        uploadsDir: '/tmp/uploads',
+        TAGS: ['duplicate'],
+        cache,
+      });
+      app.use(router);
+
+      // Act 1: Prime the cache
+      const first = await request(app).get('/api/rooms/room-1/issues');
+      expect(first.status).toBe(200);
+      expect(first.body.map(i => i.id)).toEqual(['issue-1']);
+
+      // Act 2: Create an issue (should invalidate room issues + leaderboard caches)
+      const created = await request(app)
+        .post('/api/rooms/room-1/issues')
+        .field('scriptId', '42')
+        .field('description', 'Test issue description')
+        .field('is_issue', 'true');
+      expect(created.status).toBe(200);
+
+      expect(cache.del).toHaveBeenCalledWith('room:room-1:issues');
+      expect(cache.del).toHaveBeenCalledWith('room:room-1:leaderboard');
+
+      // Act 3: GET again should bypass the old cached value
+      const second = await request(app).get('/api/rooms/room-1/issues');
+      expect(second.status).toBe(200);
+      expect(second.body.map(i => i.id)).toEqual(['issue-99']);
+
+      // getRoomIssues should have been called twice (cache miss after invalidation)
+      expect(mockIssueServiceInstance.getRoomIssues).toHaveBeenCalledTimes(2);
     });
   });
 

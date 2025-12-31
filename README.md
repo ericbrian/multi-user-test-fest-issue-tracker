@@ -134,6 +134,20 @@ At runtime, the app will also create the schema/tables if they don’t exist, an
 - Session store is Postgres via `connect-pg-simple`
 - Schema is created on startup if missing
 
+## Caching (Redis)
+
+Some read-heavy endpoints support short TTL caching.
+
+- Enable: set `CACHE_ENABLED=true`
+- Redis: set `REDIS_URL` (or `REDISCLOUD_URL`)
+- TTL: `CACHE_TTL_SECONDS` (default varies by endpoint)
+
+If you're using `docker-compose.yml` (which includes a `redis` service), set:
+
+```text
+REDIS_URL=redis://redis:6379
+```
+
 ## Containerization (Docker)
 
 Build locally:
