@@ -4,6 +4,9 @@ const registerRoomRoutes = require('./rooms');
 const registerIssueRoutes = require('./issues');
 
 function registerRoutes(app, deps) {
+  const uiIndexPath = deps && deps.uiIndexPath
+    ? deps.uiIndexPath
+    : path.join(__dirname, '..', '..', 'public', 'index.html');
   /**
    * @openapi
    * /health:
@@ -35,12 +38,12 @@ function registerRoutes(app, deps) {
 
   // HTML entry
   app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', '..', 'public', 'index.html'));
+    res.sendFile(uiIndexPath);
   });
 
   // Room-specific URLs
   app.get('/fest/:roomId', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', '..', 'public', 'index.html'));
+    res.sendFile(uiIndexPath);
   });
 
   // Global error handling middleware

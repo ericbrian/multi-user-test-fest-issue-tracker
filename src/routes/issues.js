@@ -10,6 +10,7 @@ const { issueCreationLimiter, uploadLimiter } = require('../rateLimiter');
 const { IssueService } = require('../services/issueService');
 const { JiraService } = require('../services/jiraService');
 const { ApiError } = require('../utils/apiResponse');
+const { createNoopCache } = require('../cache');
 
 function registerIssueRoutes(router, deps) {
   const {
@@ -22,7 +23,10 @@ function registerIssueRoutes(router, deps) {
     JIRA_API_TOKEN,
     JIRA_PROJECT_KEY,
     JIRA_ISSUE_TYPE,
+    cache: providedCache,
   } = deps;
+
+  const cache = providedCache || createNoopCache();
 
   const prisma = getPrisma();
   const issueService = new IssueService(prisma, uploadsDir);
@@ -72,7 +76,7 @@ function registerIssueRoutes(router, deps) {
   router.get('/api/rooms/:roomId/issues', requireAuth, async (req, res) => {
     try {
       const { roomId } = req.params;
-      const issues = await issueService.getRoomIssues(roomId);
+      const issues = await cache.wrap(`room:${roomId}:issues`, 5, () => issueService.getRoomIssues(roomId));
       res.json(issues);
     } catch (error) {
       console.error('Error fetching issues:', error);
@@ -125,7 +129,7 @@ function registerIssueRoutes(router, deps) {
   router.get('/api/rooms/:roomId/leaderboard', requireAuth, async (req, res) => {
     try {
       const { roomId } = req.params;
-      const leaderboard = await issueService.getRoomLeaderboard(roomId);
+      const leaderboard = await cache.wrap(`room:${roomId}:leaderboard`, 10, () => issueService.getRoomLeaderboard(roomId));
       res.json(leaderboard);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
@@ -255,6 +259,10 @@ function registerIssueRoutes(router, deps) {
         files
       });
 
+      // Invalidate short-lived caches for this room.
+      await cache.del(`room:${roomId}:issues`);
+      await cache.del(`room:${roomId}:leaderboard`);
+
       io.to(roomId).emit('issue:new', issueOut);
       res.json(issueOut);
     } catch (error) {
@@ -343,6 +351,10 @@ function registerIssueRoutes(router, deps) {
       }
 
       const out = await issueService.updateStatus(id, requestedStatus);
+
+      if (roomId) {
+        await cache.del(`room:${roomId}:issues`);
+      }
 
       io.to(roomId).emit('issue:update', out);
       res.json(out);
@@ -444,6 +456,8 @@ function registerIssueRoutes(router, deps) {
       // Update issue with Jira key
       await issueService.updateJiraKey(issue.id, jiraKey);
 
+      await cache.del(`room:${issue.room_id}:issues`);
+
       io.to(issue.room_id).emit('issue:update', { ...issue, jira_key: jiraKey });
       res.json({ jira_key: jiraKey });
     } catch (error) {
@@ -523,6 +537,10 @@ function registerIssueRoutes(router, deps) {
       // Permission check handled by middleware
 
       await issueService.deleteIssue(id);
+
+      const roomId = req.issue.room_id;
+      await cache.del(`room:${roomId}:issues`);
+      await cache.del(`room:${roomId}:leaderboard`);
 
       // Emit update
       const issue = req.issue;

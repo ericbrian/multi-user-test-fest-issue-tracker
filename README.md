@@ -142,3 +142,13 @@ Build locally:
 docker build -t test-fest-tracker:local .
 docker run --env-file .env -p 3000:3000 test-fest-tracker:local
 ```
+
+## Frontend build (Vite)
+
+The UI in `public/` can be built and optimized for production:
+
+```bash
+npm run build:ui
+```
+
+This outputs `dist/`. When `NODE_ENV=production` and `dist/index.html` exists, `server.js` serves the built UI automatically.

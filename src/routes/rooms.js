@@ -5,12 +5,16 @@ const { getPrisma } = require('../prismaClient');
 const { requireAuth } = require('../middleware');
 const { RoomService } = require('../services/roomService');
 const { ApiError } = require('../utils/apiResponse');
+const { createNoopCache } = require('../cache');
 
 function registerRoomRoutes(router, deps) {
   const {
     io,
-    GROUPIER_EMAILS
+    GROUPIER_EMAILS,
+    cache: providedCache,
   } = deps;
+
+  const cache = providedCache || createNoopCache();
 
   const prisma = getPrisma();
   const roomService = new RoomService(prisma);
@@ -43,7 +47,7 @@ function registerRoomRoutes(router, deps) {
    */
   router.get('/api/script-library', requireAuth, async (req, res) => {
     try {
-      const result = await roomService.getScriptLibrary();
+      const result = await cache.wrap('script_library', 30, () => roomService.getScriptLibrary());
       res.json(result);
     } catch (error) {
       console.error('Error fetching script library:', error);
@@ -79,7 +83,7 @@ function registerRoomRoutes(router, deps) {
    */
   router.get('/api/rooms', requireAuth, async (req, res) => {
     try {
-      const result = await roomService.getAllRooms();
+      const result = await cache.wrap('rooms_all', 10, () => roomService.getAllRooms());
       res.json(result);
     } catch (error) {
       console.error('Error fetching rooms:', error);
@@ -150,6 +154,8 @@ function registerRoomRoutes(router, deps) {
         userId
       });
 
+      await cache.del('rooms_all');
+
       res.json(room);
     } catch (error) {
       console.error('Error creating room:', error);
@@ -212,6 +218,8 @@ function registerRoomRoutes(router, deps) {
       const groupierEmails = GROUPIER_EMAILS || [];
 
       const result = await roomService.joinRoom(roomId, userId, groupierEmails, userEmail);
+
+      await cache.del('rooms_all');
       res.json(result);
     } catch (error) {
       console.error('Error joining room:', error);

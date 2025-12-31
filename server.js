@@ -19,6 +19,7 @@ const { registerRoutes } = require('./src/routes');
 const { getPrisma } = require('./src/prismaClient');
 const { validateConfig } = require('./src/config');
 const { createMetrics } = require('./src/metrics');
+const { createCacheFromEnv } = require('./src/cache');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -126,6 +127,18 @@ const io = require('socket.io')(server, {
   cors: { origin: false },
 });
 
+// Caching (opt-in): set CACHE_ENABLED=true to enable short-lived caching for read-heavy endpoints.
+const cache = createCacheFromEnv({ isProduction });
+
+// Frontend static serving
+// - Development: serve from ./public
+// - Production: if ./dist exists (built via `npm run build:ui`), serve from ./dist
+const publicDir = path.join(__dirname, 'public');
+const distDir = path.join(__dirname, 'dist');
+const useBuiltUi = isProduction && fs.existsSync(path.join(distDir, 'index.html'));
+const uiDir = useBuiltUi ? distDir : publicDir;
+const uiIndexPath = path.join(uiDir, 'index.html');
+
 // Rate limiting
 const { apiLimiter } = require('./src/rateLimiter');
 
@@ -189,7 +202,9 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(uploadsDir));
-app.use('/static', express.static(path.join(__dirname, 'public')));
+// Serve static files at root (Vite build expects /assets/*) and keep /static/* as an alias.
+app.use(express.static(uiDir, { index: false }));
+app.use('/static', express.static(uiDir, { index: false }));
 
 // Apply rate limiting to API routes
 // Apply rate limiting to API routes - moved to below middleware import
@@ -341,6 +356,8 @@ registerRoutes(app, {
   JIRA_ISSUE_TYPE,
   passport,
   GROUPIER_EMAILS,
+  uiIndexPath,
+  cache,
 });
 
 // CSRF Error Handler
