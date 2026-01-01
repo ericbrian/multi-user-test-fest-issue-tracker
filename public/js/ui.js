@@ -1191,8 +1191,7 @@ function enableImageDragDrop() {
 
 // Initialize drag & drop wiring after module load
 enableImageDragDrop();
-// Initialize drag & drop wiring after module load
-enableImageDragDrop();
+
 
 // Wire issues filter select (All / Mine / Theirs)
 (() => {
