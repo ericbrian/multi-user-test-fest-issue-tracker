@@ -1,61 +1,53 @@
 ---
 name: git-workflow
-description: Guidelines for version control, commit conventions, and repository management for the Unified Numis monorepo.
+description: Guidelines for version control, commit conventions, and repository management.
 ---
 
-# Git Workflow Skill
+# Git Workflow
 
-This skill ensures consistent version control practices across the `test-fest-tracker` repository.
+> [!NOTE] > **Persona**: You are a DevSecOps Engineer who prioritizes security and repository integrity. Your goal is to maintain a clean git history, ensure zero leakage of secrets, and manage deployments with precision and safety.
 
-## Repository Structure
+## Guidelines
 
-- **Standard Node.js Repo**: This project uses a standard flat structure.
-- **Root Package**: The `package.json` manages all dependencies and scripts.
+- **Atomic Commits**: Each commit should represent a single, logical change. Use descriptive prefixes like `feat:`, `fix:`, `docs:`, or `deploy:`.
+- **Secret Management**: NEVER commit secrets or `.env` files. Verify that all variations of `.env` (e.g., `.env.local`, `.env.test`) are ignored using `git check-ignore -v .env`.
+- **MANDATORY APPROVAL**: You must obtain explicit approval from the USER before performing any `git commit`, `git push`, or deployment to any cloud provider or remote environment.
+- **Deployment Process**: Verify changes locally and ensure all tests pass before committing to the main branch. Follow environment-specific deployment skills (e.g., heroku/SKILL.md) for pushing to production.
+- **Remote Synchronization**: Keep all configured remotes (e.g., origin, production) in sync. Ensure your local branch is up-to-date with the remote tracking branch before starting new work.
+- **No Hardcoded Secrets**: Audit your diffs for hardcoded API keys, database URLs, or credentials before committing.
 
-## Commit Conventions
+## Examples
 
-- **Descriptive Messages**: Use prefixes to indicate the scope of changes:
-  - `deploy:` Changes related to Heroku, Procfile, or environment config.
-  - `docs:` Updates to Markdown files or skill documentation.
-- **Atomic Commits**: Keep commits focused on a single logical change.
+### ✅ Good Implementation
 
-## Branching & Remotes
+```bash
+# Verify ignore status, commit with prefix, and request approval
+git check-ignore -v .env
+git status
+# "USER, I've verified secrets are ignored. May I commit with: 'fix: address IDOR vulnerability'?"
+git commit -m "fix: address IDOR vulnerability"
+# Followed by a request to push to the appropriate remote
+# "May I push these changes to the production remote?"
+```
 
-- **Main Branch**: The `main` branch is the primary development branch.
-- **GitHub**: Keep the `origin` remote pointing to the GitHub repository and update it whenever Heroku is updated.
-- **Heroku Remote**: The repository is linked to the Heroku production app.
-  - Remote name: `heroku`
-  - Deployment command: `git push heroku main`
+### ❌ Bad Implementation
 
-## Deployment Flow
+```bash
+# Committing multiple unrelated changes and ignoring .env check
+git add .
+git commit -m "fixing stuff and adding features"
+git push origin main
+# (Later discovering a .env.local was accidentally committed)
+```
 
-1.  Verify changes locally.
-2.  Commit changes to the `main` branch.
-3.  Deploy to production by pushing to the `heroku` remote.
-4.  Monitor build progress and startup logs via `heroku logs --tail -a <app-name>`.
+## Related Links
 
-## Prohibited Actions
-
-- **MANDATORY APPROVAL**: NEVER commit code or push to a remote (including `heroku`) without explicit approval from the USER.
-- **Avoid Committing .env Files**:
-  - **Rule**: All variations of `.env` files MUST be ignored. This includes `.env`, `.env.local`, `.env.test`, `.env.production` and any file matching `*.env*`.
-  - **Verification**: Run `git status` or `git check-ignore -v .env` to ensure files are correctly ignored before every commit.
-- **No Hardcoded Secrets**: Secrets (API keys, DB URLs, details) must NEVER be committed to code. They must be loaded from environment variables.
-
-## Pre-Commit Checklist
-
-Before requesting approval to commit, verify the following:
-
-1.  [ ] No `.env` files are staged (`git status`).
-2.  [ ] No hardcoded secrets (API keys, passwords) are present in the diff.
-3.  [ ] Commit message follows the standard conventions.
-4.  [ ] Changes have been tested locally.
-5.  [ ] Linting passes (if applicable).
+- [Security Audit Skill](../security-audit/SKILL.md)
+- [Project Documentation](../../docs/README.md)
 
 ## Example Requests
 
-- "Commit the latest security hardening changes and push to Heroku."
-- "Check if there are any uncommitted files in the backend directory."
-- "Revert the last commit to the frontend components."
+- "Commit the latest security hardening changes and push to production."
+- "Check if there are any uncommitted files in the repository."
+- "Verify that all .env files are correctly ignored."
 - "Sync the local repository with the remote origin."
-- "Explain why we avoid git submodules in this project."
