@@ -105,7 +105,7 @@ function noCache(req, res, next) {
 // Test‑only authentication middleware (pure in‑memory, no DB)
 // IMPORTANT: Only works when NODE_ENV=test, never in production or development
 function createTestAuthMiddleware() {
-  return function testAuth(req, res, next) {
+  return async function testAuth(req, res, next) {
     // Activate only in test mode
     if (process.env.NODE_ENV !== 'test') return next();
 
@@ -118,19 +118,42 @@ function createTestAuthMiddleware() {
       return next();
     }
 
-    // Build a static mock user – no Prisma / DB calls
+    // Build a static mock user
     const { v4: uuidv4 } = require('uuid');
-    const mockUser = {
-      id: uuidv4(),
-      sub: 'test-user',
-      name: process.env.TEST_USER_NAME || 'Test User',
-      email: process.env.TEST_USER_EMAIL || 'test@example.com',
-    };
-    // Attach to request and also store in session for downstream middleware
-    req.user = mockUser;
-    if (req.session) req.session.user = mockUser;
+    const sub = 'test-user';
+    
+    try {
+      const prisma = getPrisma();
+      let user = await prisma.user.findUnique({ where: { sub } });
+      
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            id: uuidv4(),
+            sub,
+            name: process.env.TEST_USER_NAME || 'Test User',
+            email: process.env.TEST_USER_EMAIL || 'test@example.com',
+          },
+        });
+      }
 
-    next();
+      // Attach to request and also store in session for downstream middleware
+      req.user = user;
+      if (req.session) req.session.user = user;
+      next();
+    } catch (e) {
+      console.error('testAuth error:', e);
+      // Fallback to in-memory only if DB fails (though this may cause FK errors later)
+      const mockUser = {
+        id: uuidv4(),
+        sub,
+        name: process.env.TEST_USER_NAME || 'Test User',
+        email: process.env.TEST_USER_EMAIL || 'test@example.com',
+      };
+      req.user = mockUser;
+      if (req.session) req.session.user = mockUser;
+      next();
+    }
   };
 }
 

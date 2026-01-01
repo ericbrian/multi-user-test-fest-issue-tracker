@@ -184,10 +184,6 @@ class RoomService {
    * @returns {Promise<Array>} - Array of scripts with line counts
    */
   async getScriptLibrary() {
-    // In test mode we don't have a real DB – return an empty array
-    if (process.env.NODE_ENV === 'test') {
-      return [];
-    }
     const scripts = await this.prisma.scriptTemplate.findMany({
       where: { is_active: true },
       orderBy: { name: 'asc' },
