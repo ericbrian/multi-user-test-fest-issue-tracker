@@ -1189,58 +1189,6 @@ function enableImageDragDrop() {
   }
 }
 
-/**
- * Animates a representative "card" flying from the form on the left 
- * to the issues list on the right.
- */
-export function animateIssueFly() {
-  const form = document.getElementById('issueForm');
-  const scrollArea = document.querySelector('.right-scroll');
-  const targetHeader = document.querySelector('.right-header');
-  
-  if (!form || !scrollArea) return;
-
-  const desc = document.getElementById('description').value || '';
-  
-  // Create the flying element
-  const fly = document.createElement('div');
-  fly.className = 'flying-issue';
-  fly.innerHTML = `
-    <div class="mini-header">🚀 Reporting Issue...</div>
-    <div class="mini-body">${desc}</div>
-  `;
-
-  // Start at the form position
-  const startRect = form.getBoundingClientRect();
-  fly.style.top = `${startRect.top}px`;
-  fly.style.left = `${startRect.left}px`;
-  fly.style.width = `${startRect.width}px`;
-  fly.style.height = `${Math.min(startRect.height, 200)}px`;
-
-  document.body.appendChild(fly);
-
-  // Force reflow
-  fly.offsetHeight;
-
-  // Calculate target position (roughly top-center of the right panel)
-  const targetRect = targetHeader ? targetHeader.getBoundingClientRect() : scrollArea.getBoundingClientRect();
-  
-  // Apply target class and styles
-  // We want it to "shrink" and "fade" as it approaches the right column
-  fly.classList.add('target');
-  fly.style.top = `${targetRect.top + 50}px`;
-  fly.style.left = `${targetRect.left + (targetRect.width / 2) - 50}px`;
-  fly.style.width = '100px';
-  fly.style.height = '60px';
-
-  // Clean up
-  setTimeout(() => {
-    if (fly && fly.parentNode) {
-      document.body.removeChild(fly);
-    }
-  }, 1000); // slightly longer than the 0.8s transition
-}
-
 // Initialize drag & drop wiring after module load
 enableImageDragDrop();
 

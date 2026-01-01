@@ -147,9 +147,6 @@ ui.elements.issueForm.addEventListener("submit", async (e) => {
 
   const formData = new FormData(ui.elements.issueForm);
   try {
-    // Trigger the "flying" animation
-    ui.animateIssueFly();
-
     await api.submitIssue(store.state.currentRoomId, formData);
     // Keep the selected script ID; clearing it forces re-selection and triggers the numeric warning.
     const preservedScriptId = scriptVal;

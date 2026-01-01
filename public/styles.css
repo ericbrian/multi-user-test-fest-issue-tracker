@@ -408,49 +408,6 @@ body {
   }
 }
 
-/* Flying Issue Animation */
-.flying-issue {
-  position: fixed;
-  z-index: 2000;
-  pointer-events: none;
-  background: var(--bg2);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-md);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  padding: 16px;
-  overflow: hidden;
-  transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  opacity: 1;
-}
-
-.flying-issue.target {
-  opacity: 0;
-  transform: scale(0.2) rotate(15deg) translate(100px, -100px);
-}
-
-.flying-issue .mini-header {
-  font-weight: 800;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--accent-2);
-}
-
-.flying-issue .mini-body {
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--text);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
 /* De-emphasize placeholder cards for "no issue reported" entries.
    Keep them in the flow but reduce contrast, remove heavy shadows
    and disable hover transforms so they don't compete with real issues. */
