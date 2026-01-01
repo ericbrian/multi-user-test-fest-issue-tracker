@@ -131,7 +131,7 @@ ui.elements.issueForm.addEventListener("submit", async (e) => {
   const scriptIdEl = document.getElementById("scriptId");
   const scriptVal = (scriptIdEl?.value || "").trim();
   if (!scriptVal) {
-    toast.warn("Script ID is required");
+    toast.warn("Select a test script item from the list to report an issue");
     return;
   }
   if (!/^\d+$/.test(scriptVal)) {

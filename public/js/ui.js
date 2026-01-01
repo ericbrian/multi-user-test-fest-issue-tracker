@@ -367,19 +367,7 @@ export function renderTestScriptLines(shouldAutoScroll = false) {
         // Update the visible badge for the selected script
         updateSelectedScriptBadge(currentScriptId);
       } else {
-        // If Hide checked is enabled, the currently selected line may simply be
-        // filtered out because it's already checked. In that case, keep the
-        // script selection (badge + hidden input) as-is.
-        const selectedLine = (store.state.testScriptLines || []).find(
-          (l) => String(l.test_script_line_id) === String(currentScriptId)
-        );
-
-        if (hideChecked && selectedLine && selectedLine.is_checked) {
-          updateSelectedScriptBadge(currentScriptId);
-          return;
-        }
-
-        // Otherwise selection might be from another room; clear it to avoid confusing/stale UI.
+        // If the selected item is not found in the rendered list, clear the selection.
         const scriptInput = document.getElementById('scriptId');
         if (scriptInput) scriptInput.value = '';
         updateSelectedScriptBadge(null);
