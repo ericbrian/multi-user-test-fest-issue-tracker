@@ -30,7 +30,7 @@ function ensureContainer() {
  * @param {string} title - Optional title
  * @param {number} duration - Duration in ms (default 3000)
  */
-export function showToast(message, type = 'info', title = '', duration = 3000) {
+export function showToast(message, type = 'info', title = '', duration = 6000) {
   ensureContainer();
 
   const toast = document.createElement('div');
