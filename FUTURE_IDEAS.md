@@ -12,7 +12,7 @@ This document captures high-level ideas, technical debt, and feature requests fo
 
 ## ✨ Feature Enhancements
 
-- **Issue Reporting**: Instead of showing the issue form inline, allow the user to pick which script item they are reporting an issue for and then show the completed checkbox and the form in a modal dialog. [High Priority]
+- **Issue Reporting**: Instead of showing the issue form inline, allow the user to pick which script item for which they are reporting an issue. Show the completed checkbox. And, after clicking a button within the script item, display the form in a modal dialog. [Highest Priority]
 - **Room Management**: Allow users to create, update, and delete rooms in the tracker. This includes script uploads and edits via a form. [Medium Priority]
 - **Enhanced Leaderboard Gamification**: Add badges, milestones, or "streaks" for consistent contributors during the Test Fest. [Medium Priority]
 - **Exporting Reports**: Generate PDF or Excel summaries of all issues found during a specific Test Fest session. [Medium Priority]
