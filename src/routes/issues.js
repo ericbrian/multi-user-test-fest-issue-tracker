@@ -5,7 +5,7 @@ const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const xss = require('xss');
 const { getPrisma } = require('../prismaClient');
-const { requireAuth, requireGroupierByRoom, requireIssueAndMembership, requireGroupierOrCreator } = require('../middleware');
+const { requireAuth, requireGroupierByRoom, requireMembership, requireIssueAndMembership, requireGroupierOrCreator } = require('../middleware');
 const { issueCreationLimiter, uploadLimiter } = require('../rateLimiter');
 const { IssueService } = require('../services/issueService');
 const { JiraService } = require('../services/jiraService');
@@ -73,7 +73,7 @@ function registerIssueRoutes(router, deps) {
    *             schema:
    *               $ref: '#/components/schemas/Error'
    */
-  router.get('/api/rooms/:roomId/issues', requireAuth, async (req, res) => {
+  router.get('/api/rooms/:roomId/issues', requireAuth, requireMembership(), async (req, res) => {
     try {
       const { roomId } = req.params;
       const issues = await cache.wrap(`room:${roomId}:issues`, 5, () => issueService.getRoomIssues(roomId));
@@ -126,7 +126,7 @@ function registerIssueRoutes(router, deps) {
    *       500:
    *         description: Server error
    */
-  router.get('/api/rooms/:roomId/leaderboard', requireAuth, async (req, res) => {
+  router.get('/api/rooms/:roomId/leaderboard', requireAuth, requireMembership(), async (req, res) => {
     try {
       const { roomId } = req.params;
       const leaderboard = await cache.wrap(`room:${roomId}:leaderboard`, 10, () => issueService.getRoomLeaderboard(roomId));
@@ -222,7 +222,7 @@ function registerIssueRoutes(router, deps) {
    *             schema:
    *               $ref: '#/components/schemas/Error'
    */
-  router.post('/api/rooms/:roomId/issues', requireAuth, issueCreationLimiter, uploadLimiter, upload.array('images', 5), async (req, res) => {
+  router.post('/api/rooms/:roomId/issues', requireAuth, requireMembership(), issueCreationLimiter, uploadLimiter, upload.array('images', 5), async (req, res) => {
     try {
       const { roomId } = req.params;
       const body = req.body || {};

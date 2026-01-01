@@ -29,6 +29,27 @@ function requireGroupierByRoom() {
   };
 }
 
+// Middleware: require user to be a member of a given roomId
+function requireMembership() {
+  return async function (req, res, next) {
+    try {
+      const roomId = (req.body && req.body.roomId) || (req.params && req.params.roomId) || (req.query && req.query.roomId) || null;
+      if (!roomId) return ApiError.missingField(res, 'roomId');
+
+      const prisma = getPrisma();
+      const membership = await prisma.roomMember.findUnique({ where: { room_id_user_id: { room_id: roomId, user_id: req.user.id } } });
+
+      if (!membership) return ApiError.forbidden(res, 'You must join this room to access its content');
+
+      req.membership = membership;
+      next();
+    } catch (e) {
+      console.error('requireMembership error:', e);
+      return ApiError.internal(res, 'Internal server error', e.message);
+    }
+  };
+}
+
 // Middleware: load issue by :id param and attach issue + membership (if exists)
 function requireIssueAndMembership() {
   return async function (req, res, next) {
@@ -116,6 +137,7 @@ function createTestAuthMiddleware() {
 module.exports = {
   requireAuth,
   requireGroupierByRoom,
+  requireMembership,
   requireIssueAndMembership,
   requireGroupierOrCreator,
   noCache,

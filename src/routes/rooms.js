@@ -2,7 +2,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const xss = require('xss');
 const { getPrisma } = require('../prismaClient');
-const { requireAuth } = require('../middleware');
+const { requireAuth, requireMembership } = require('../middleware');
 const { RoomService } = require('../services/roomService');
 const { ApiError } = require('../utils/apiResponse');
 const { createNoopCache } = require('../cache');
@@ -261,7 +261,7 @@ function registerRoomRoutes(router, deps) {
    *             schema:
    *               $ref: '#/components/schemas/Error'
    */
-  router.get('/api/rooms/:roomId/test-script-lines', requireAuth, async (req, res) => {
+  router.get('/api/rooms/:roomId/test-script-lines', requireAuth, requireMembership(), async (req, res) => {
     try {
       const { roomId } = req.params;
       const userId = req.user.id;

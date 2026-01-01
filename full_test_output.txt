@@ -1,0 +1,797 @@
+
+> test-fest-tracker@1.0.0 test
+> jest --coverage
+
+FAIL __tests__/integration/issues.routes.test.js
+  ● Console
+
+    console.log
+      DEBUG ERROR: {
+        "success": false,
+        "error": "You must join this room to access its content",
+        "timestamp": "2026-01-01T01:09:58.216Z",
+        "code": "FORBIDDEN",
+        "path": "/api/rooms/room-1/issues"
+      }
+
+      at Object.log (__tests__/integration/issues.routes.test.js:241:39)
+
+  ● Issues API Integration Tests › GET /api/rooms/:roomId/issues › returns issues for a room
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 403
+
+       96 |
+       97 |       const res = await request(app).get('/api/rooms/room-1/issues');
+    >  98 |       expect(res.status).toBe(200);
+          |                          ^
+       99 |       expect(Array.isArray(res.body)).toBe(true);
+      100 |       expect(res.body[0].id).toBe('issue-1');
+      101 |       expect(mockIssueServiceInstance.getRoomIssues).toHaveBeenCalledWith('room-1');
+
+      at Object.toBe (__tests__/integration/issues.routes.test.js:98:26)
+
+  ● Issues API Integration Tests › GET /api/rooms/:roomId/issues › returns 500 on service error
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 500
+    Received: 403
+
+      125 |
+      126 |       const res = await request(app).get('/api/rooms/room-1/issues');
+    > 127 |       expect(res.status).toBe(500);
+          |                          ^
+      128 |       expect(res.body).toHaveProperty('error', 'Failed to fetch issues');
+      129 |     });
+      130 |
+
+      at Object.toBe (__tests__/integration/issues.routes.test.js:127:26)
+
+  ● Issues API Integration Tests › GET /api/rooms/:roomId/issues › invalidates cached issues after creating an issue
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 403
+
+      160 |       // Act 1: Prime the cache
+      161 |       const first = await request(app).get('/api/rooms/room-1/issues');
+    > 162 |       expect(first.status).toBe(200);
+          |                            ^
+      163 |       expect(first.body.map(i => i.id)).toEqual(['issue-1']);
+      164 |
+      165 |       // Act 2: Create an issue (should invalidate room issues + leaderboard caches)
+
+      at Object.toBe (__tests__/integration/issues.routes.test.js:162:28)
+
+  ● Issues API Integration Tests › GET /api/rooms/:roomId/leaderboard › returns leaderboard entries for a room
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 403
+
+      204 |
+      205 |       const res = await request(app).get('/api/rooms/room-1/leaderboard');
+    > 206 |       expect(res.status).toBe(200);
+          |                          ^
+      207 |       expect(Array.isArray(res.body)).toBe(true);
+      208 |       expect(res.body[0]).toHaveProperty('count');
+      209 |       expect(mockIssueServiceInstance.getRoomLeaderboard).toHaveBeenCalledWith('room-1');
+
+      at Object.toBe (__tests__/integration/issues.routes.test.js:206:26)
+
+  ● Issues API Integration Tests › POST /api/rooms/:roomId/issues › creates issue with valid data
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 403
+
+      240 |
+      241 |       if (res.status !== 200) console.log('DEBUG ERROR:', JSON.stringify(res.body, null, 2));
+    > 242 |       expect(res.status).toBe(200);
+          |                          ^
+      243 |       expect(res.body).toHaveProperty('id', 'issue-2');
+      244 |       expect(mockIssueServiceInstance.createIssue).toHaveBeenCalledWith(
+      245 |         expect.objectContaining({
+
+      at Object.toBe (__tests__/integration/issues.routes.test.js:242:26)
+
+  ● Issues API Integration Tests › POST /api/rooms/:roomId/issues › returns 400 for missing scriptId
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 403
+
+      278 |         .field('description', 'Test issue');
+      279 |
+    > 280 |       expect(res.status).toBe(400);
+          |                          ^
+      281 |       expect(res.body).toHaveProperty('error', 'Script ID is required and must be numeric');
+      282 |     });
+      283 |
+
+      at Object.toBe (__tests__/integration/issues.routes.test.js:280:26)
+
+  ● Issues API Integration Tests › POST /api/rooms/:roomId/issues › returns 400 for invalid scriptId
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 403
+
+      308 |         .field('description', 'Test issue');
+      309 |
+    > 310 |       expect(res.status).toBe(400);
+          |                          ^
+      311 |       expect(res.body).toHaveProperty('error', 'Script ID is required and must be numeric');
+      312 |     });
+      313 |
+
+      at Object.toBe (__tests__/integration/issues.routes.test.js:310:26)
+
+  ● Issues API Integration Tests › POST /api/rooms/:roomId/issues › returns 400 for missing description
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 403
+
+      337 |         .field('scriptId', '42');
+      338 |
+    > 339 |       expect(res.status).toBe(400);
+          |                          ^
+      340 |       expect(res.body).toHaveProperty('error', 'Missing required field: description');
+      341 |     });
+      342 |   });
+
+      at Object.toBe (__tests__/integration/issues.routes.test.js:339:26)
+
+PASS __tests__/integration/security_idor.test.js
+PASS __tests__/unit/metrics.test.js
+PASS __tests__/unit/config.test.js
+  ● Console
+
+    console.log
+      [dotenv@17.2.1] injecting env (14) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+    console.warn
+      ⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)
+
+      58 |     }
+      59 |   } else {
+    > 60 |     console.warn('⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)');
+         |             ^
+      61 |   }
+      62 |
+      63 |   // Jira configuration validation (optional but warn if partially configured)
+
+      at warn (src/config.js:60:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:28:7)
+
+    console.error
+      
+      ❌ Configuration Errors:
+
+      87 |   // Print errors and exit if any
+      88 |   if (errors.length > 0) {
+    > 89 |     console.error('\n❌ Configuration Errors:');
+         |             ^
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+
+      at error (src/config.js:89:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:28:7)
+
+    console.error
+        - DATABASE_URL is required
+
+      88 |   if (errors.length > 0) {
+      89 |     console.error('\n❌ Configuration Errors:');
+    > 90 |     errors.forEach(error => console.error(`  - ${error}`));
+         |                                     ^
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+
+      at error (src/config.js:90:37)
+          at Array.forEach (<anonymous>)
+      at forEach (src/config.js:90:12)
+      at Object.validateConfig (__tests__/unit/config.test.js:28:7)
+
+    console.error
+      
+      Please fix these configuration errors and try again.
+
+      89 |     console.error('\n❌ Configuration Errors:');
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+    > 91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+         |             ^
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+      94 |   } else {
+
+      at error (src/config.js:91:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:28:7)
+
+    console.warn
+      ⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)
+
+      58 |     }
+      59 |   } else {
+    > 60 |     console.warn('⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)');
+         |             ^
+      61 |   }
+      62 |
+      63 |   // Jira configuration validation (optional but warn if partially configured)
+
+      at warn (src/config.js:60:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:36:7)
+
+    console.error
+      
+      ❌ Configuration Errors:
+
+      87 |   // Print errors and exit if any
+      88 |   if (errors.length > 0) {
+    > 89 |     console.error('\n❌ Configuration Errors:');
+         |             ^
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+
+      at error (src/config.js:89:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:36:7)
+
+    console.error
+        - SESSION_SECRET is required
+
+      88 |   if (errors.length > 0) {
+      89 |     console.error('\n❌ Configuration Errors:');
+    > 90 |     errors.forEach(error => console.error(`  - ${error}`));
+         |                                     ^
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+
+      at error (src/config.js:90:37)
+          at Array.forEach (<anonymous>)
+      at forEach (src/config.js:90:12)
+      at Object.validateConfig (__tests__/unit/config.test.js:36:7)
+
+    console.error
+      
+      Please fix these configuration errors and try again.
+
+      89 |     console.error('\n❌ Configuration Errors:');
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+    > 91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+         |             ^
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+      94 |   } else {
+
+      at error (src/config.js:91:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:36:7)
+
+    console.warn
+      ⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)
+
+      58 |     }
+      59 |   } else {
+    > 60 |     console.warn('⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)');
+         |             ^
+      61 |   }
+      62 |
+      63 |   // Jira configuration validation (optional but warn if partially configured)
+
+      at warn (src/config.js:60:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:44:7)
+
+    console.error
+      
+      ❌ Configuration Errors:
+
+      87 |   // Print errors and exit if any
+      88 |   if (errors.length > 0) {
+    > 89 |     console.error('\n❌ Configuration Errors:');
+         |             ^
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+
+      at error (src/config.js:89:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:44:7)
+
+    console.error
+        - SESSION_SECRET must not use the default value "change_me_session_secret"
+
+      88 |   if (errors.length > 0) {
+      89 |     console.error('\n❌ Configuration Errors:');
+    > 90 |     errors.forEach(error => console.error(`  - ${error}`));
+         |                                     ^
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+
+      at error (src/config.js:90:37)
+          at Array.forEach (<anonymous>)
+      at forEach (src/config.js:90:12)
+      at Object.validateConfig (__tests__/unit/config.test.js:44:7)
+
+    console.error
+      
+      Please fix these configuration errors and try again.
+
+      89 |     console.error('\n❌ Configuration Errors:');
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+    > 91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+         |             ^
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+      94 |   } else {
+
+      at error (src/config.js:91:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:44:7)
+
+    console.warn
+      ⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)
+
+      58 |     }
+      59 |   } else {
+    > 60 |     console.warn('⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)');
+         |             ^
+      61 |   }
+      62 |
+      63 |   // Jira configuration validation (optional but warn if partially configured)
+
+      at warn (src/config.js:60:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:53:22)
+
+    console.log
+      ✅ Configuration validated successfully
+
+      at log (src/config.js:95:13)
+
+    console.warn
+      ⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)
+
+      58 |     }
+      59 |   } else {
+    > 60 |     console.warn('⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)');
+         |             ^
+      61 |   }
+      62 |
+      63 |   // Jira configuration validation (optional but warn if partially configured)
+
+      at warn (src/config.js:60:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:67:22)
+
+    console.log
+      ✅ Configuration validated successfully
+
+      at log (src/config.js:95:13)
+
+    console.warn
+      ⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)
+
+      58 |     }
+      59 |   } else {
+    > 60 |     console.warn('⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)');
+         |             ^
+      61 |   }
+      62 |
+      63 |   // Jira configuration validation (optional but warn if partially configured)
+
+      at warn (src/config.js:60:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:78:22)
+
+    console.log
+      ✅ Configuration validated successfully
+
+      at log (src/config.js:95:13)
+
+    console.warn
+      ⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)
+
+      58 |     }
+      59 |   } else {
+    > 60 |     console.warn('⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)');
+         |             ^
+      61 |   }
+      62 |
+      63 |   // Jira configuration validation (optional but warn if partially configured)
+
+      at warn (src/config.js:60:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:90:22)
+
+    console.log
+      ✅ Configuration validated successfully
+
+      at log (src/config.js:95:13)
+
+    console.warn
+      ⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)
+
+      58 |     }
+      59 |   } else {
+    > 60 |     console.warn('⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)');
+         |             ^
+      61 |   }
+      62 |
+      63 |   // Jira configuration validation (optional but warn if partially configured)
+
+      at warn (src/config.js:60:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:100:7)
+
+    console.error
+      
+      ❌ Configuration Errors:
+
+      87 |   // Print errors and exit if any
+      88 |   if (errors.length > 0) {
+    > 89 |     console.error('\n❌ Configuration Errors:');
+         |             ^
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+
+      at error (src/config.js:89:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:100:7)
+
+    console.error
+        - DB_SCHEMA must be one of: testfest (got: public)
+
+      88 |   if (errors.length > 0) {
+      89 |     console.error('\n❌ Configuration Errors:');
+    > 90 |     errors.forEach(error => console.error(`  - ${error}`));
+         |                                     ^
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+
+      at error (src/config.js:90:37)
+          at Array.forEach (<anonymous>)
+      at forEach (src/config.js:90:12)
+      at Object.validateConfig (__tests__/unit/config.test.js:100:7)
+
+    console.error
+      
+      Please fix these configuration errors and try again.
+
+      89 |     console.error('\n❌ Configuration Errors:');
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+    > 91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+         |             ^
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+      94 |   } else {
+
+      at error (src/config.js:91:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:100:7)
+
+    console.warn
+      ⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)
+
+      58 |     }
+      59 |   } else {
+    > 60 |     console.warn('⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)');
+         |             ^
+      61 |   }
+      62 |
+      63 |   // Jira configuration validation (optional but warn if partially configured)
+
+      at warn (src/config.js:60:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:108:7)
+
+    console.error
+      
+      ❌ Configuration Errors:
+
+      87 |   // Print errors and exit if any
+      88 |   if (errors.length > 0) {
+    > 89 |     console.error('\n❌ Configuration Errors:');
+         |             ^
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+
+      at error (src/config.js:89:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:108:7)
+
+    console.error
+        - DB_SCHEMA must be one of: testfest (got: maliciousDROPTABLEusers)
+
+      88 |   if (errors.length > 0) {
+      89 |     console.error('\n❌ Configuration Errors:');
+    > 90 |     errors.forEach(error => console.error(`  - ${error}`));
+         |                                     ^
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+
+      at error (src/config.js:90:37)
+          at Array.forEach (<anonymous>)
+      at forEach (src/config.js:90:12)
+      at Object.validateConfig (__tests__/unit/config.test.js:108:7)
+
+    console.error
+      
+      Please fix these configuration errors and try again.
+
+      89 |     console.error('\n❌ Configuration Errors:');
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+    > 91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+         |             ^
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+      94 |   } else {
+
+      at error (src/config.js:91:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:108:7)
+
+    console.warn
+      ⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)
+
+      58 |     }
+      59 |   } else {
+    > 60 |     console.warn('⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)');
+         |             ^
+      61 |   }
+      62 |
+      63 |   // Jira configuration validation (optional but warn if partially configured)
+
+      at warn (src/config.js:60:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:118:22)
+
+    console.log
+      ✅ Configuration validated successfully
+
+      at log (src/config.js:95:13)
+
+    console.warn
+      ⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)
+
+      58 |     }
+      59 |   } else {
+    > 60 |     console.warn('⚠️  TEST MODE: SSO validation bypassed (NODE_ENV=test)');
+         |             ^
+      61 |   }
+      62 |
+      63 |   // Jira configuration validation (optional but warn if partially configured)
+
+      at warn (src/config.js:60:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:128:7)
+
+    console.error
+      
+      ❌ Configuration Errors:
+
+      87 |   // Print errors and exit if any
+      88 |   if (errors.length > 0) {
+    > 89 |     console.error('\n❌ Configuration Errors:');
+         |             ^
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+
+      at error (src/config.js:89:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:128:7)
+
+    console.error
+        - PORT must be a valid port number (1-65535)
+
+      88 |   if (errors.length > 0) {
+      89 |     console.error('\n❌ Configuration Errors:');
+    > 90 |     errors.forEach(error => console.error(`  - ${error}`));
+         |                                     ^
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+
+      at error (src/config.js:90:37)
+          at Array.forEach (<anonymous>)
+      at forEach (src/config.js:90:12)
+      at Object.validateConfig (__tests__/unit/config.test.js:128:7)
+
+    console.error
+      
+      Please fix these configuration errors and try again.
+
+      89 |     console.error('\n❌ Configuration Errors:');
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+    > 91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+         |             ^
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+      94 |   } else {
+
+      at error (src/config.js:91:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:128:7)
+
+    console.error
+      
+      ❌ Configuration Errors:
+
+      87 |   // Print errors and exit if any
+      88 |   if (errors.length > 0) {
+    > 89 |     console.error('\n❌ Configuration Errors:');
+         |             ^
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+
+      at error (src/config.js:89:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:139:7)
+
+    console.error
+        - Entra ID SSO configuration is required. Please configure ENTRA_ISSUER, ENTRA_CLIENT_ID, and ENTRA_CLIENT_SECRET
+
+      88 |   if (errors.length > 0) {
+      89 |     console.error('\n❌ Configuration Errors:');
+    > 90 |     errors.forEach(error => console.error(`  - ${error}`));
+         |                                     ^
+      91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+
+      at error (src/config.js:90:37)
+          at Array.forEach (<anonymous>)
+      at forEach (src/config.js:90:12)
+      at Object.validateConfig (__tests__/unit/config.test.js:139:7)
+
+    console.error
+      
+      Please fix these configuration errors and try again.
+
+      89 |     console.error('\n❌ Configuration Errors:');
+      90 |     errors.forEach(error => console.error(`  - ${error}`));
+    > 91 |     console.error('\nPlease fix these configuration errors and try again.\n');
+         |             ^
+      92 |     exitFn(1);
+      93 |     // If exitFn is mocked and doesn't exit, we return partial/invalid config, but caller should handle exit
+      94 |   } else {
+
+      at error (src/config.js:91:13)
+      at Object.validateConfig (__tests__/unit/config.test.js:139:7)
+
+    console.log
+      ✅ Configuration validated successfully
+
+      at log (src/config.js:95:13)
+
+PASS __tests__/unit/jiraService.test.js
+  ● Console
+
+    console.error
+      Jira API error: undefined
+
+      237 |    */
+      238 |   handleJiraError(error) {
+    > 239 |     console.error('Jira API error:', error.message);
+          |             ^
+      240 |
+      241 |     if (error.response) {
+      242 |       console.error('Jira response status:', error.response.status);
+
+      at JiraService.error [as handleJiraError] (src/services/jiraService.js:239:13)
+      at JiraService.handleJiraError [as createIssue] (src/services/jiraService.js:170:12)
+      at Object.<anonymous> (__tests__/unit/jiraService.test.js:121:7)
+
+    console.error
+      Jira response status: 401
+
+      240 |
+      241 |     if (error.response) {
+    > 242 |       console.error('Jira response status:', error.response.status);
+          |               ^
+      243 |       console.error('Jira response data:', error.response.data);
+      244 |
+      245 |       if (error.response.status === 401) {
+
+      at JiraService.error [as handleJiraError] (src/services/jiraService.js:242:15)
+      at JiraService.handleJiraError [as createIssue] (src/services/jiraService.js:170:12)
+      at Object.<anonymous> (__tests__/unit/jiraService.test.js:121:7)
+
+    console.error
+      Jira response data: {}
+
+      241 |     if (error.response) {
+      242 |       console.error('Jira response status:', error.response.status);
+    > 243 |       console.error('Jira response data:', error.response.data);
+          |               ^
+      244 |
+      245 |       if (error.response.status === 401) {
+      246 |         throw new Error('Jira authentication failed. Please check credentials.');
+
+      at JiraService.error [as handleJiraError] (src/services/jiraService.js:243:15)
+      at JiraService.handleJiraError [as createIssue] (src/services/jiraService.js:170:12)
+      at Object.<anonymous> (__tests__/unit/jiraService.test.js:121:7)
+
+    console.error
+      Jira API error: undefined
+
+      237 |    */
+      238 |   handleJiraError(error) {
+    > 239 |     console.error('Jira API error:', error.message);
+          |             ^
+      240 |
+      241 |     if (error.response) {
+      242 |       console.error('Jira response status:', error.response.status);
+
+      at JiraService.error [as handleJiraError] (src/services/jiraService.js:239:13)
+      at JiraService.handleJiraError [as createIssue] (src/services/jiraService.js:170:12)
+      at Object.<anonymous> (__tests__/unit/jiraService.test.js:139:7)
+
+    console.error
+      Jira response status: 403
+
+      240 |
+      241 |     if (error.response) {
+    > 242 |       console.error('Jira response status:', error.response.status);
+          |               ^
+      243 |       console.error('Jira response data:', error.response.data);
+      244 |
+      245 |       if (error.response.status === 401) {
+
+      at JiraService.error [as handleJiraError] (src/services/jiraService.js:242:15)
+      at JiraService.handleJiraError [as createIssue] (src/services/jiraService.js:170:12)
+      at Object.<anonymous> (__tests__/unit/jiraService.test.js:139:7)
+
+    console.error
+      Jira response data: {}
+
+      241 |     if (error.response) {
+      242 |       console.error('Jira response status:', error.response.status);
+    > 243 |       console.error('Jira response data:', error.response.data);
+          |               ^
+      244 |
+      245 |       if (error.response.status === 401) {
+      246 |         throw new Error('Jira authentication failed. Please check credentials.');
+
+      at JiraService.error [as handleJiraError] (src/services/jiraService.js:243:15)
+      at JiraService.handleJiraError [as createIssue] (src/services/jiraService.js:170:12)
+      at Object.<anonymous> (__tests__/unit/jiraService.test.js:139:7)
+
+PASS __tests__/integration/rooms.routes.test.js
+PASS __tests__/integration/auth.test.js
+PASS __tests__/unit/middleware.test.js
+PASS __tests__/unit/cache.test.js
+------------------|---------|----------|---------|---------|--------------------------------------------------
+File              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                
+------------------|---------|----------|---------|---------|--------------------------------------------------
+All files         |   49.44 |    37.72 |   42.96 |      50 |                                                  
+ src              |   66.53 |    55.13 |   68.88 |   67.39 |                                                  
+  cache.js        |   61.62 |     42.1 |   71.42 |   63.15 | 4-8,24-29,37-38,81,97-98,115,127,144-148,155-164 
+  config.js       |   87.27 |    83.33 |      80 |   88.46 | 31,71,77,82-84                                   
+  metrics.js      |   56.52 |    20.83 |      60 |   54.54 | 5-9,43-54                                        
+  middleware.js   |   63.51 |    61.11 |      75 |   64.06 | 26-27,47-48,70-71,81,98-133                      
+  prismaClient.js |      40 |        0 |       0 |      40 | 6-9                                              
+  rateLimiter.js  |   85.71 |      100 |       0 |   85.71 | 21                                               
+  swagger.js      |       0 |      100 |     100 |       0 | 1-263                                            
+ src/routes       |   43.34 |    23.59 |   35.48 |   43.85 |                                                  
+  auth.js         |      50 |    66.66 |   28.57 |      50 | 31-38,67,96-99                                   
+  index.js        |       0 |        0 |       0 |       0 | 1-103                                            
+  issues.js       |   48.67 |    22.91 |      40 |      50 | 77-83,130-136,226-278,362-363,465-481,551-552    
+  rooms.js        |   51.38 |     37.5 |   55.55 |   51.42 | 49-54,89-90,161-162,212-226,272-273,354-384      
+ src/services     |    33.5 |    24.63 |   18.91 |      35 |                                                  
+  issueService.js |    6.89 |        0 |       0 |     7.4 | 12-218                                           
+  jiraService.js  |    72.5 |    64.15 |    87.5 |      75 | 160,165,180-210,249-254                          
+  roomService.js  |    3.77 |        0 |       0 |       4 | 10-302                                           
+ src/utils        |   52.63 |    33.33 |    40.9 |   52.63 |                                                  
+  apiResponse.js  |   52.63 |    33.33 |    40.9 |   52.63 | 111,138,173-204,216-260                          
+------------------|---------|----------|---------|---------|--------------------------------------------------
+
+Test Suites: 1 failed, 8 passed, 9 total
+Tests:       8 failed, 58 passed, 66 total
+Snapshots:   0 total
+Time:        0.636 s, estimated 1 s
+Ran all test suites.

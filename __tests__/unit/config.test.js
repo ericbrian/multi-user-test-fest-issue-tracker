@@ -1,139 +1,154 @@
 /**
  * Unit tests for config validation
+ * Uses Dependency Injection for robust testing without global state pollution
  */
 
-// Mock dotenv before requiring config
-jest.mock('dotenv', () => ({
-  config: jest.fn(),
-}));
+const { validateConfig } = require('../../src/config');
 
 describe('Config Validation', () => {
-  let originalEnv;
-  let validateConfig;
+  let mockExit;
 
   beforeEach(() => {
-    // Save original env
-    originalEnv = { ...process.env };
-    
-    // Mock process.exit
-    jest.spyOn(process, 'exit').mockImplementation(() => {
-      throw new Error('process.exit called');
-    });
-    
-    // Clear require cache to get fresh module
-    jest.resetModules();
-    validateConfig = require('../../src/config').validateConfig;
+    mockExit = jest.fn();
+    // No need to mock process.env or dotenv as we pass explicit env objects
   });
 
-  afterEach(() => {
-    // Restore original env
-    process.env = originalEnv;
-    jest.restoreAllMocks();
+  // Helper to create a base valid environment
+  const getBaseEnv = () => ({
+    DATABASE_URL: 'postgresql://localhost/test',
+    SESSION_SECRET: 'a'.repeat(32),
+    NODE_ENV: 'test', // defaulting to test mode to bypass SSO checks unless testing them
   });
 
   describe('Required variables', () => {
     test('should fail without DATABASE_URL', () => {
-      delete process.env.DATABASE_URL;
-      process.env.SESSION_SECRET = 'a'.repeat(32);
+      const env = getBaseEnv();
+      delete env.DATABASE_URL;
       
-      expect(() => validateConfig()).toThrow();
+      validateConfig(env, mockExit);
+      expect(mockExit).toHaveBeenCalledWith(1);
     });
 
     test('should fail without SESSION_SECRET', () => {
-      process.env.DATABASE_URL = 'postgresql://localhost/test';
-      delete process.env.SESSION_SECRET;
+      const env = getBaseEnv();
+      delete env.SESSION_SECRET;
       
-      expect(() => validateConfig()).toThrow();
+      validateConfig(env, mockExit);
+      expect(mockExit).toHaveBeenCalledWith(1);
     });
 
     test('should fail with default SESSION_SECRET', () => {
-      process.env.DATABASE_URL = 'postgresql://localhost/test';
-      process.env.SESSION_SECRET = 'change_me_session_secret';
+      const env = getBaseEnv();
+      env.SESSION_SECRET = 'change_me_session_secret';
       
-      expect(() => validateConfig()).toThrow();
+      validateConfig(env, mockExit);
+      expect(mockExit).toHaveBeenCalledWith(1);
     });
   });
 
   describe('Valid configuration', () => {
     test('should pass with valid required config', () => {
-      process.env.DATABASE_URL = 'postgresql://localhost/test';
-      process.env.SESSION_SECRET = 'a'.repeat(32);
+      const env = getBaseEnv();
       
-      const config = validateConfig();
+      const config = validateConfig(env, mockExit);
       
+      expect(mockExit).not.toHaveBeenCalled();
       expect(config).toBeDefined();
       expect(config.DATABASE_URL).toBe('postgresql://localhost/test');
       expect(config.SESSION_SECRET).toBe('a'.repeat(32));
     });
 
     test('should use default values for optional config', () => {
-      process.env.DATABASE_URL = 'postgresql://localhost/test';
-      process.env.SESSION_SECRET = 'a'.repeat(32);
-      delete process.env.PORT;
-      delete process.env.DB_SCHEMA;
+      const env = getBaseEnv();
+      // Ensure optionals are undefined
+      delete env.PORT;
+      delete env.DB_SCHEMA;
       
-      const config = validateConfig();
+      const config = validateConfig(env, mockExit);
       
-      expect(config.PORT).toBe(3000);
+      expect(mockExit).not.toHaveBeenCalled();
+      expect(config.PORT).toBe(3000); // Default port
       expect(config.SCHEMA).toBe('testfest');
     });
 
     test('should parse TAGS correctly', () => {
-      process.env.DATABASE_URL = 'postgresql://localhost/test';
-      process.env.SESSION_SECRET = 'a'.repeat(32);
-      process.env.TAGS = 'bug,enhancement,wontfix';
+      const env = getBaseEnv();
+      env.TAGS = 'bug,enhancement,wontfix';
       
-      const config = validateConfig();
+      const config = validateConfig(env, mockExit);
       
+      expect(mockExit).not.toHaveBeenCalled();
       expect(config.TAGS).toEqual(['bug', 'enhancement', 'wontfix']);
     });
   });
 
   describe('Schema validation', () => {
     test('should accept testfest schema', () => {
-      process.env.DATABASE_URL = 'postgresql://localhost/test';
-      process.env.SESSION_SECRET = 'a'.repeat(32);
-      process.env.DB_SCHEMA = 'testfest';
+      const env = getBaseEnv();
+      env.DB_SCHEMA = 'testfest';
       
-      const config = validateConfig();
+      const config = validateConfig(env, mockExit);
       
+      expect(mockExit).not.toHaveBeenCalled();
       expect(config.SCHEMA).toBe('testfest');
     });
 
     test('should reject public schema', () => {
-      process.env.DATABASE_URL = 'postgresql://localhost/test';
-      process.env.SESSION_SECRET = 'a'.repeat(32);
-      process.env.DB_SCHEMA = 'public';
+      const env = getBaseEnv();
+      env.DB_SCHEMA = 'public';
       
-      expect(() => validateConfig()).toThrow();
+      validateConfig(env, mockExit);
+      expect(mockExit).toHaveBeenCalledWith(1);
     });
 
     test('should reject invalid schema', () => {
-      process.env.DATABASE_URL = 'postgresql://localhost/test';
-      process.env.SESSION_SECRET = 'a'.repeat(32);
-      process.env.DB_SCHEMA = 'malicious; DROP TABLE users;';
+      const env = getBaseEnv();
+      env.DB_SCHEMA = 'malicious; DROP TABLE users;';
       
-      expect(() => validateConfig()).toThrow();
+      validateConfig(env, mockExit);
+      expect(mockExit).toHaveBeenCalledWith(1);
     });
   });
 
   describe('Port validation', () => {
     test('should accept valid port', () => {
-      process.env.DATABASE_URL = 'postgresql://localhost/test';
-      process.env.SESSION_SECRET = 'a'.repeat(32);
-      process.env.PORT = '8080';
+      const env = getBaseEnv();
+      env.PORT = '8080';
       
-      const config = validateConfig();
+      const config = validateConfig(env, mockExit);
       
+      expect(mockExit).not.toHaveBeenCalled();
       expect(config.PORT).toBe(8080);
     });
 
     test('should reject invalid port', () => {
-      process.env.DATABASE_URL = 'postgresql://localhost/test';
-      process.env.SESSION_SECRET = 'a'.repeat(32);
-      process.env.PORT = '99999';
+      const env = getBaseEnv();
+      env.PORT = '99999';
       
-      expect(() => validateConfig()).toThrow();
+      validateConfig(env, mockExit);
+      expect(mockExit).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe('SSO Validation', () => {
+    test('should require SSO config in non-test mode', () => {
+      const env = getBaseEnv();
+      env.NODE_ENV = 'production';
+      // Missing SSO vars
+      
+      validateConfig(env, mockExit);
+      expect(mockExit).toHaveBeenCalledWith(1);
+    });
+
+     test('should pass SSO config in non-test mode if provided', () => {
+      const env = getBaseEnv();
+      env.NODE_ENV = 'production';
+      env.ENTRA_ISSUER = 'issuer';
+      env.ENTRA_CLIENT_ID = 'id';
+      env.ENTRA_CLIENT_SECRET = 'secret';
+      
+      validateConfig(env, mockExit);
+      expect(mockExit).not.toHaveBeenCalled();
     });
   });
 });
