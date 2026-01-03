@@ -113,7 +113,7 @@ function createTestAuthMiddleware() {
     // If a user is already attached (e.g., from a previous request), skip
     if (req.user) return next();
 
-    // Identify the user by their 'sub' (subject ID) from the session, defaulting to 'test-user' for testing.
+    // Identify the user by their subject ID from the session, defaulting to 'test-user' for testing.
     const sub = (req.session && req.session.user && req.session.user.sub) ? req.session.user.sub : 'test-user';
     
     try {
