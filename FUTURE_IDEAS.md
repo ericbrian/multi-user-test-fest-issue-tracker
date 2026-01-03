@@ -22,9 +22,12 @@ This document captures high-level ideas, technical debt, and feature requests fo
 
 ## 🛠 Stability & Operations
 
-- **E2E Testing Suite**: Implement Playwright or Cypress tests to cover the "happy path" of creating a room, joining, and reporting an issue from a real browser.
-- **Dockerized Environment**: Standardize local development further with a full `docker-compose` setup for the app, DB, and Redis.
-- **Advanced Monitoring**: Expand Prometheus metrics to include business KPIs (e.g., "Issues reported per hour").
+- **Dockerized Environment**: Standardize local development further with a full `docker-compose` setup for the app, DB, and Redis. [Low Priority]
+- **Advanced Monitoring**: Expand Prometheus metrics to include business KPIs (e.g., "Issues reported per hour"). [Won't do!]
+
+## ✅ Completed
+
+- [x] **E2E Testing Suite**: Implement Playwright or Cypress tests to cover the "happy path" of creating a room, joining, and reporting an issue from a real browser.
 
 ---
 

@@ -1,3 +1,4 @@
+const { v4: uuidv4 } = require('uuid');
 const { getPrisma } = require("./prismaClient");
 const { ApiError } = require("./utils/apiResponse");
 
@@ -102,7 +103,7 @@ function noCache(req, res, next) {
   next();
 }
 
-// Test‑only authentication middleware (pure in‑memory, no DB)
+// Test‑only authentication middleware (DB-backed with in-memory fallback)
 // IMPORTANT: Only works when NODE_ENV=test, never in production or development
 function createTestAuthMiddleware() {
   return async function testAuth(req, res, next) {
@@ -112,15 +113,8 @@ function createTestAuthMiddleware() {
     // If a user is already attached (e.g., from a previous request), skip
     if (req.user) return next();
 
-    // Reuse session-stored user if present (stable identity across requests)
-    if (req.session && req.session.user) {
-      req.user = req.session.user;
-      return next();
-    }
-
-    // Build a static mock user
-    const { v4: uuidv4 } = require('uuid');
-    const sub = 'test-user';
+    // Identify the user by their 'sub' (subject ID) from the session, defaulting to 'test-user' for testing.
+    const sub = (req.session && req.session.user && req.session.user.sub) ? req.session.user.sub : 'test-user';
     
     try {
       const prisma = getPrisma();
@@ -136,8 +130,8 @@ function createTestAuthMiddleware() {
           },
         });
       }
-
-      // Attach to request and also store in session for downstream middleware
+ 
+      // Populate req.user and sync session
       req.user = user;
       if (req.session) req.session.user = user;
       next();

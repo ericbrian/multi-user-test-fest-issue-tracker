@@ -94,6 +94,9 @@ export function updateVisibility() {
 
   if (elements.loginBtn) elements.loginBtn.style.display = store.state.me ? "none" : "inline-block";
   if (elements.logoutBtn) elements.logoutBtn.style.display = store.state.me ? "inline-block" : "none";
+
+  // Always sync the user info text/bubble when visibility changes
+  updateUserInfoDisplay();
 }
 
 export function showLeaderboardDialog(entries) {
