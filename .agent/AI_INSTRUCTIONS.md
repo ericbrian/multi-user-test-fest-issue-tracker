@@ -34,7 +34,7 @@ This document orients future AI/code assistants to continue development efficien
   - `ENTRA_ISSUER` (e.g., <https://login.microsoftonline.com/**tenant-id_here**}**/v2.0>)
   - `ENTRA_CLIENT_ID`
   - `ENTRA_CLIENT_SECRET`
-  - `ENTRA_REDIRECT_URI` (default <http://localhost:3000/auth/callback>)
+  - `ENTRA_REDIRECT_URI` (Optional. Defaults to `https://testfestdotdev-dff5671c87e3.herokuapp.com/auth/callback`)
 - Roles/Tags
 - Dev mode: `npm run dev` (Nodemon). Visit `http://localhost:3000`
   - `TAGS` (comma-separated, default: duplicate,as-designed,low-priority)

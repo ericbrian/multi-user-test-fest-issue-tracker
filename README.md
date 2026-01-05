@@ -57,7 +57,8 @@ DATABASE_URL=postgres://username:password@localhost:5432/test_fest_tracker
 ENTRA_ISSUER=
 ENTRA_CLIENT_ID=
 ENTRA_CLIENT_SECRET=
-ENTRA_REDIRECT_URI=http://localhost:3000/auth/callback
+# (Optional) Defaults to https://testfestdotdev-dff5671c87e3.herokuapp.com/auth/callback
+# ENTRA_REDIRECT_URI=http://localhost:3000/auth/callback
 
 # Comma-separated list of emails with Groupier powers (creator is groupier by default)
 GROUPIER_EMAILS=

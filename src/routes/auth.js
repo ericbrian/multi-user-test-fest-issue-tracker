@@ -6,6 +6,7 @@ function registerAuthRoutes(router, deps) {
     passport,
     TAGS,
     JIRA_BASE_URL,
+    ENTRA_REDIRECT_URI,
   } = deps;
 
   /**
@@ -37,6 +38,7 @@ function registerAuthRoutes(router, deps) {
     // Normal OIDC flow
     passport.authenticate('oidc', {
       scope: 'openid profile email offline_access',
+      redirect_uri: ENTRA_REDIRECT_URI,
     })(req, res, next);
   });
 
@@ -67,6 +69,7 @@ function registerAuthRoutes(router, deps) {
     passport.authenticate('oidc', {
       successRedirect: '/',
       failureRedirect: '/?login=failed',
+      redirect_uri: ENTRA_REDIRECT_URI,
     })(req, res, next);
   });
 

@@ -253,7 +253,7 @@ async function setupOIDC() {
   oidcClient = new issuer.Client({
     client_id: ENTRA_CLIENT_ID,
     client_secret: ENTRA_CLIENT_SECRET,
-    redirect_uris: [ENTRA_REDIRECT_URI],
+    redirect_uris: ENTRA_REDIRECT_URI ? [ENTRA_REDIRECT_URI] : [],
     response_types: ['code'],
   });
 
@@ -358,6 +358,7 @@ registerRoutes(app, {
   GROUPIER_EMAILS,
   uiIndexPath,
   cache,
+  ENTRA_REDIRECT_URI,
 });
 
 // CSRF Error Handler

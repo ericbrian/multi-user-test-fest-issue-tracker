@@ -104,7 +104,7 @@ function validateConfig(env = process.env, exitFn = process.exit) {
     ENTRA_ISSUER: env.ENTRA_ISSUER,
     ENTRA_CLIENT_ID: env.ENTRA_CLIENT_ID,
     ENTRA_CLIENT_SECRET: env.ENTRA_CLIENT_SECRET,
-    ENTRA_REDIRECT_URI: env.ENTRA_REDIRECT_URI || `http://localhost:${PORT}/auth/callback`,
+    ENTRA_REDIRECT_URI: env.ENTRA_REDIRECT_URI || 'https://testfestdotdev-dff5671c87e3.herokuapp.com/auth/callback',
     GROUPIER_EMAILS: (env.GROUPIER_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
     TAGS,
     JIRA_BASE_URL,
