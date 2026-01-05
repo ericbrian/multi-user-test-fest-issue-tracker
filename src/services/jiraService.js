@@ -37,9 +37,10 @@ class JiraService {
    * Create a Jira issue from an internal issue
    * @param {Object} issue - The issue object from database
    * @param {string} roomName - Name of the room for labeling
+   * @param {string} appBaseUrl - Base URL of this app for deep links
    * @returns {Promise<string>} - Jira issue key
    */
-  async createIssue(issue, roomName = '') {
+  async createIssue(issue, roomName = '', appBaseUrl = '') {
     if (!this.isConfigured()) {
       throw new Error('Jira is not configured');
     }
@@ -78,6 +79,22 @@ class JiraService {
       type: 'listItem',
       content: [{ type: 'paragraph', content: [{ type: 'text', text: `Test Fest: ${roomName}` }] }]
     });
+
+    const base = (appBaseUrl || '').replace(/\/$/, '');
+    const roomId = issue.room_id;
+    if (base && roomId) {
+      const roomUrl = `${base}/fest/${roomId}`;
+      contextItems.push({
+        type: 'listItem',
+        content: [{
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'Open in Test Fest: ' },
+            { type: 'text', text: roomUrl, marks: [{ type: 'link', attrs: { href: roomUrl } }] }
+          ]
+        }]
+      });
+    }
     if (issue.script_id) {
       contextItems.push({
         type: 'listItem',

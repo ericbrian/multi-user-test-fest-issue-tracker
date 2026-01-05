@@ -451,7 +451,19 @@ function registerIssueRoutes(router, deps) {
         return res.json({ jira_key: issue.jira_key });
       }
 
-      const jiraKey = await jiraService.createIssue(issue, req.user);
+      const room = await prisma.room.findUnique({
+        where: { id: issue.room_id },
+        select: { name: true },
+      });
+      const roomName = room?.name || '';
+
+      const forwardedProto = (req.get('x-forwarded-proto') || '').split(',')[0].trim();
+      const forwardedHost = (req.get('x-forwarded-host') || '').split(',')[0].trim();
+      const protocol = forwardedProto || req.protocol;
+      const host = forwardedHost || req.get('host');
+      const appBaseUrl = (protocol && host) ? `${protocol}://${host}` : '';
+
+      const jiraKey = await jiraService.createIssue(issue, roomName, appBaseUrl);
 
       // Update issue with Jira key
       await issueService.updateJiraKey(issue.id, jiraKey);
