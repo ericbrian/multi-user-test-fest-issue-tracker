@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: <YOUR_ACCOUNT_ID>.dkr.ecr.<YOUR_REGION>.amazonaws.com/testfest-repo:latest
+          image: <YOUR_ACCOUNT_ID>.dkr.ecr.<YOUR_REGION>.amazonaws.com/testfest-app:latest
           ports:
             - containerPort: 3000
           envFrom:

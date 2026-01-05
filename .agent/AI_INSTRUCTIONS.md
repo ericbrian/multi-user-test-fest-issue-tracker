@@ -114,7 +114,7 @@ This document orients future AI/code assistants to continue development efficien
 - Build: `docker build -t testfest-app:local .`
 - Run: `docker run --env-file .env -p 3000:3000 testfest-app:local`
 - Healthcheck: Container uses `/health`.
-- ECS: Pushes to ECR repo `testfest-repo` via Bitbucket Pipelines; configure Task Definition to expose port 3000, set env vars, and attach a persistent storage or migrate to S3 for uploads.
+- ECS: Pushes to ECR repo `testfest-app` via Bitbucket Pipelines; configure Task Definition to expose port 3000, set env vars, and attach a persistent storage or migrate to S3 for uploads.
 
 ## CI/CD (Bitbucket Pipelines)
 
@@ -122,7 +122,7 @@ This document orients future AI/code assistants to continue development efficien
   1. Snyk Open Source & Code scan (requires `SNYK_TOKEN`)
   2. Build Docker image (artifact)
   3. Snyk Container scan
-  4. Push to AWS ECR repo `testfest-repo`
+  4. Push to AWS ECR repo `testfest-app`
 - Required repo variables: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ACCOUNT_ID`, `AWS_DEFAULT_REGION`, `SNYK_TOKEN` (optional `SNYK_SEVERITY_THRESHOLD`).
 
 ## Development

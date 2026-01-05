@@ -60,11 +60,11 @@ We need an ECR repo for the application image.
 
 Kubernetes manifest placeholder expects repo name:
 
-- `testfest-repo`
+- `testfest-app`
 
 Deliverable outputs:
 
-- ECR repository URI (e.g. `<acct>.dkr.ecr.<region>.amazonaws.com/testfest-repo`)
+- ECR repository URI (e.g. `<acct>.dkr.ecr.<region>.amazonaws.com/testfest-app`)
 
 ### C) RDS Postgres
 
@@ -197,7 +197,7 @@ Please provide these values back to the app team:
 
 - EKS cluster name + region
 - Confirmation that AWS Load Balancer Controller is installed
-- Repo URI for `testfest-repo`
+- Repo URI for `testfest-app`
 - `DATABASE_URL` (or the components to construct it)
 - `REDIS_URL` (or its components)
 - Any required SSL flags/CA requirements
@@ -207,7 +207,7 @@ Please provide these values back to the app team:
 ## Day-0 checklist (cloud team)
 
 - Provision EKS + AWS Load Balancer Controller
-- Create ECR repo `testfest-repo`
+- Create ECR repo `testfest-app`
 - Create RDS Postgres and connectivity to EKS
 - Provision Redis (ElastiCache) and connectivity to EKS
 - Optional: ACM/DNS

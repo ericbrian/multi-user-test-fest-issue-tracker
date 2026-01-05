@@ -89,7 +89,7 @@ Target runtime:
 ### ECR
 
 - ECR repo for app image
-  - Expected name: `testfest-repo` (or provide the actual repo URI)
+  - Expected name: `testfest-app` (or provide the actual repo URI)
 
 ### RDS Postgres
 

@@ -28,7 +28,6 @@ description: Guidelines for deploying and managing the application on Heroku, in
 # Syncing config safely and monitoring the release
 ./scripts/heroku-set-config-from-env-production.sh
 git push heroku main
-heroku logs --tail --app test-fest-tracker
 heroku logs --tail --app testfest-app
 ```
 

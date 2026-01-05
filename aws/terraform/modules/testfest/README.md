@@ -16,7 +16,7 @@ This repo intentionally keeps only placeholder scaffolding. The protected Terraf
 
 - `../testfest_step2_provisioning/`
   - EKS cluster + node groups (or consumes an existing cluster)
-  - ECR repo (`testfest-repo`)
+  - ECR repo (`testfest-app`)
   - RDS Postgres (or consumes an existing instance)
   - optional S3 bucket for uploads
 

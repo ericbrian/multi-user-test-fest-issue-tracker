@@ -8,7 +8,7 @@ Typical responsibilities (adjust to match your protected repo standards):
 
 - EKS cluster + managed node group(s) (or wiring to an existing EKS cluster)
 - AWS Load Balancer Controller installation (if not done centrally)
-- ECR repository for app image (`testfest-repo`)
+- ECR repository for app image (`testfest-app`)
 - RDS Postgres (or connectivity to an existing instance)
 - Optional: S3 bucket for uploads + IRSA role/policy for the app
 
