@@ -6,6 +6,9 @@ data:
   NODE_ENV: "production"
   PORT: "3000"
   DB_SCHEMA: "testfest"
+  # Required behind ALB so Express treats X-Forwarded-* correctly.
+  # This is critical when cookies are marked `secure` in production.
+  TRUST_PROXY: "1"
   ENTRA_ISSUER: "https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0"
   ENTRA_CLIENT_ID: "YOUR_CLIENT_ID"
   ENTRA_REDIRECT_URI: "https://issues.yourdomain.com/auth/callback"

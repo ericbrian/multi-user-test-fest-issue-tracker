@@ -92,13 +92,14 @@ Deliverable outputs:
 
 ### D) TLS certificate + DNS (recommended)
 
-If we’re using a custom domain day-0:
+DNS + TLS is required for day-0 because Entra login must work end-to-end.
+
+Requirements:
 
 - Internal DNS name (recommended: Route53 **private hosted zone**) pointing to the internal ALB
 - TLS certificate approach for an internal hostname (choose one):
   - Import a certificate issued by your corporate/internal CA
   - Use ACM Private CA (if your org has it)
-  - Use a public ACM certificate only if your org can validate it and it matches the chosen hostname
 
 Deliverable outputs:
 
@@ -149,7 +150,7 @@ The app team will apply manifests from `aws/k8s/`.
 
 Notable expectations:
 
-- Ingress: ALB, internet-facing, target-type `ip`, sticky sessions enabled
+- Ingress: ALB, **internal** (behind firewall), target-type `ip`, sticky sessions enabled
 - Service: NodePort
 - Deployment:
   - `replicas: 1`
@@ -198,6 +199,6 @@ Please provide these values back to the app team:
 ## Open decisions/questions
 
 - Target AWS region?
-- Day-0 DNS/TLS: custom domain + ACM now, or use ALB DNS name over HTTP temporarily?
+- Day-0 DNS/TLS: internal hostname + internal certificate approach (corporate CA / ACM Private CA)?
 - RDS sizing/HA for day-0: single-AZ small instance ok?
 - Optional S3 provisioning now vs later?

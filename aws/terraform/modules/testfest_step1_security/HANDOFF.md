@@ -50,6 +50,11 @@ Provide/confirm:
   - Route53 **private hosted zone** (recommended) or your corporate DNS integration
   - Internal hostname to be used for Entra redirect URI
 
+Entra SSO requirement:
+
+- DNS + TLS for the internal hostname is required for day-0 because Entra login must work end-to-end.
+  - Provide an internal hostname and a TLS strategy (ACM Private CA and/or corporate CA import).
+
 Firewall/CIDR restriction:
 
 - Define the allowed inbound CIDRs (VPN/office ranges). These will be applied to the internal ALB via security groups and/or ALB Ingress annotations.

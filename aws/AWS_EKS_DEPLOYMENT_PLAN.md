@@ -48,7 +48,10 @@ The app reads schema from `DB_SCHEMA` (validated in `src/config.js`).
 
 - [ ] AWS account access + CLI configured (`aws sts get-caller-identity` works)
 - [ ] Region chosen
-- [ ] Internal DNS name chosen (recommended: Route53 private hosted zone), e.g. `issues.internal.example.com`
+- [ ] DNS + TLS (required for Entra login):
+  - Internal DNS name via Route53 private hosted zone (recommended) or corporate DNS integration, e.g. `issues.internal.example.com`
+  - TLS certificate for that internal hostname (ACM Private CA or corporate CA import)
+  - Entra app registration must include redirect URI: `https://<internal-host>/auth/callback`
 
 ### 2) Create/confirm EKS cluster
 
@@ -79,6 +82,7 @@ The app reads schema from `DB_SCHEMA` (validated in `src/config.js`).
 - [ ] K8s ConfigMap contains:
   - `NODE_ENV=production`, `PORT=3000`
   - `DB_SCHEMA=testfest`
+  - `TRUST_PROXY=1` (required behind ALB so secure cookies work)
   - Entra OIDC env vars
 
 ### 6) Ingress and WebSockets

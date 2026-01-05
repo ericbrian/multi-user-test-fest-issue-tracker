@@ -51,6 +51,7 @@ To allow the app to scale beyond 1 replica in the future:
 
 - **Install**: `npm install socket.io-redis redis`
 - **Update `server.js`**:
+
   ```javascript
   if (process.env.REDIS_URL) {
     const redisAdapter = require("socket.io-redis");

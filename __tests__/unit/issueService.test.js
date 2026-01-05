@@ -14,6 +14,7 @@ jest.mock('uuid', () => ({
 describe('IssueService', () => {
   let issueService;
   let prismaMock;
+  let storageServiceMock;
   const uploadsDir = '/tmp/uploads';
 
   beforeEach(() => {
@@ -29,7 +30,12 @@ describe('IssueService', () => {
         delete: jest.fn(),
       },
     };
-    issueService = new IssueService(prismaMock, uploadsDir);
+    storageServiceMock = {
+      uploadFile: jest.fn().mockImplementation((file) => Promise.resolve(`/uploads/${file.filename || file}`)),
+      deleteFile: jest.fn().mockResolvedValue(),
+      getFileStream: jest.fn(),
+    };
+    issueService = new IssueService(prismaMock, storageServiceMock);
   });
 
   afterEach(() => {
@@ -133,10 +139,11 @@ describe('IssueService', () => {
           created_by: 'u1',
           script_id: 10,
           description: 'desc',
-          images: ['img.png'],
+          images: ['/uploads/img.png'],
           is_issue: true
         })
       });
+      expect(storageServiceMock.uploadFile).toHaveBeenCalledWith('img.png', { roomId: 'r1' });
       expect(result.created_by_name).toBe('User');
     });
   });
@@ -182,9 +189,9 @@ describe('IssueService', () => {
       await issueService.deleteIssue('issue-1');
 
       expect(prismaMock.issue.findUnique).toHaveBeenCalledWith({ where: { id: 'issue-1' } });
-      expect(fs.unlink).toHaveBeenCalledWith(path.join(uploadsDir, 'img1.png'), expect.any(Function));
-      // should not try to unlink not-an-upload.jpg because it doesn't start with /uploads/
-      expect(fs.unlink).toHaveBeenCalledTimes(1);
+      expect(storageServiceMock.deleteFile).toHaveBeenCalledWith('/uploads/img1.png');
+      expect(storageServiceMock.deleteFile).toHaveBeenCalledWith('not-an-upload.jpg');
+      expect(storageServiceMock.deleteFile).toHaveBeenCalledTimes(2);
       expect(prismaMock.issue.delete).toHaveBeenCalledWith({ where: { id: 'issue-1' } });
     });
 
@@ -192,13 +199,13 @@ describe('IssueService', () => {
       const issue = { id: 'i1', images: ['/uploads/fail.png'] };
       prismaMock.issue.findUnique.mockResolvedValue(issue);
       const logSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      
-      // Simulate unlink error
-      fs.unlink.mockImplementation((path, cb) => cb({ code: 'EBUSY' }));
+
+      // Simulate deleteFile error
+      storageServiceMock.deleteFile.mockRejectedValue(new Error('unlink failed'));
 
       await issueService.deleteIssue('i1');
 
-      expect(logSpy).toHaveBeenCalledWith('Error deleting file:', expect.any(Object));
+      expect(logSpy).toHaveBeenCalledWith('Error cleaning up files:', expect.any(Object));
       logSpy.mockRestore();
     });
 

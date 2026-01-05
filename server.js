@@ -20,6 +20,7 @@ const { getPrisma } = require('./src/prismaClient');
 const { validateConfig } = require('./src/config');
 const { createMetrics } = require('./src/metrics');
 const { createCacheFromEnv } = require('./src/cache');
+const { createStorageService } = require('./src/services/storageService');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -41,6 +42,12 @@ const {
   JIRA_API_TOKEN,
   JIRA_PROJECT_KEY,
   JIRA_ISSUE_TYPE,
+  UPLOADS_BACKEND,
+  S3_BUCKET,
+  S3_REGION,
+  S3_ACCESS_KEY_ID,
+  S3_SECRET_ACCESS_KEY,
+  TRUST_PROXY,
 } = config;
 
 // DB setup
@@ -118,6 +125,16 @@ const upload = multer({
 
     cb(null, true);
   }
+});
+
+// Storage Service initialization
+const storageService = createStorageService({
+  backend: UPLOADS_BACKEND,
+  uploadsDir,
+  s3Bucket: S3_BUCKET,
+  s3Region: S3_REGION,
+  s3AccessKeyId: S3_ACCESS_KEY_ID,
+  s3SecretAccessKey: S3_SECRET_ACCESS_KEY,
 });
 
 // Express app
@@ -201,7 +218,38 @@ app.get('/metrics', (req, res, next) => {
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(uploadsDir));
+
+// File serving
+if (UPLOADS_BACKEND === 's3') {
+  // Stream from S3
+  app.get('/uploads/*', async (req, res) => {
+    try {
+      const key = req.params[0];
+      if (!key) return res.status(404).send('Not Found');
+      const stream = await storageService.getFileStream(key);
+      
+      // Basic content type detection
+      const ext = path.extname(key).toLowerCase();
+      const mimeTypes = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.avif': 'image/avif',
+      };
+      res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+      stream.pipe(res);
+    } catch (err) {
+      console.error('Error streaming from S3:', err);
+      res.status(404).send('Not Found');
+    }
+  });
+} else {
+  // Local disk serving
+  app.use('/uploads', express.static(uploadsDir));
+}
+
 // Serve static files at root (Vite build expects /assets/*) and keep /static/* as an alias.
 app.use(express.static(uiDir, { index: false }));
 app.use('/static', express.static(uiDir, { index: false }));
@@ -213,7 +261,7 @@ app.use('/api/', apiLimiter);
 // Routes are now in src/routes.js
 
 // Sessions
-app.set('trust proxy', 1);
+app.set('trust proxy', TRUST_PROXY === 'true' || TRUST_PROXY === '1' || TRUST_PROXY === 1);
 app.use(
   session({
     store: process.env.NODE_ENV === 'test'
@@ -359,6 +407,7 @@ registerRoutes(app, {
   uiIndexPath,
   cache,
   ENTRA_REDIRECT_URI,
+  storageService,
 });
 
 // CSRF Error Handler

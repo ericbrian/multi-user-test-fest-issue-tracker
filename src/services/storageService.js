@@ -5,6 +5,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const crypto = require('crypto');
 const {
   S3Client,
   PutObjectCommand,
@@ -18,7 +19,7 @@ class StorageService {
    * @param {string} filename
    * @returns {Promise<string>} - Returns the URL or path to be stored in DB
    */
-  async uploadFile(file) {
+  async uploadFile(file, options = {}) {
     throw new Error("uploadFile not implemented");
   }
 
@@ -48,7 +49,7 @@ class DiskStorageService extends StorageService {
     this.uploadsDir = uploadsDir;
   }
 
-  async uploadFile(file) {
+  async uploadFile(file, options = {}) {
     // Multer has already handled the disk write if we use diskStorage
     // This method might be used for manual moves or just returning the path
     return `/uploads/${file.filename}`;
@@ -101,15 +102,24 @@ class S3StorageService extends StorageService {
     });
   }
 
-  async uploadFile(file) {
-    const filename = `${Date.now()}-${file.originalname}`;
+  async uploadFile(file, options = {}) {
+    // Avoid collisions and avoid exposing user-provided filenames.
+    // Preserve extension to keep downstream content-type sniffing friendly.
+    const ext = (file && file.originalname) ? path.extname(file.originalname).toLowerCase() : '';
+    const uuid = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    const filename = `${uuid}${ext}`;
     const fileStream = fs.createReadStream(file.path);
+
+    // Optional organization: keep objects scoped by roomId.
+    // This keeps S3 browsable and also reduces blast radius for bulk operations.
+    const roomId = options && typeof options.roomId === 'string' ? options.roomId.trim() : '';
+    const keySuffix = roomId ? `${roomId}/${filename}` : filename;
 
     const upload = new Upload({
       client: this.s3Client,
       params: {
         Bucket: this.bucket,
-        Key: `uploads/${filename}`,
+        Key: `uploads/${keySuffix}`,
         Body: fileStream,
         ContentType: file.mimetype,
       },
@@ -122,13 +132,14 @@ class S3StorageService extends StorageService {
       if (err) console.error("Error deleting temp file after S3 upload:", err);
     });
 
-    return `/uploads/${filename}`;
+    return `/uploads/${keySuffix}`;
   }
 
   async deleteFile(fileUrlOrPath) {
     if (!fileUrlOrPath || !fileUrlOrPath.startsWith("/uploads/")) return;
 
-    const filename = path.basename(fileUrlOrPath);
+    // Keep nested paths (e.g., /uploads/<roomId>/<file>) so we delete the correct object.
+    const filename = fileUrlOrPath.slice('/uploads/'.length);
     const command = new DeleteObjectCommand({
       Bucket: this.bucket,
       Key: `uploads/${filename}`,

@@ -102,10 +102,19 @@ class IssueService {
       isAnnoyance,
       isExistingUpper,
       isNotSureHowToTest,
-      files,
+      files, // These will be Multer file objects now
     } = data;
 
     const id = uuidv4();
+
+    // Upload files using StorageService
+    const imagePaths = [];
+    if (Array.isArray(files)) {
+      for (const file of files) {
+        const path = await this.storageService.uploadFile(file, { roomId });
+        imagePaths.push(path);
+      }
+    }
 
     await this.prisma.issue.create({
       data: {
@@ -114,7 +123,7 @@ class IssueService {
         created_by: userId,
         script_id: scriptId,
         description: description || '',
-        images: files,
+        images: imagePaths,
         is_issue: isIssue,
         is_annoyance: isAnnoyance,
         is_existing_upper_env: isExistingUpper,
@@ -209,8 +218,11 @@ class IssueService {
     if (!files || files.length === 0) return;
 
     files.forEach(file => {
+      // file.path is the local temp path from multer
       fs.unlink(file.path, (err) => {
-        if (err) console.error('Error cleaning up uploaded file:', err);
+        if (err && err.code !== 'ENOENT') {
+          console.error('Error cleaning up uploaded file:', err);
+        }
       });
     });
   }
