@@ -8,9 +8,9 @@ const fs = require('fs');
 const path = require('path');
 
 class IssueService {
-  constructor(prisma, uploadsDir) {
+  constructor(prisma, storageService) {
     this.prisma = prisma;
-    this.uploadsDir = uploadsDir;
+    this.storageService = storageService;
   }
 
   /**
@@ -184,19 +184,14 @@ class IssueService {
       throw new Error('Issue not found');
     }
 
-    // Delete uploaded images from disk (best effort)
+    // Delete uploaded images (best effort)
     try {
       const images = Array.isArray(issue.images) ? issue.images : [];
-      images.forEach((imagePath) => {
-        if (typeof imagePath === 'string' && imagePath.startsWith('/uploads/')) {
-          const fullPath = path.join(this.uploadsDir, path.basename(imagePath));
-          fs.unlink(fullPath, (err) => {
-            if (err && err.code !== 'ENOENT') {
-              console.error('Error deleting file:', err);
-            }
-          });
+      for (const imagePath of images) {
+        if (typeof imagePath === 'string') {
+          await this.storageService.deleteFile(imagePath);
         }
-      });
+      }
     } catch (error) {
       console.error('Error cleaning up files:', error);
       // Don't fail the delete operation
