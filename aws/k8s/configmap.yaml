@@ -9,6 +9,11 @@ data:
   # Required behind ALB so Express treats X-Forwarded-* correctly.
   # This is critical when cookies are marked `secure` in production.
   TRUST_PROXY: "1"
+  # Day-0 recommendation: enable Redis so Socket.IO broadcasts work across multiple replicas.
+  # Set REDIS_URL to your ElastiCache/Redis endpoint (including auth/TLS parameters per org standard).
+  # Example: redis://:PASSWORD@host:6379
+  SOCKETIO_REDIS_ENABLED: "true"
+  # REDIS_URL: "redis://:PASSWORD@your-redis-endpoint:6379"
   ENTRA_ISSUER: "https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0"
   ENTRA_CLIENT_ID: "YOUR_CLIENT_ID"
   ENTRA_REDIRECT_URI: "https://issues.yourdomain.com/auth/callback"

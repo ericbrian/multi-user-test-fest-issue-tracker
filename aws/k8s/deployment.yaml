@@ -5,7 +5,8 @@ metadata:
   labels:
     app: testfest-tracker
 spec:
-  replicas: 1
+  # With Redis enabled (SOCKETIO_REDIS_ENABLED=true + REDIS_URL set), it's safe to run 2+ replicas.
+  replicas: 2
   selector:
     matchLabels:
       app: testfest-tracker

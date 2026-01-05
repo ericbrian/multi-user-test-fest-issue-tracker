@@ -11,7 +11,7 @@ description: AWS deployment skill for this app: internal-only EKS + ALB Ingress 
 
 ## Scope
 
-This skill is specific to this repo’s application (`multi-user-test-fest-issue-tracker`).
+This skill is specific to this repo’s application (`testfest-app`).
 
 Target runtime on AWS:
 

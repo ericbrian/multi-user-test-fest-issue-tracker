@@ -18,6 +18,9 @@ Scope: **Step 2** of the org-required 2-step Terraform process.
 
 Day-0 constraint: the app will deploy with **replicas=1**.
 
+Update: With Redis provisioned day-0 (see below) and the Socket.IO Redis adapter enabled, the repo now defaults the deployment to **replicas=2** for basic HA.
+You may still choose to start at **replicas=1** for the simplest first cut.
+
 Access constraint: this app must live **behind the company firewall** (internal-only). End users must be on the corporate network (e.g. VPN) to reach it.
 
 ## Step 2 inputs required from Step 1
@@ -84,13 +87,32 @@ Deliverable outputs:
 - RDS endpoint/port
 - A `DATABASE_URL` value usable by the app
 
+### D) Redis (ElastiCache) for Socket.IO (day-0 recommended)
+
+We recommend provisioning Redis day-0 so Socket.IO broadcasts work across multiple replicas.
+
+Requirements:
+
+- ElastiCache Redis (or org-standard Redis offering) reachable from EKS workloads
+- Security group rules allowing EKS → Redis (typically `6379`)
+- Provide a `REDIS_URL` usable by the app
+
+App config:
+
+- `SOCKETIO_REDIS_ENABLED=true`
+- `REDIS_URL=redis://:PASSWORD@HOST:6379` (include TLS/auth parameters per org standard)
+
+Kubernetes note:
+
+- The repo’s default `aws/k8s/deployment.yaml` is set to `replicas: 2` assuming Redis is enabled.
+
 `DATABASE_URL` format:
 
 - `postgresql://USER:PASSWORD@HOST:5432/DBNAME`
 
 (If your org standard requires SSL parameters, include them in the URL.)
 
-### D) TLS certificate + DNS (recommended)
+### E) TLS certificate + DNS (recommended)
 
 DNS + TLS is required for day-0 because Entra login must work end-to-end.
 
@@ -177,6 +199,7 @@ Please provide these values back to the app team:
 - Confirmation that AWS Load Balancer Controller is installed
 - Repo URI for `testfest-repo`
 - `DATABASE_URL` (or the components to construct it)
+- `REDIS_URL` (or its components)
 - Any required SSL flags/CA requirements
 - If using custom domain: public hostname + ACM certificate ARN
 - If S3 provisioned: bucket name + IRSA role ARN
@@ -186,6 +209,7 @@ Please provide these values back to the app team:
 - Provision EKS + AWS Load Balancer Controller
 - Create ECR repo `testfest-repo`
 - Create RDS Postgres and connectivity to EKS
+- Provision Redis (ElastiCache) and connectivity to EKS
 - Optional: ACM/DNS
 - Optional: S3 + IRSA role for app
 

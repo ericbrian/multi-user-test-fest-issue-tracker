@@ -11,7 +11,7 @@ description: Captures org-standard Terraform requirements for deploying this app
 
 ## Scope
 
-This skill is **specific to** the app in this repo (`multi-user-test-fest-issue-tracker`).
+This skill is **specific to** the app in this repo (`testfest-app`).
 
 Target runtime:
 

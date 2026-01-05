@@ -1,5 +1,5 @@
 ---
-description: How to containerize and run the Test Fest Tracker app locally
+description: How to containerize and run the testfest-app locally
 ---
 
 ## 1. Verify Dockerfile
@@ -11,7 +11,7 @@ Ensure the `Dockerfile` in the root directory is set up correctly (it currently 
 Run the following command in the project root to build the image:
 
 ```bash
-docker build -t test-fest-tracker:local .
+docker build -t testfest-app:local .
 ```
 
 ## 3. Run the Container
@@ -26,7 +26,7 @@ docker run --name test-fest-container \
   --env-file .env \
   -e DATABASE_URL=postgres://postgres:postgres@host.docker.internal:5432/test_fest_tracker \
   -p 3000:3000 \
-  -d test-fest-tracker:local
+  -d testfest-app:local
 ```
 
 _(If you are on Linux instead of Mac/Windows, use `--add-host=host.docker.internal:host-gateway`)_

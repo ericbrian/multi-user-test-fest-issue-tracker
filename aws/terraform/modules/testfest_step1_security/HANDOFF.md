@@ -16,7 +16,8 @@ Scope: **Step 1** of the org-required 2-step Terraform process.
 - Database: RDS Postgres
 - Realtime: Socket.IO
 
-Day-0 constraint: the app will deploy with **replicas=1**.
+Day-0 scaling note: the repo defaults to **replicas=2** once Redis is available (Socket.IO Redis adapter).
+You may still start at **replicas=1** for the simplest first cut.
 
 Access constraint: this app must live **behind the company firewall** (internal-only). That means the ALB should be **internal**, and inbound should be restricted to corporate networks (VPN/office CIDRs).
 

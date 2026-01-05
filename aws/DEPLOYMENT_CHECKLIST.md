@@ -104,13 +104,13 @@ Use this checklist before deploying to production.
 - [ ] Build Docker image successfully
 
   ```bash
-  docker build -t test-fest-tracker:latest .
+  docker build -t testfest-app:latest .
   ```
 
 - [ ] Test Docker container locally
 
   ```bash
-  docker run --env-file .env -p 3000:3000 test-fest-tracker:latest
+  docker run --env-file .env -p 3000:3000 testfest-app:latest
   ```
 
 - [ ] Health check endpoint responds: `http://localhost:3000/health`

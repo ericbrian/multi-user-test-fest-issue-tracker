@@ -11,7 +11,7 @@ description: Redis guidance for this repo: ElastiCache day-0, env vars, Socket.I
 
 ## Scope
 
-This skill applies to this repo’s app (`multi-user-test-fest-issue-tracker`) running on AWS/EKS.
+This skill applies to this repo’s app (`testfest-app`) running on AWS/EKS.
 
 ## What Redis is (plain English)
 

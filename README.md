@@ -1,4 +1,4 @@
-# Test Fest Tracker
+# testfest-app
 
 Real-time multi-user issue tracker for Test Fests. Left pane: submit issues. Right pane: live list of issues from everyone. Auth via Entra ID (SSO), data in Postgres, real-time via Socket.IO, optional Jira integration.
 
@@ -24,7 +24,7 @@ Real-time multi-user issue tracker for Test Fests. Left pane: submit issues. Rig
 
 To deploy to Heroku:
 
-1. **Create a Heroku App**: Run `heroku create test-fest-tracker`.
+1. **Create a Heroku App**: Run `heroku create testfest-app`.
 1. **Add Postgres**: Run `heroku addons:create heroku-postgresql:essential-0`.
 1. **Configure Env Vars**: Set `ENTRA_ISSUER`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`, etc., using `heroku config:set`.
 1. **Deploy**: Run `git push heroku main`.
@@ -154,8 +154,8 @@ REDIS_URL=redis://redis:6379
 Build locally:
 
 ```bash
-docker build -t test-fest-tracker:local .
-docker run --env-file .env -p 3000:3000 test-fest-tracker:local
+docker build -t testfest-app:local .
+docker run --env-file .env -p 3000:3000 testfest-app:local
 ```
 
 ## Frontend build (Vite)

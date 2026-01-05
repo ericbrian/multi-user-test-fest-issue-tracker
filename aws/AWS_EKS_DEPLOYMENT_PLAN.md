@@ -20,9 +20,11 @@ Access requirement: this app must live **behind the company firewall** (internal
 
 Initial rollout decision (to reduce risk):
 
-- **Replicas = 1** for day-0 correctness (Socket.IO) until we add a multi-node adapter.
+- **Introduce Redis day-0** (ElastiCache) and enable the Socket.IO Redis adapter.
+- Default to `replicas: 2` for basic HA once Redis is in place.
+- You may still start with `replicas: 1` if you want the simplest possible first cut.
 
-Why: With multiple pods, Socket.IO events won’t broadcast across pods without a shared adapter (usually Redis). ALB stickiness keeps a single client pinned, but it does not synchronize events across pods.
+Why: With multiple pods, Socket.IO events won’t broadcast across pods without a shared adapter (Redis). ALB stickiness keeps a single client pinned, but it does not synchronize events across pods.
 
 ## Database Decision (Agreed)
 
@@ -83,6 +85,8 @@ The app reads schema from `DB_SCHEMA` (validated in `src/config.js`).
   - `NODE_ENV=production`, `PORT=3000`
   - `DB_SCHEMA=testfest`
   - `TRUST_PROXY=1` (required behind ALB so secure cookies work)
+  - `SOCKETIO_REDIS_ENABLED=true`
+  - `REDIS_URL=...` (ElastiCache endpoint)
   - Entra OIDC env vars
 
 ### 6) Ingress and WebSockets
@@ -168,13 +172,13 @@ Replace `${BUCKET_NAME}` and optionally constrain prefix.
 }
 ```
 
-## Multi-Replica Realtime Plan (Later)
+## Multi-Replica Realtime Plan (Day-0)
 
-When scaling beyond 1 replica:
+For day-0 Redis-backed realtime:
 
-- Add Redis (Elasticache or in-cluster)
-- Add Socket.IO Redis adapter to broadcast events across pods
-- Then scale deployment to 2+ replicas
+- Provision Redis (ElastiCache recommended)
+- Set `SOCKETIO_REDIS_ENABLED=true` and `REDIS_URL=...`
+- Then you may scale deployment to 2+ replicas
 
 ## DNS + TLS Plan
 

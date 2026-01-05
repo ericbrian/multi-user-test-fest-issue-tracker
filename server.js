@@ -144,6 +144,33 @@ const io = require('socket.io')(server, {
   cors: { origin: false },
 });
 
+// Optional: Socket.IO Redis adapter (required if you want multiple replicas to broadcast events)
+// Enable with SOCKETIO_REDIS_ENABLED=true and REDIS_URL=<redis://...>
+async function maybeEnableSocketIoRedisAdapter() {
+  const enabled = String(process.env.SOCKETIO_REDIS_ENABLED || '').toLowerCase() === 'true';
+  if (!enabled) return;
+
+  const redisUrl = process.env.REDIS_URL || process.env.REDISCLOUD_URL;
+  if (!redisUrl) {
+    throw new Error('SOCKETIO_REDIS_ENABLED=true but REDIS_URL is not set');
+  }
+
+  // Lazy-load so local dev/test doesn't require redis.
+  // eslint-disable-next-line global-require
+  const { createAdapter } = require('@socket.io/redis-adapter');
+  // eslint-disable-next-line global-require
+  const { createClient } = require('redis');
+
+  const pubClient = createClient({ url: redisUrl });
+  const subClient = pubClient.duplicate();
+
+  await pubClient.connect();
+  await subClient.connect();
+
+  io.adapter(createAdapter(pubClient, subClient));
+  console.log('✅ Socket.IO Redis adapter enabled');
+}
+
 // Caching (opt-in): set CACHE_ENABLED=true to enable short-lived caching for read-heavy endpoints.
 const cache = createCacheFromEnv({ isProduction });
 
@@ -382,7 +409,7 @@ app.use('/api/', noCache);
 
 // Swagger API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customSiteTitle: 'Test Fest Tracker API Docs',
+  customSiteTitle: 'testfest-app API Docs',
   customCss: '.swagger-ui .topbar { display: none }',
   swaggerOptions: {
     persistAuthorization: true,
@@ -491,6 +518,16 @@ process.on('SIGINT', async () => {
     console.error('OIDC setup error:', e);
   }
 
+  try {
+    await maybeEnableSocketIoRedisAdapter();
+  } catch (e) {
+    console.error('Socket.IO Redis adapter setup error:', e);
+    // If explicitly enabled, fail fast so we don't run multi-replica without cross-pod broadcasts.
+    if (String(process.env.SOCKETIO_REDIS_ENABLED || '').toLowerCase() === 'true') {
+      process.exit(1);
+    }
+  }
+
   // Handle server startup errors
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
@@ -506,6 +543,6 @@ process.on('SIGINT', async () => {
   });
 
   server.listen(PORT, () => {
-    console.log(`Test Fest Tracker running on http://localhost:${PORT}`);
+    console.log(`testfest-app running on http://localhost:${PORT}`);
   });
 })();

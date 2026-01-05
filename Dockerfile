@@ -1,4 +1,4 @@
-# Build a production image for Test Fest Tracker
+# Build a production image for testfest-app
 FROM node:20-alpine
 
 ENV NODE_ENV=production

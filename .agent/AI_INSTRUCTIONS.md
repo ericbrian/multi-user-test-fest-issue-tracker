@@ -1,4 +1,4 @@
-# Test Fest Tracker — AI Development Guide
+# testfest-app — AI Development Guide
 
 This document orients future AI/code assistants to continue development efficiently.
 
@@ -111,8 +111,8 @@ This document orients future AI/code assistants to continue development efficien
 
 ## Docker & ECS
 
-- Build: `docker build -t test-fest-tracker:local .`
-- Run: `docker run --env-file .env -p 3000:3000 test-fest-tracker:local`
+- Build: `docker build -t testfest-app:local .`
+- Run: `docker run --env-file .env -p 3000:3000 testfest-app:local`
 - Healthcheck: Container uses `/health`.
 - ECS: Pushes to ECR repo `testfest-repo` via Bitbucket Pipelines; configure Task Definition to expose port 3000, set env vars, and attach a persistent storage or migrate to S3 for uploads.
 

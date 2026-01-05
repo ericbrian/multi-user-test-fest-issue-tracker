@@ -4,12 +4,12 @@ const options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'Test Fest Issue Tracker API',
+            title: 'testfest-app API',
             version: '1.0.0',
-            description: 'API documentation for the Multi-User Test Fest Issue Tracker - a real-time collaborative issue tracking system for test fests with Jira integration and SSO authentication.',
+            description: 'API documentation for testfest-app - a real-time collaborative issue tracking system for test fests with Jira integration and SSO authentication.',
             contact: {
                 name: 'API Support',
-                url: 'https://github.com/ericbrian/multi-user-test-fest-issue-tracker',
+                url: 'https://github.com/ericbrian/testfest-app',
             },
             license: {
                 name: 'ISC',
