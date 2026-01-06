@@ -343,18 +343,20 @@ async function setupOIDC() {
         const sub = userinfo.sub || tokenset.claims().sub;
         const name = userinfo.name || userinfo.preferred_username || '';
         const email = userinfo.email || userinfo.upn || '';
+        const picture = userinfo.picture || null;
         const prisma = getPrisma();
-        let user = await prisma.user.findUnique({ where: { sub } });
-        if (!user) {
-          user = await prisma.user.create({
-            data: {
-              id: uuidv4(),
-              sub,
-              name,
-              email,
-            },
-          });
-        }
+        
+        let user = await prisma.user.upsert({
+          where: { sub },
+          update: { name, email, picture },
+          create: {
+            id: uuidv4(),
+            sub,
+            name,
+            email,
+            picture,
+          },
+        });
         done(null, user);
       } catch (e) {
         done(e);
