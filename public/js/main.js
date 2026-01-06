@@ -218,10 +218,12 @@ async function joinRoom(roomId) {
   socket.initSocket(roomId);
 
   try {
-    const [issues, testScriptLines, joinData] = await Promise.all([
+    const joinData = await api.joinRoomApi(roomId);
+    store.setState({ isGroupier: !!(joinData && joinData.isGroupier) });
+
+    const [issues, testScriptLines] = await Promise.all([
       api.fetchIssues(roomId),
-      api.fetchTestScriptLines(roomId),
-      api.joinRoomApi(roomId)
+      api.fetchTestScriptLines(roomId)
     ]);
 
     // Ensure test script lines are set before rendering issues so that
@@ -230,7 +232,6 @@ async function joinRoom(roomId) {
     ui.renderIssues(issues);
     ui.renderTestScriptLines(true);
 
-    store.setState({ isGroupier: !!(joinData && joinData.isGroupier) });
     ui.updateUserInfoDisplay();
   } catch (error) {
     console.error("Error joining room:", error);
