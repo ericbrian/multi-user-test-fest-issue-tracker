@@ -1,0 +1,257 @@
+Section,Item under Test,Description
+Header,NOTE: With the release of the REST API the 'Quick Links' button/feature should no longer be included in the header.,
+Header > Learn More or Get Help Pop-Up,,
+Footer,,
+Left Hand Navigation Bar,,
+Landing Page/Homepage,,
+Metric Details Pages,,
+Notifications,"Icon, Notifications Window",
+Notifications > Manage Notifications and Emails Page,,
+Your Work,Includes 'Change User' Button,
+Your Work > Your Favorites,,
+Your Work > Your Collections,,
+Your Work > Your Work Bulk Edit,,
+Search Portfolio,"Includes 'Show Cards' Button
+Includes 'Hide Record Details' Button
+Includes 'Hide Financials' Button
+Ensure general search functionality works",
+Search Portfolio > Search Portfolio > Map View,,
+Search Portfolio > Search Portfolio > Filter Panel,"Includes 'Your Filters' button
+Includes 'Save Filters' button
+Includes Basic Search
+Includes Advanced Search",
+Create New Record Wizard,"Includes entire wizard (Conservation Record Type, Conservation Record Name, Additional Data)
+Ensure all 4 record types can be created
+
+Note for future: UI/UX is messy and confusing on this feature - Confusing how you are supposed to 'search' a Record Name when you are naming a new record. Also for the future, can we capitalize the 'n' in 'new'?",
+Collections,"Includes Search and Filter functionality.
+Includes Paging",
+Collections > Create New Collection Pop-Up,,
+Collections > Individual Collection,Includes deleting the collection,
+Collections > Edit Collection Pop-Up,,
+Dashboards,"Ensure all links to dashboards work - see screenshot for all dashboards (as of Nov/21/2023)
+Includes Hub Dashboard Guidance button",
+Administration,Includes Landing Page: System Permissions Tab,
+Administration > Edit User Role Pop-Up,,
+Administration > User Bulk Editing,,
+Administration > NCS Calculator Default Pool Values,,
+Project Record,"Includes Email Link Button
+Includes Add/Remove Favorite Button
+Includes Add to Collection Button
+Includes Section Links Panel",
+Project Record > Project Team Panel,,
+Project Record > View Project Mode: Summary,,
+Project Record > View Project Mode: Outcomes,"Includes Outcome Details Checkbox
+
+NOTE: With release of REST API in 2024 the 'Show Chart' checkbox will not longer be available. It was removed as part of this work.",
+Project Record > View Project Mode: Intermediate Results,"Includes IR 'Show Details' Checkbox
+
+NOTE: With release of REST API in 2024 the 'Show Chart' checkbox will not longer be available. It was removed as part of this work.",
+Project Record > View Project Mode: Outputs,"Includes Active and Archived Outputs
+Includes 'Show Details' checkbox for both Active and Archived Outputs",
+Project Record > View Project Mode: Financials,,
+Project Record > View Project Mode: Financials > Financial Notes,,
+Project Record > View Project Mode: Financials > Workday Financials by Fiscal Year (FY),,
+Project Record > View Project Mode: Financials > Linked Workday Finance Projects,,
+Project Record > View Project Mode: Financials > Estimated TNC and Non-TNC Costs by FY,,
+Project Record > View Project Mode: Partnerships,,
+Project Record > View Project Mode: Location,,
+Project Record > View Project Mode: Associated Files,,
+Project Record > View Project Mode: Audit Log,,
+Project Record > Edit Project Mode: Summary,"Includes Deleting the record
+Includes Editing Record Status",
+Project Record > Edit Project Mode: Team,Includes adding/editing/deleting a Team Member,
+Project Record > Edit Project Mode: Partners,Includes adding/editing/deleting a Partner,
+Project Record > Edit Project Mode: Location,,
+Project Record > Edit Project Mode: Relations,,
+Project Record > Edit Project Mode: Financials,,
+Project Record > Edit Project Mode: Financials > Workday Projects,,
+Project Record > Edit Project Mode: Financials > Workday Projects > LINK WORKDAY PROJECT(S) Pop-up,,
+Project Record > Edit Project Mode: Financials > Estimated Financials,,
+Project Record > Edit Project Mode: Financials > Notes,,
+Project Record > Edit Project Mode: Additional Information,"NOTE: After REST API update the only tab left in this section will be Donor Keywords. 
+Levers: REMOVED AS OF 2024
+Science-based Instruments: REMOVED AS OF 2024
+Equity Indicators: REMOVED AS OF 2024",
+Project Record > Edit Project Mode: Associated Files,"Includes adding, editing, and deleting a file link",
+Edit Project Mode: Outcomes,Includes deleting an outcome,
+Edit Project Mode: Outcomes > Create Project Outcome Wizard,"Includes both options on the Outcome Type page
+Includes all functionality on the Outcome Details Page (including rolling up to a strategy)
+Includes all NCS Calculator functionality (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)
+Includes all functionality on the Target Data Page",
+Edit Project Mode: Outcomes > Edit Project Outcome Wizard,"Includes all functionality on the 20230 Goals Metrics Page
+Includes all functionality on the Outcome Statement Page
+Includes all NCS Calculator Functionality  (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)",
+Edit Project Mode: Outcomes > Add Project Outcome Target Value,"Includes all functionalities for creating an Outcome Target Value
+Includes all NCS Calculator Functionality  (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)",
+Edit Project Mode: Outcomes > Edit or Delete Project Outcome Target Value,"Includes all functionalities for editing or deleting an Outcome Target Value
+Includes all NCS Calculator Functionality  (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)",
+Edit Project Mode: Outcomes > Add Project Outcome Progress Value,"Includes all functionalities for adding an Outcome Progress Value
+Includes all NCS Calculator Functionality  (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)",
+Edit Project Mode: Outcomes > Edit or Delete Project Outcome Progress Value,"Includes all functionalities for editing or deleting an Outcome Progress Value
+Includes all NCS Calculator Functionality  (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)",
+Edit Project Mode: Outcomes > Add Project Outcome Start Value,"Includes all functionalities for adding an Outcome Start Value
+Includes all NCS Calculator Functionality  (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)",
+Edit Project Mode: Outcomes > Edit or Delete Project Outcome Start Value,"Includes all functionalities for editing or deleting an Start Value
+Includes all NCS Calculator Functionality  (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)",
+Edit Project Mode: Intermediate Results,Includes deleting an intermediate result,
+Edit Project Mode: Intermediate Results > Create Project Intermediate Result Wizard,"Includes all functionality of the IR Type page
+Includes all functionality of the IR Details page
+Includes all functionality of the IR Statement page",
+Edit Project Mode: Intermediate Results > Edit Project Intermediate Result Wizard,"Includes all functionality of the IR Type page
+Includes all functionality of the IR Details page
+Includes all functionality of the IR Statement page",
+Edit Project Mode: Intermediate Results > Add Project Intermediate Result Target Value,,
+Edit Project Mode: Intermediate Results > Edit Project Intermediate Result Target Value,,
+Edit Project Mode: Intermediate Results > Add Project Intermediate Result Progress Value,,
+Edit Project Mode: Intermediate Results > Edit Project Intermediate Result Progress Value,,
+Edit Project Mode: Intermediate Results > Add Project Intermediate Result Start Value,,
+Edit Project Mode: Intermediate Results > Edit Project Intermediate Result Start Value,,
+Edit Project Mode: Outputs,Includes deleting an Active or Archived Output,
+Edit Project Mode: Outputs > Create Project Output,,
+Edit Project Mode: Outputs > Edit Project Output,"Note for the future: Edit Output box still says 'Create', should say 'Edit'",
+Edit Project Mode: Outputs > Archived Project Outputs,,
+Edit Project Mode: Outputs > Create Project Output Progress Report,,
+Edit Project Mode: Outputs > Update Project Output Progress Report,,
+Edit Project Mode: Outputs > Create Project Output File Links,Includes updating and deleting file links,
+Strategy Record,"Includes Email Link Button
+Includes Add/Remove Favorite Button
+Includes Add to Collection Button
+Includes Section Links Panel",
+Strategy Record > Strategy Team Panel,,
+Strategy Record > View Strategy Mode: Summary,,
+Strategy Record > View Strategy Mode: Strategic Pillars,Note for future: Bug? Green circle image next to SP is a link and directs user back to Hub homepage. Should either not be a link or it should direct user to a specific record.,
+Strategy Record > View Strategy Mode: Outcomes,"Includes 'Show Details' checkbox
+
+NOTE: With release of REST API in 2024 the 'Show Chart' checkbox will not longer be available. It was removed as part of this work.",
+Strategy Record > View Strategy Mode: Intermediate Results,"Includes 'Show Details' checkbox
+
+NOTE: With release of REST API in 2024 the 'Show Chart' checkbox will not longer be available. It was removed as part of this work.",
+Strategy Record > View Strategy Mode: Outputs,"Includes Active and Archived Outputs
+Includes 'Show Details' checkbox for both Active and Archived Outputs",
+Strategy Record > View Strategy Mode: Financials,,
+Strategy Record > View Strategy Mode: Financials > Financial Notes,,
+Strategy Record > View Strategy Mode: Financials > Workday Financials by Fiscal Year (FY),,
+Strategy Record > View Strategy Mode: Financials > Linked Workday Finance Projects,,
+Strategy Record > View Strategy Mode: Financials > Estimated TNC and Non-TNC Costs by FY,,
+Strategy Record > View Strategy Mode: Partnerships,,
+Strategy Record > View Strategy Mode: Locations,,
+Strategy Record > View Strategy Mode: Additional Information,,
+Strategy Record > View Strategy Mode: Associated Files,,
+Strategy Record > View Strategy Mode: Audit Log,,
+Strategy Record > Edit Strategy Mode: Summary,"Includes Deleting the record
+Includes Editing Record Status",
+Strategy Record > Edit Strategy Mode: Team,Includes adding/editing/deleting a Team member,
+Strategy Record > Edit Strategy Mode: Partners,Includes adding/editing/deleting a Partner,
+Strategy Record > Edit Strategy Mode: Location,,
+Strategy Record > Edit Strategy Mode: Relations,,
+Strategy Record > Edit Strategy Mode: Financials,,
+Strategy Record > Workday Projects,,
+Strategy Record > Workday Projects > LINK WORKDAY PROJECT(S) Pop-up,,
+Strategy Record > Estimated Financials,,
+Strategy Record > Notes,,
+Strategy Record > Edit Strategy Mode: Additional Information,"Edit Mode: Additional Information	""NOTE: After REST API update the only tab left in this section will be Donor Keywords. 
+Equity Indicators: REMOVED AS OF 2024""",
+Strategy Record > Edit Strategy Mode: Associated Files,"Includes adding, editing, and deleting a file link",
+Edit Strategy Mode: Strategic Pillars,"Includes deleting a Strategic Pillar
+Includes Strategic Pillar Details functionality",
+Edit Strategy Mode: Strategic Pillars > Create Strategy Pillar,,
+Edit Strategy Mode: Outcomes,Includes deleting an Outcome,
+Edit Strategy Mode: Outcomes > Create Strategy Outcome Wizard,"Includes both options on the Outcome Type page
+Includes all functionality on the Outcome Details Page (including rolling up to a strategy)
+Includes all NCS Calculator functionality (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)
+Includes all functionality on the Target Data Page",
+Edit Strategy Mode: Outcomes > Edit Strategy Outcome,,
+Edit Strategy Mode: Outcomes > Add Strategy Outcome Target Value,"Includes all functionalities for creating an Outcome Target Value
+Includes all NCS Calculator Functionality  (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)",
+Edit Strategy Mode: Outcomes > Edit or Delete Strategy Outcome Target Value,"Includes all functionalities for editing or deleting an Outcome Target Value
+Includes all NCS Calculator Functionality  (Link to NCS Calculator How To Documents: https://tnc.app.box.com/s/zxjk79beys8ihakuxjmvvxcluqb5x53u/folder/206225391156)",
+Edit Strategy Mode: Intermediate Results,Includes deleting an intermediate result,
+Edit Strategy Mode: Intermediate Results > Create Strategy Intermediate Result,,
+Edit Strategy Mode: Intermediate Results > Edit Strategy Intermediate Result,,
+Edit Strategy Mode: Intermediate Results > Add Strategy Intermediate Result Target Value,,
+Edit Strategy Mode: Intermediate Results > Edit Strategy Intermediate Result Target Value,,
+Edit Strategy Mode: Outputs,Includes deleting an Active or Archived Output,
+Edit Strategy Mode: Outputs > Create Strategy Output,,
+Edit Strategy Mode: Outputs > Edit Strategy Output,"Note for the future: Edit Output box still says 'Create', should say 'Edit'",
+Edit Strategy Mode: Outputs > Archived Strategy Outputs,,
+Edit Strategy Mode: Outputs > Create Strategy Output Progress Report,,
+Edit Strategy Mode: Outputs > Update Strategy Output Progress Report,,
+Edit Strategy Mode: Outputs > Create Strategy Output File Links,Includes updating and deleting file links,
+Program Management Record (PM),,
+Program Management Record (PM) > Program Management Team Panel,,
+Program Management Record (PM) > View PM Mode: Summary,,
+Program Management Record (PM) > View PM Mode: Outputs,"Includes Active and Archived Outputs
+Includes 'Show Details' checkbox for both Active and Archived Outputs",
+Program Management Record (PM) > View PM Mode: Financials,,
+Program Management Record (PM) > View PM Mode: Financials > Financial Notes,,
+Program Management Record (PM) > View PM Mode: Financials > Workday Financials by Fiscal Year (FY),,
+Program Management Record (PM) > View PM Mode: Financials > Linked Workday Finance Projects,,
+Program Management Record (PM) > View PM Mode: Financials > Estimated TNC and Non-TNC Costs by FY,,
+Program Management Record (PM) > Estimated Financials,,
+Program Management Record (PM) > Notes,,
+Program Management Record (PM) > View PM Mode: Partnerships,,
+Program Management Record (PM) > View PM Mode: Location,,
+Program Management Record (PM) > View PM Mode: Associated Files,,
+Program Management Record (PM) > View PM Mode: Audit Log,,
+Program Management Record (PM) > Edit PM Mode: Summary,"Includes Deleting the record
+Includes Editing Record Status",
+Program Management Record (PM) > Edit PM Mode: Team,Includes adding/editing/deleting a Team member,
+Program Management Record (PM) > Edit PM Mode: Partners,Includes adding/editing/deleting a Partner,
+Program Management Record (PM) > Edit PM Mode: Location,,
+Program Management Record (PM) > Edit PM Mode: Relations,,
+Program Management Record (PM) > Edit PM Mode: Financials,,
+Program Management Record (PM) > Edit PM Mode: Financials > Workday Projects,,
+Program Management Record (PM) > Edit PM Mode: Financials > Workday Projects > LINK WORKDAY PROJECT(S) Pop-up,,
+Program Management Record (PM) > Edit PM Mode: Financials > Workday Projects > Estimated Financials,,
+Program Management Record (PM) > Edit PM Mode: Financials > Workday Projects > Notes,,
+Program Management Record (PM) > Edit PM Mode: Associated Files,"Includes adding, editing, and deleting a file link",
+Edit Program Management Mode: Outputs,"Includes deleting an Active or Archived Output
+Note for future - Icon next to Progress Reports links to Hub Home Page - BUG",
+Edit Program Management Mode: Outputs > Create PM Output,,
+Edit Program Management Mode: Outputs > Edit PM Output,"Note for the future: Edit Output box still says 'Create', should say 'Edit'",
+Edit Program Management Mode: Outputs > Archived PM Outputs,,
+Edit Program Management Mode: Outputs > Create PM Output Progress Report,,
+Edit Program Management Mode: Outputs > Update PM Output Progress Report,,
+Edit Program Management Mode: Outputs > Create PM Output File Links,Includes updating and deleting file links,
+Whole System Record (WS),"Includes Email Link Button
+Includes Add/Remove Favorite Button
+Includes Add to Collection Button
+Includes Section Links Panel",
+Whole System Record (WS) > Whole System Team Panel,,
+Whole System Record (WS) > View WS Mode: Summary,,
+Whole System Record (WS) > View WS Mode: Outputs,"Includes Active and Archived Outputs
+Includes 'Show Details' checkbox for both Active and Archived Outputs",
+Whole System Record (WS) > View WS Mode: Financials,,
+Whole System Record (WS) > View WS Mode: Financials > Financial Notes,,
+Whole System Record (WS) > View WS Mode: Financials > Workday Financials by Fiscal Year (FY),,
+Whole System Record (WS) > View WS Mode: Financials > Linked Workday Finance Projects,,
+Whole System Record (WS) > View WS Mode: Financials > Estimated TNC and Non-TNC Costs by FY,,
+Whole System Record (WS) > View WS Mode: Partnerships,,
+Whole System Record (WS) > View WS Mode: Location,,
+Whole System Record (WS) > View WS Mode: Associated Files,,
+Whole System Record (WS) > View WS Mode: Audit Log,,
+Whole System Record (WS) > Edit WS Mode: Summary,"Includes Deleting the record
+Includes Editing Record Status",
+Whole System Record (WS) > Edit WS Mode: Team,Includes adding/editing/deleting a Team member,
+Whole System Record (WS) > Edit WS Mode: Partners,Includes adding/editing/deleting a Partner,
+Whole System Record (WS) > Edit WS Mode: Location,,
+Whole System Record (WS) > Edit WS Mode: Relations,,
+Whole System Record (WS) > Edit WS Mode: Financials,,
+Whole System Record (WS) > Edit WS Mode: Financials > Workday Projects,,
+Whole System Record (WS) > Edit WS Mode: Financials > Workday Projects > LINK WORKDAY PROJECT(S) Pop-up,,
+Whole System Record (WS) > Edit WS Mode: Financials > Estimated Financials,,
+Whole System Record (WS) > Edit WS Mode: Financials > Notes,,
+Whole System Record (WS) > Edit WS Mode: Anchor Record Selection,"Includes Requesting a new Insight Anchor Record 
+Includes selecting an existing Insight Record",
+Whole System Record (WS) > Edit WS Mode: Additional Information,"""NOTE: After REST API update the only tab left in this section will be Donor Keywords. 
+Science-based Instruments: REMOVED AS OF 2024""",
+Whole System Record (WS) > Edit WS Mode: Associated Files,"Includes adding, editing, and deleting a file link",
+Edit Whole System Mode: Outputs,"Includes deleting an Active or Archived Output
+Note for future - Icon next to Progress Reports links to Hub Home Page - BUG",
+Edit Whole System Mode: Outputs > Create WS Output,,
+Edit Whole System Mode: Outputs > Edit WS Output,"Note for the future: Edit Output box still says 'Create', should say 'Edit'",
+Edit Whole System Mode: Outputs > Archived WS Outputs,,
+Edit Whole System Mode: Outputs > Create WS Output Progress Report,,
+Edit Whole System Mode: Outputs > Update WS Output Progress Report,,
+Edit Whole System Mode: Outputs > Create WS Output File Links,Includes updating and deleting file links,
