@@ -24,19 +24,20 @@ function registerIssueRoutes(router, deps) {
     JIRA_PROJECT_KEY,
     JIRA_ISSUE_TYPE,
     cache: providedCache,
+    storageService,
   } = deps;
 
   const cache = providedCache || createNoopCache();
 
   const prisma = getPrisma();
-  const issueService = new IssueService(prisma, uploadsDir);
+  const issueService = new IssueService(prisma, storageService);
   const jiraService = new JiraService({
     JIRA_BASE_URL,
     JIRA_EMAIL,
     JIRA_API_TOKEN,
     JIRA_PROJECT_KEY,
     JIRA_ISSUE_TYPE,
-    uploadsDir
+    storageService
   });
 
   /**
@@ -244,7 +245,6 @@ function registerIssueRoutes(router, deps) {
       const isAnnoyance = body.is_annoyance === 'on' || body.is_annoyance === 'true' || body.is_annoyance === true;
       const isExistingUpper = body.is_existing_upper_env === 'on' || body.is_existing_upper_env === 'true' || body.is_existing_upper_env === true;
       const isNotSureHowToTest = body.is_not_sure_how_to_test === 'on' || body.is_not_sure_how_to_test === 'true' || body.is_not_sure_how_to_test === true;
-      const files = (req.files || []).map((f) => `/uploads/${path.basename(f.path)}`);
       const userId = req.user.id;
 
       const issueOut = await issueService.createIssue({
@@ -256,7 +256,7 @@ function registerIssueRoutes(router, deps) {
         isAnnoyance,
         isExistingUpper,
         isNotSureHowToTest,
-        files
+        files: req.files || [],
       });
 
       // Invalidate short-lived caches for this room.
@@ -451,7 +451,19 @@ function registerIssueRoutes(router, deps) {
         return res.json({ jira_key: issue.jira_key });
       }
 
-      const jiraKey = await jiraService.createIssue(issue, req.user);
+      const room = await prisma.room.findUnique({
+        where: { id: issue.room_id },
+        select: { name: true },
+      });
+      const roomName = room?.name || '';
+
+      const forwardedProto = (req.get('x-forwarded-proto') || '').split(',')[0].trim();
+      const forwardedHost = (req.get('x-forwarded-host') || '').split(',')[0].trim();
+      const protocol = forwardedProto || req.protocol;
+      const host = forwardedHost || req.get('host');
+      const appBaseUrl = (protocol && host) ? `${protocol}://${host}` : '';
+
+      const jiraKey = await jiraService.createIssue(issue, roomName, appBaseUrl);
 
       // Update issue with Jira key
       await issueService.updateJiraKey(issue.id, jiraKey);

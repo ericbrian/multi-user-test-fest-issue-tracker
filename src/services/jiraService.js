@@ -15,7 +15,7 @@ class JiraService {
     this.apiToken = config.JIRA_API_TOKEN;
     this.projectKey = config.JIRA_PROJECT_KEY;
     this.issueType = config.JIRA_ISSUE_TYPE || 'Bug';
-    this.uploadsDir = config.uploadsDir;
+    this.storageService = config.storageService;
   }
 
   /**
@@ -37,9 +37,10 @@ class JiraService {
    * Create a Jira issue from an internal issue
    * @param {Object} issue - The issue object from database
    * @param {string} roomName - Name of the room for labeling
+   * @param {string} appBaseUrl - Base URL of this app for deep links
    * @returns {Promise<string>} - Jira issue key
    */
-  async createIssue(issue, roomName = '') {
+  async createIssue(issue, roomName = '', appBaseUrl = '') {
     if (!this.isConfigured()) {
       throw new Error('Jira is not configured');
     }
@@ -78,6 +79,22 @@ class JiraService {
       type: 'listItem',
       content: [{ type: 'paragraph', content: [{ type: 'text', text: `Test Fest: ${roomName}` }] }]
     });
+
+    const base = (appBaseUrl || '').replace(/\/$/, '');
+    const roomId = issue.room_id;
+    if (base && roomId) {
+      const roomUrl = `${base}/fest/${roomId}`;
+      contextItems.push({
+        type: 'listItem',
+        content: [{
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'Open in Test Fest: ' },
+            { type: 'text', text: roomUrl, marks: [{ type: 'link', attrs: { href: roomUrl } }] }
+          ]
+        }]
+      });
+    }
     if (issue.script_id) {
       contextItems.push({
         type: 'listItem',
@@ -180,30 +197,30 @@ class JiraService {
     console.log(`Attempting to upload ${images.length} attachments for issue ${jiraKey}`);
     for (const imagePath of images) {
       try {
-        const fullPath = path.join(this.uploadsDir, path.basename(imagePath));
-        if (fs.existsSync(fullPath)) {
-          console.log(`Uploading attachment: ${fullPath}`);
-          const form = new FormData();
-          form.append('file', fs.createReadStream(fullPath));
+        const relativeKey = (typeof imagePath === 'string' && imagePath.startsWith('/uploads/'))
+          ? imagePath.slice('/uploads/'.length)
+          : path.basename(String(imagePath || ''));
+        const filename = path.basename(relativeKey);
+        console.log(`Uploading attachment: ${filename}`);
+        const stream = await this.storageService.getFileStream(relativeKey);
+        const form = new FormData();
+        form.append('file', stream, { filename }); // FormData needs filename when using streams
 
-          await axios.post(
-            `${this.baseUrl.replace(/\/$/, '')}/rest/api/3/issue/${jiraKey}/attachments`,
-            form,
-            {
-              headers: {
-                Authorization: this.getAuthHeader(),
-                'X-Atlassian-Token': 'no-check',
-                ...form.getHeaders()
-              },
-              maxBodyLength: Infinity,
-              maxContentLength: Infinity,
-              timeout: 60000
-            }
-          );
-          console.log(`Successfully uploaded: ${path.basename(imagePath)}`);
-        } else {
-          console.warn(`Attachment file not found: ${fullPath}`);
-        }
+        await axios.post(
+          `${this.baseUrl.replace(/\/$/, '')}/rest/api/3/issue/${jiraKey}/attachments`,
+          form,
+          {
+            headers: {
+              Authorization: this.getAuthHeader(),
+              'X-Atlassian-Token': 'no-check',
+              ...form.getHeaders()
+            },
+            maxBodyLength: Infinity,
+            maxContentLength: Infinity,
+            timeout: 60000
+          }
+        );
+        console.log(`Successfully uploaded: ${filename}`);
       } catch (error) {
         console.error(`Failed to upload attachment ${imagePath}:`, error.message);
         if (error.response) {

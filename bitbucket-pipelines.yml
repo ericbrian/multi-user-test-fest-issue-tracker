@@ -21,7 +21,7 @@ pipelines:
           caches:
             - docker
           script:
-            - export REPOSITORY="testfest-repo"
+            - export REPOSITORY="testfest-app"
             - export TAG_COMMIT=${BITBUCKET_COMMIT}
             - export IMAGE="${REPOSITORY}:${TAG_COMMIT}"
             - docker build -t ${IMAGE} .
@@ -38,7 +38,7 @@ pipelines:
             - docker load -i image.tar
             - apk add --no-cache curl || true
             - curl -sL https://static.snyk.io/cli/latest/snyk-alpine -o /usr/local/bin/snyk && chmod +x /usr/local/bin/snyk
-            - export REPOSITORY="testfest-repo"
+            - export REPOSITORY="testfest-app"
             - export TAG_COMMIT=${BITBUCKET_COMMIT}
             - export IMAGE="${REPOSITORY}:${TAG_COMMIT}"
             - snyk auth ${SNYK_TOKEN}

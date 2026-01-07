@@ -51,12 +51,12 @@ The codebase has matured significantly and now stands as a robust, secure, and h
 
 ### 🟡 Medium Priority
 
-1.  **Declarative Validation (Zod/Joi):** While manual validation is currently functional, migrating to a library like `Zod` would standardize error messages and provide better type safety across the backend.
-2.  **Service Layer Unit Tests:** Expand unit testing to include isolated tests for `IssueService` and `RoomService` to further decouple business logic from integration context.
+1. **Declarative Validation (Zod/Joi):** While manual validation is currently functional, migrating to a library like `Zod` would standardize error messages and provide better type safety across the backend.
+2. **Service Layer Unit Tests:** Expand unit testing to include isolated tests for `IssueService` and `RoomService` to further decouple business logic from integration context.
 
 ### 🔵 Low Priority
 
-1.  **Frontend Componentization:** As the SPA grows, consider moving from direct DOM manipulation in `ui.js` toward a lightweight component-based approach or templating engine to simplify maintenance.
+1. **Frontend Componentization:** As the SPA grows, consider moving from direct DOM manipulation in `ui.js` toward a lightweight component-based approach or templating engine to simplify maintenance.
 
 ---
 

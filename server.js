@@ -20,6 +20,7 @@ const { getPrisma } = require('./src/prismaClient');
 const { validateConfig } = require('./src/config');
 const { createMetrics } = require('./src/metrics');
 const { createCacheFromEnv } = require('./src/cache');
+const { createStorageService } = require('./src/services/storageService');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -41,6 +42,12 @@ const {
   JIRA_API_TOKEN,
   JIRA_PROJECT_KEY,
   JIRA_ISSUE_TYPE,
+  UPLOADS_BACKEND,
+  S3_BUCKET,
+  S3_REGION,
+  S3_ACCESS_KEY_ID,
+  S3_SECRET_ACCESS_KEY,
+  TRUST_PROXY,
 } = config;
 
 // DB setup
@@ -120,12 +127,49 @@ const upload = multer({
   }
 });
 
+// Storage Service initialization
+const storageService = createStorageService({
+  backend: UPLOADS_BACKEND,
+  uploadsDir,
+  s3Bucket: S3_BUCKET,
+  s3Region: S3_REGION,
+  s3AccessKeyId: S3_ACCESS_KEY_ID,
+  s3SecretAccessKey: S3_SECRET_ACCESS_KEY,
+});
+
 // Express app
 const app = express();
 const server = http.createServer(app);
 const io = require('socket.io')(server, {
   cors: { origin: false },
 });
+
+// Optional: Socket.IO Redis adapter (required if you want multiple replicas to broadcast events)
+// Enable with SOCKETIO_REDIS_ENABLED=true and REDIS_URL=<redis://...>
+async function maybeEnableSocketIoRedisAdapter() {
+  const enabled = String(process.env.SOCKETIO_REDIS_ENABLED || '').toLowerCase() === 'true';
+  if (!enabled) return;
+
+  const redisUrl = process.env.REDIS_URL || process.env.REDISCLOUD_URL;
+  if (!redisUrl) {
+    throw new Error('SOCKETIO_REDIS_ENABLED=true but REDIS_URL is not set');
+  }
+
+  // Lazy-load so local dev/test doesn't require redis.
+  // eslint-disable-next-line global-require
+  const { createAdapter } = require('@socket.io/redis-adapter');
+  // eslint-disable-next-line global-require
+  const { createClient } = require('redis');
+
+  const pubClient = createClient({ url: redisUrl });
+  const subClient = pubClient.duplicate();
+
+  await pubClient.connect();
+  await subClient.connect();
+
+  io.adapter(createAdapter(pubClient, subClient));
+  console.log('✅ Socket.IO Redis adapter enabled');
+}
 
 // Caching (opt-in): set CACHE_ENABLED=true to enable short-lived caching for read-heavy endpoints.
 const cache = createCacheFromEnv({ isProduction });
@@ -201,7 +245,38 @@ app.get('/metrics', (req, res, next) => {
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(uploadsDir));
+
+// File serving
+if (UPLOADS_BACKEND === 's3') {
+  // Stream from S3
+  app.get('/uploads/*', async (req, res) => {
+    try {
+      const key = req.params[0];
+      if (!key) return res.status(404).send('Not Found');
+      const stream = await storageService.getFileStream(key);
+      
+      // Basic content type detection
+      const ext = path.extname(key).toLowerCase();
+      const mimeTypes = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.avif': 'image/avif',
+      };
+      res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+      stream.pipe(res);
+    } catch (err) {
+      console.error('Error streaming from S3:', err);
+      res.status(404).send('Not Found');
+    }
+  });
+} else {
+  // Local disk serving
+  app.use('/uploads', express.static(uploadsDir));
+}
+
 // Serve static files at root (Vite build expects /assets/*) and keep /static/* as an alias.
 app.use(express.static(uiDir, { index: false }));
 app.use('/static', express.static(uiDir, { index: false }));
@@ -213,7 +288,7 @@ app.use('/api/', apiLimiter);
 // Routes are now in src/routes.js
 
 // Sessions
-app.set('trust proxy', 1);
+app.set('trust proxy', TRUST_PROXY === 'true' || TRUST_PROXY === '1' || TRUST_PROXY === 1);
 app.use(
   session({
     store: process.env.NODE_ENV === 'test'
@@ -268,18 +343,20 @@ async function setupOIDC() {
         const sub = userinfo.sub || tokenset.claims().sub;
         const name = userinfo.name || userinfo.preferred_username || '';
         const email = userinfo.email || userinfo.upn || '';
+        const picture = userinfo.picture || null;
         const prisma = getPrisma();
-        let user = await prisma.user.findUnique({ where: { sub } });
-        if (!user) {
-          user = await prisma.user.create({
-            data: {
-              id: uuidv4(),
-              sub,
-              name,
-              email,
-            },
-          });
-        }
+        
+        let user = await prisma.user.upsert({
+          where: { sub },
+          update: { name, email, picture },
+          create: {
+            id: uuidv4(),
+            sub,
+            name,
+            email,
+            picture,
+          },
+        });
         done(null, user);
       } catch (e) {
         done(e);
@@ -334,7 +411,7 @@ app.use('/api/', noCache);
 
 // Swagger API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customSiteTitle: 'Test Fest Tracker API Docs',
+  customSiteTitle: 'testfest-app API Docs',
   customCss: '.swagger-ui .topbar { display: none }',
   swaggerOptions: {
     persistAuthorization: true,
@@ -359,6 +436,7 @@ registerRoutes(app, {
   uiIndexPath,
   cache,
   ENTRA_REDIRECT_URI,
+  storageService,
 });
 
 // CSRF Error Handler
@@ -442,6 +520,16 @@ process.on('SIGINT', async () => {
     console.error('OIDC setup error:', e);
   }
 
+  try {
+    await maybeEnableSocketIoRedisAdapter();
+  } catch (e) {
+    console.error('Socket.IO Redis adapter setup error:', e);
+    // If explicitly enabled, fail fast so we don't run multi-replica without cross-pod broadcasts.
+    if (String(process.env.SOCKETIO_REDIS_ENABLED || '').toLowerCase() === 'true') {
+      process.exit(1);
+    }
+  }
+
   // Handle server startup errors
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
@@ -457,6 +545,6 @@ process.on('SIGINT', async () => {
   });
 
   server.listen(PORT, () => {
-    console.log(`Test Fest Tracker running on http://localhost:${PORT}`);
+    console.log(`testfest-app running on http://localhost:${PORT}`);
   });
 })();

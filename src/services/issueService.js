@@ -8,9 +8,9 @@ const fs = require('fs');
 const path = require('path');
 
 class IssueService {
-  constructor(prisma, uploadsDir) {
+  constructor(prisma, storageService) {
     this.prisma = prisma;
-    this.uploadsDir = uploadsDir;
+    this.storageService = storageService;
   }
 
   /**
@@ -102,10 +102,19 @@ class IssueService {
       isAnnoyance,
       isExistingUpper,
       isNotSureHowToTest,
-      files,
+      files, // These will be Multer file objects now
     } = data;
 
     const id = uuidv4();
+
+    // Upload files using StorageService
+    const imagePaths = [];
+    if (Array.isArray(files)) {
+      for (const file of files) {
+        const path = await this.storageService.uploadFile(file, { roomId });
+        imagePaths.push(path);
+      }
+    }
 
     await this.prisma.issue.create({
       data: {
@@ -114,7 +123,7 @@ class IssueService {
         created_by: userId,
         script_id: scriptId,
         description: description || '',
-        images: files,
+        images: imagePaths,
         is_issue: isIssue,
         is_annoyance: isAnnoyance,
         is_existing_upper_env: isExistingUpper,
@@ -184,19 +193,14 @@ class IssueService {
       throw new Error('Issue not found');
     }
 
-    // Delete uploaded images from disk (best effort)
+    // Delete uploaded images (best effort)
     try {
       const images = Array.isArray(issue.images) ? issue.images : [];
-      images.forEach((imagePath) => {
-        if (typeof imagePath === 'string' && imagePath.startsWith('/uploads/')) {
-          const fullPath = path.join(this.uploadsDir, path.basename(imagePath));
-          fs.unlink(fullPath, (err) => {
-            if (err && err.code !== 'ENOENT') {
-              console.error('Error deleting file:', err);
-            }
-          });
+      for (const imagePath of images) {
+        if (typeof imagePath === 'string') {
+          await this.storageService.deleteFile(imagePath);
         }
-      });
+      }
     } catch (error) {
       console.error('Error cleaning up files:', error);
       // Don't fail the delete operation
@@ -214,8 +218,11 @@ class IssueService {
     if (!files || files.length === 0) return;
 
     files.forEach(file => {
+      // file.path is the local temp path from multer
       fs.unlink(file.path, (err) => {
-        if (err) console.error('Error cleaning up uploaded file:', err);
+        if (err && err.code !== 'ENOENT') {
+          console.error('Error cleaning up uploaded file:', err);
+        }
       });
     });
   }

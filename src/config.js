@@ -112,6 +112,13 @@ function validateConfig(env = process.env, exitFn = process.exit) {
     JIRA_API_TOKEN,
     JIRA_PROJECT_KEY,
     JIRA_ISSUE_TYPE: env.JIRA_ISSUE_TYPE || 'Bug',
+    // Storage configuration
+    UPLOADS_BACKEND: env.UPLOADS_BACKEND || 'local',
+    S3_BUCKET: env.S3_BUCKET,
+    S3_REGION: env.S3_REGION || 'us-east-1',
+    S3_ACCESS_KEY_ID: env.S3_ACCESS_KEY_ID,
+    S3_SECRET_ACCESS_KEY: env.S3_SECRET_ACCESS_KEY,
+    TRUST_PROXY: env.TRUST_PROXY || '1',
   };
 }
 

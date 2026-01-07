@@ -168,9 +168,12 @@ export function updateUserInfoDisplay() {
   }
 
   const userName = store.state.me.name || store.state.me.email || "User";
+  const avatarHtml = store.state.me.picture 
+    ? `<img src="${store.state.me.picture}" class="user-avatar" alt="*" />`
+    : '';
 
   if (store.state.isGroupier) {
-    elements.userInfoHeader.innerHTML = `<span class="groupier-bubble" id="groupierBubble" role="button" tabindex="0" title="Click to learn what this means">You are the Groupier</span> &nbsp; ${userName}`;
+    elements.userInfoHeader.innerHTML = `<span class="groupier-bubble" id="groupierBubble" role="button" tabindex="0" title="Click to learn what this means">You are the Groupier</span> &nbsp; ${escapeHtml(userName)} ${avatarHtml}`;
 
     // Add click listener for explanation
     setTimeout(() => {
@@ -180,7 +183,7 @@ export function updateUserInfoDisplay() {
       }
     }, 0);
   } else {
-    elements.userInfoHeader.textContent = userName;
+    elements.userInfoHeader.innerHTML = `${avatarHtml}<span>${escapeHtml(userName)}</span>`;
   }
 }
 

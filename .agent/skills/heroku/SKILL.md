@@ -12,7 +12,7 @@ description: Guidelines for deploying and managing the application on Heroku, in
 - **Environment Configuration**: Always set `NODE_ENV=production`. Use `scripts/heroku-set-config-from-env-production.sh` to sync environment variables from `.env.production`. NEVER hardcode secrets in the Heroku dashboard.
 - **Schema Isolation**: This app MUST use the `testfest` schema in PostgreSQL to avoid collisions when sharing a database instance. Ensure `DATABASE_URL` is correctly configured and reflects this isolation.
 
-  - CRITICAL: This directive is for the app called 'multi-user-test-fest-issue-tracker' and should be ignored for all other apps.
+  - CRITICAL: This directive is for the app called 'testfest-app' and should be ignored for all other apps.
 
 - **Prisma Management**: The `heroku-postbuild` script must run `npm run prisma:generate`. Migrations are handled in the `release` phase via `scripts/heroku-release.js`. If `P3005` (schema not empty) occurs, handle it gracefully.
 - **Connection Limits**: Monitor database connection limits (Mini/Standard-0 plans have tight limits). Configure the `pg` pool in `server.js` and Prisma's `connection_limit` to stay within bounds.
@@ -28,7 +28,7 @@ description: Guidelines for deploying and managing the application on Heroku, in
 # Syncing config safely and monitoring the release
 ./scripts/heroku-set-config-from-env-production.sh
 git push heroku main
-heroku logs --tail --app test-fest-tracker
+heroku logs --tail --app testfest-app
 ```
 
 ### ❌ Bad Implementation
@@ -44,6 +44,9 @@ git push heroku main
 
 - [Git Workflow Skill](../git-workflow/SKILL.md)
 - [Security Audit Skill](../security-audit/SKILL.md)
+- [Terraform AWS/EKS Handoff Skill](../terraform/SKILL.md)
+- [AWS EKS Internal App Skill](../aws/SKILL.md)
+- [Kubernetes EKS/ALB Skill](../kubernetes/SKILL.md)
 
 ## Example Requests
 

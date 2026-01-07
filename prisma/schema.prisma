@@ -23,10 +23,11 @@ model User {
   // - `sub` is the unique subject from the identity provider and is enforced as unique.
   // - Optional profile fields: `name`, `email`.
   // Relations: created rooms, room membership, created issues, and test script progress.
-  id    String  @id @db.Uuid
-  sub   String  @unique
-  name  String?
-  email String?
+  id      String  @id @db.Uuid
+  sub     String  @unique
+  name    String?
+  email   String?
+  picture String?
 
   rooms                  Room[]                   @relation("RoomCreatedBy")
   roomMembers            RoomMember[]

@@ -4,17 +4,22 @@ metadata:
   name: testfest-ingress
   annotations:
     kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
+    # Internal-only (behind company firewall): creates an internal ALB.
+    alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/target-type: ip
     # Enables sticky sessions for Socket.IO compatibility with multiple replicas
     alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=3600
+    # Optional: restrict inbound to corporate CIDRs (VPN/office ranges)
+    # alb.ingress.kubernetes.io/inbound-cidrs: 10.0.0.0/8,192.168.0.0/16
+    # Entra SSO requirement: HTTPS must be enabled with a stable internal hostname.
+    # Configure TLS on the ALB with an internal certificate (ACM Private CA / corporate CA import).
     # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:REGION:ACCOUNT:certificate/CERT_ID
     # alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    # alb.ingress.kubernetes.io/ssl-redirect: '443'
 spec:
   rules:
-    # If you don't have a domain yet, you can remove the 'host' line
-    # and just use the ALB DNS name directly.
-    # - host: issues.yourdomain.com
+    # Entra requires a stable redirect URI, so use an internal hostname.
+    # - host: issues.internal.example.com
     - http:
         paths:
           - path: /

@@ -182,7 +182,15 @@ body {
   font-size: 13px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--accent); 
 }
 
 .groupier-bubble {
