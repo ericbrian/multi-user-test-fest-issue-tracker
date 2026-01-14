@@ -369,12 +369,49 @@ registerRoutes(app, {
   BUNNY_REGION,
 });
 
-// CSRF Error Handler
+// Global Error Handler
 app.use((err, req, res, next) => {
   if (err.code === 'EBADCSRFTOKEN') {
     return res.status(403).json({ error: 'Invalid CSRF token' });
   }
-  next(err);
+
+  // Log detiled error information
+  const fs = require('fs');
+  const path = require('path');
+  try {
+    const logData = {
+      timestamp: new Date().toISOString(),
+      message: err.message,
+      stack: err.stack,
+      code: err.code,
+      path: req.path,
+      method: req.method,
+      hasFiles: !!req.files,
+      filesCount: req.files ? req.files.length : 0,
+      body: req.body
+    };
+    fs.writeFileSync(path.join(__dirname, 'last_server_error.json'), JSON.stringify(logData, null, 2));
+  } catch(e) { /* ignore write failure */ }
+
+  console.error('Unhandled Error:', {
+    message: err.message,
+    stack: err.stack,
+    code: err.code,
+    path: req.path,
+    method: req.method,
+    body: req.body, // Be careful with sensitive data, but helpful for debugging
+    files: req.files ? req.files.map(f => ({ originalname: f.originalname, path: f.path, size: f.size })) : undefined
+  });
+
+  // Delegate to default handler or send generic 500
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: isProduction ? 'An unexpected error occurred' : err.message
+  });
 });
 
 // Socket.io logic

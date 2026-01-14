@@ -262,20 +262,24 @@ function registerIssueRoutes(router, deps) {
 
       if (bunnyService.isConfigured()) {
         try {
+          // Attempt to upload all files to CDN
+          // We wait for all to succeed before deleting any local files
           files = await Promise.all(uploadedFiles.map(async (f) => {
             const filename = path.basename(f.path);
-            const url = await bunnyService.uploadFile(f.path, filename);
-            // Delete local file after upload
+            return await bunnyService.uploadFile(f.path, filename);
+          }));
+
+          // If we got here, all uploads succeeded. We can safely clean up local files.
+          uploadedFiles.forEach(f => {
             fs.unlink(f.path, (err) => {
                if (err) console.error('Error deleting local file after CDN upload:', err);
             });
-            return url;
-          }));
+          });
         } catch (err) {
-           console.error('BunnyCDN upload failed, falling back to local files or failing:', err);
-           // If upload fails, we should probably fail the request or fallback?
-           // For now, let's fail to ensure data consistency
-           throw new Error('Failed to upload images to CDN');
+           console.error('BunnyCDN upload failed. Falling back to local files.', err.message);
+           // Fallback to local files
+           // Since we deferred deletion, the files are still on disk (unless a partial logic deleted them, which we avoided)
+           files = uploadedFiles.map((f) => `/uploads/${path.basename(f.path)}`);
         }
       } else {
         files = uploadedFiles.map((f) => `/uploads/${path.basename(f.path)}`);
