@@ -262,11 +262,15 @@ function registerIssueRoutes(router, deps) {
 
       if (bunnyService.isConfigured()) {
         try {
-          // Attempt to upload all files to CDN
+          // Get room name for folder organization
+          const room = await prisma.room.findUnique({ where: { id: roomId }, select: { name: true } });
+          const folderName = room ? room.name.replace(/[^a-zA-Z0-9-_]/g, '-') : roomId;
+
+          // Attempt to upload all files to CDN in room-specific folder
           // We wait for all to succeed before deleting any local files
           files = await Promise.all(uploadedFiles.map(async (f) => {
             const filename = path.basename(f.path);
-            return await bunnyService.uploadFile(f.path, filename);
+            return await bunnyService.uploadFile(f.path, filename, folderName);
           }));
 
           // If we got here, all uploads succeeded. We can safely clean up local files.

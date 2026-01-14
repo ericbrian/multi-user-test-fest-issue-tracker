@@ -25,15 +25,17 @@ class BunnyService {
    * Upload a file to BunnyCDN
    * @param {string} localFilePath - Path to file on disk
    * @param {string} filename - Target filename
+   * @param {string} [folder=''] - Optional folder path (e.g., 'room-name' or 'room-id')
    * @returns {Promise<string>} - The public URL of the uploaded file
    */
-  async uploadFile(localFilePath, filename) {
+  async uploadFile(localFilePath, filename, folder = '') {
     if (!this.isConfigured()) {
       throw new Error('BunnyCDN is not configured');
     }
 
     const fileStream = fs.createReadStream(localFilePath);
-    const url = `${this.getBaseUrl()}/${this.storageZoneName}/${filename}`;
+    const remotePath = folder ? `${folder}/${filename}` : filename;
+    const url = `${this.getBaseUrl()}/${this.storageZoneName}/${remotePath}`;
 
     try {
       await axios.put(url, fileStream, {
@@ -48,7 +50,7 @@ class BunnyService {
       // Return the Pull Zone URL
       // Ensure pullZone doesn't have trailing slash
       const baseUrl = this.pullZone.replace(/\/$/, '');
-      return `${baseUrl}/${filename}`;
+      return `${baseUrl}/${remotePath}`;
     } catch (error) {
       console.error('BunnyCDN upload error:', error.message);
       throw error;
@@ -57,7 +59,7 @@ class BunnyService {
 
   /**
    * Delete a file from BunnyCDN
-   * @param {string} filename - The filename to delete
+   * @param {string} filename - The filename to delete (can include folder path like 'folder/file.jpg')
    */
   async deleteFile(filename) {
     if (!this.isConfigured()) return;

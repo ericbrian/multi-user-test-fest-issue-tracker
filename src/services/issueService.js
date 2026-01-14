@@ -199,10 +199,10 @@ class IssueService {
                 }
               });
            } else if (this.bunnyService && this.bunnyService.isConfigured() && imagePath.includes(this.bunnyService.pullZone)) {
-              // BunnyCDN file
-              // Extract filename from URL
-              const filename = path.basename(imagePath);
-              this.bunnyService.deleteFile(filename);
+              // BunnyCDN file - extract path after pull zone URL
+              const pullZoneBase = this.bunnyService.pullZone.replace(/\/$/, '');
+              const remotePath = imagePath.replace(pullZoneBase + '/', '');
+              this.bunnyService.deleteFile(remotePath);
            }
         }
       });

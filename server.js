@@ -161,6 +161,7 @@ const cspDirectives = {
     "'self'",
     "data:",
     "blob:",
+    "https://*.b-cdn.net", // Allow BunnyCDN images
   ],
   connectSrc: [
     "'self'",
