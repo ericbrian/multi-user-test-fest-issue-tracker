@@ -1227,13 +1227,13 @@ export function renderActiveUsers() {
     // Show static crown if this user is the groupier
     const isUserGroupier = user.isGroupier;
     const crownHtml = isUserGroupier
-      ? `<span class="groupier-indicator" title="Click to learn about Groupier role" role="button">👑</span>`
+      ? `<span class="groupier-indicator" title="Click to learn about Groupier role" role="button">🃏</span>`
       : '';
 
     // Check if current user is Groupier and can transfer to this user (not self)
     const canTransfer = store.state.isGroupier && !isMe;
     const transferBtn = canTransfer
-      ? `<button type="button" class="transfer-btn" data-user-id="${user.id}" title="Make Groupier">👑</button>`
+      ? `<button type="button" class="transfer-btn" data-user-id="${user.id}" title="Make Groupier">🃏</button>`
       : '';
 
     return `

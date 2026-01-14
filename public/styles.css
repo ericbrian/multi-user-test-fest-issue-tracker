@@ -1556,13 +1556,14 @@ input[type="submit"]:focus,
   cursor: pointer;
   padding: 0 4px;
   font-size: 1.2em;
-  opacity: 1;
+  opacity: 0.5;
   transition: all 0.2s ease;
   margin-left: 8px;
   filter: none;
 }
 
 .transfer-btn:hover {
+  opacity: 1;
   transform: scale(1.1);
 }
 
