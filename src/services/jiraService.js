@@ -260,14 +260,22 @@ class JiraService {
 
     if (error.response) {
       console.error('Jira response status:', error.response.status);
-      console.error('Jira response data:', error.response.data);
+      console.error('Jira response data (full):', JSON.stringify(error.response.data, null, 2));
 
       if (error.response.status === 401) {
         throw new Error('Jira authentication failed. Please check credentials.');
       } else if (error.response.status === 403) {
         throw new Error('Insufficient Jira permissions.');
       } else if (error.response.status === 400) {
-        throw new Error('Invalid Jira request. Please check project configuration.');
+        // Extract detailed error messages from Jira
+        let errorDetails = 'Invalid Jira request.';
+        if (error.response.data && error.response.data.errors) {
+          errorDetails += ' Field errors: ' + JSON.stringify(error.response.data.errors);
+        }
+        if (error.response.data && error.response.data.errorMessages) {
+          errorDetails += ' Messages: ' + error.response.data.errorMessages.join(', ');
+        }
+        throw new Error(errorDetails);
       }
     }
 
