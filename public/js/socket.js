@@ -15,7 +15,33 @@ export function initSocket(roomId) {
   const socket = io();
   store.setState({ socket });
 
-  store.state.socket.emit("room:join", roomId);
+  const user = store.state.me;
+  store.state.socket.emit("room:join", { roomId, user });
+
+  store.state.socket.on("room:users", (users) => {
+    store.setState({ usersInRoom: users || [] });
+    if (ui.renderActiveUsers) ui.renderActiveUsers();
+  });
+
+  store.state.socket.on("room:user_joined", (user) => {
+    if (!user) return;
+    const currentUsers = store.state.usersInRoom || [];
+    // Avoid duplicates if user is already in list (e.g. multiple tabs)
+    if (!currentUsers.find(u => u.id === user.id)) {
+      const updated = [...currentUsers, user];
+      store.setState({ usersInRoom: updated });
+      if (ui.renderActiveUsers) ui.renderActiveUsers();
+      showNotification('success', 'New tester', `${user.name || user.email} joined the Test Fest`);
+    }
+  });
+
+  store.state.socket.on("room:user_left", (userId) => {
+    if (!userId) return;
+    const currentUsers = store.state.usersInRoom || [];
+    const updated = currentUsers.filter(u => u.id !== userId);
+    store.setState({ usersInRoom: updated });
+    if (ui.renderActiveUsers) ui.renderActiveUsers();
+  });
 
   store.state.socket.on("issue:new", (payload) => {
     try {

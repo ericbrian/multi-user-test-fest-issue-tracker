@@ -451,7 +451,7 @@ function registerIssueRoutes(router, deps) {
         return res.json({ jira_key: issue.jira_key });
       }
 
-      const jiraKey = await jiraService.createIssue(issue, req.user);
+      const jiraKey = await jiraService.createIssue(issue, issue.room?.name || 'Unknown Room');
 
       // Update issue with Jira key
       await issueService.updateJiraKey(issue.id, jiraKey);

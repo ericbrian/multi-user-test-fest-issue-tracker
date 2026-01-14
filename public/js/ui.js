@@ -25,6 +25,7 @@ export const elements = {
   imagesInput: document.getElementById('images'),
   issuesFilter: document.getElementById('issuesFilter'),
   leaderboardBtn: document.getElementById('leaderboardBtn'),
+  activeUsers: document.getElementById('activeUsers'),
 };
 
 // Cache last rendered issues list so toggling placeholders can re-render locally
@@ -1219,3 +1220,31 @@ enableImageDragDrop();
     }
   });
 })();
+
+export function renderActiveUsers() {
+  const container = elements.activeUsers;
+  // If element not in DOM just yet, try fetching it
+  if (!container && document.getElementById('activeUsers')) {
+    elements.activeUsers = document.getElementById('activeUsers');
+  }
+  if (!elements.activeUsers) return;
+
+  const users = store.state.usersInRoom || [];
+  if (users.length === 0) {
+    elements.activeUsers.innerHTML = '';
+    return;
+  }
+
+  elements.activeUsers.innerHTML = users.map(user => {
+    const isMe = store.state.me && user.id === store.state.me.id;
+    const displayName = user.name || user.email || 'Unknown';
+    const initial = (displayName.replace(/[^a-zA-Z0-9]/g, '')).charAt(0).toUpperCase() || '?';
+    
+    return `
+      <div class="user-chip ${isMe ? 'is-me' : ''}" title="${displayName}">
+        <div class="user-avatar">${initial}</div>
+        <span class="user-name">${displayName}</span>
+      </div>
+    `;
+  }).join('');
+}

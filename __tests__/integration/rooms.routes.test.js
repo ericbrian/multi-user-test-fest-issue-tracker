@@ -109,7 +109,7 @@ describe('Rooms API Integration Tests', () => {
     test('returns lines for a member', async () => {
       mockPrisma.roomMember.findUnique.mockResolvedValue({ user_id: 'u1' });
       mockRoomServiceInstance.getTestScriptLines = jest.fn().mockResolvedValue([{ id: 'l1' }]);
-      
+
       const app = express();
       const router = express.Router();
       app.use((req, _res, next) => { req.user = { id: 'u1' }; next(); });
@@ -135,7 +135,7 @@ describe('Rooms API Integration Tests', () => {
   });
 
   describe('POST /api/test-script-lines/:lineId/progress', () => {
-    test('updates progress and emits socket event', async () => {
+    test('updates progress', async () => {
       const emitMock = jest.fn();
       const ioMock = { to: jest.fn().mockReturnValue({ emit: emitMock }) };
       mockRoomServiceInstance.updateTestScriptLineProgress = jest.fn().mockResolvedValue({
@@ -155,11 +155,8 @@ describe('Rooms API Integration Tests', () => {
         .send({ is_checked: true, notes: 'notes' });
 
       expect(res.status).toBe(200);
-      expect(ioMock.to).toHaveBeenCalledWith('room-1');
-      expect(emitMock).toHaveBeenCalledWith('testScriptLine:progress', expect.objectContaining({
-        lineId: 'l1',
-        is_checked: true
-      }));
+      expect(ioMock.to).not.toHaveBeenCalled();
+      expect(emitMock).not.toHaveBeenCalled();
     });
 
     test('returns 404 for non-existent line', async () => {

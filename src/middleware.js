@@ -59,7 +59,7 @@ function requireIssueAndMembership() {
       if (!id) return ApiError.missingField(res, 'id');
 
       const prisma = getPrisma();
-      const issue = await prisma.issue.findUnique({ where: { id }, include: { createdBy: true } });
+      const issue = await prisma.issue.findUnique({ where: { id }, include: { createdBy: true, room: true } });
 
       if (!issue) return ApiError.notFound(res, 'Issue');
 
@@ -115,11 +115,11 @@ function createTestAuthMiddleware() {
 
     // Identify the user by their subject ID from the session, defaulting to 'test-user' for testing.
     const sub = (req.session && req.session.user && req.session.user.sub) ? req.session.user.sub : 'test-user';
-    
+
     try {
       const prisma = getPrisma();
       let user = await prisma.user.findUnique({ where: { sub } });
-      
+
       if (!user) {
         user = await prisma.user.create({
           data: {
@@ -130,7 +130,7 @@ function createTestAuthMiddleware() {
           },
         });
       }
- 
+
       // Populate req.user and sync session
       req.user = user;
       if (req.session) req.session.user = user;

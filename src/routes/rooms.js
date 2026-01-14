@@ -363,15 +363,6 @@ function registerRoomRoutes(router, deps) {
         notes
       );
 
-      // Emit socket notification
-      io.to(roomId).emit('testScriptLine:progress', {
-        lineId,
-        userId,
-        is_checked: progress.is_checked,
-        checked_at: progress.checked_at,
-        notes: progress.notes
-      });
-
       res.json(progress);
     } catch (error) {
       console.error('Error updating test script line progress:', error);

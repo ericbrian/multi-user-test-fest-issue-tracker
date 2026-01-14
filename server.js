@@ -371,9 +371,46 @@ app.use((err, req, res, next) => {
 
 // Socket.io logic
 io.on('connection', (socket) => {
-  socket.on('room:join', (roomId) => {
+  socket.on('room:join', async (payload) => {
+    // Handle both string (legacy) and object payload
+    const roomId = typeof payload === 'object' ? payload.roomId : payload;
+    const user = typeof payload === 'object' ? payload.user : null;
+
     socket.join(roomId);
+
+    if (user) {
+      socket.data.user = user;
+
+      // Broadcast to others that a user joined
+      socket.to(roomId).emit('room:user_joined', user);
+
+      // Fetch all sockets in the room to get current user list
+      const sockets = await io.in(roomId).fetchSockets();
+      // key by user.id to avoid duplicates if user has multiple tabs open
+      const uniqueUsers = new Map();
+
+      sockets.forEach(s => {
+        if (s.data.user) {
+          uniqueUsers.set(s.data.user.id, s.data.user);
+        }
+      });
+
+      const users = Array.from(uniqueUsers.values());
+      socket.emit('room:users', users);
+    }
   });
+
+  socket.on('disconnecting', () => {
+    if (socket.data.user) {
+      // socket.rooms is a Set containing the socket ID and joined rooms
+      for (const room of socket.rooms) {
+        if (room !== socket.id) {
+          socket.to(room).emit('room:user_left', socket.data.user.id);
+        }
+      }
+    }
+  });
+
   socket.on('disconnect', () => { });
 });
 

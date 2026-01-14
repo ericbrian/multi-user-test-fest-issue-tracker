@@ -30,6 +30,7 @@ const initialState = {
   currentRoomNameValue: null,
   socket: null,
   isGroupier: false,
+  usersInRoom: [], // List of users currently in the room
   testScriptLines: [],
   hideCheckedLines: false,
   issuesFilter: 'all',
