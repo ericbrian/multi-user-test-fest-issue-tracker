@@ -142,10 +142,6 @@ class JiraService {
         description,
         issuetype: { name: this.issueType },
         labels: [roomLabel],
-        // Required custom fields for this Jira instance
-        customfield_10909: 'N/A', // Job Name
-        customfield_10910: 'None', // Dependencies
-        // customfield_10908: 'Test Fest', // Source - Removed as it causes 400 error (not on screen)
       },
     };
 
