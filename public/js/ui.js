@@ -1277,10 +1277,10 @@ document.addEventListener('click', async (e) => {
     if (!roomId) throw new Error("No current room set");
 
     await api.transferOwnershipApi(roomId, userId);
-    toast("Ownership transferred successfully. Reloading...");
+    toast.success("Ownership transferred successfully. Reloading...");
     setTimeout(() => window.location.reload(), 1000);
   } catch (err) {
     console.error(err);
-    toast(err.message, 'error');
+    toast.error(err.message);
   }
 });
