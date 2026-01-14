@@ -77,6 +77,19 @@ function validateConfig(env = process.env, exitFn = process.exit) {
     warnings.push('No TAGS configured, using defaults');
   }
 
+  // BunnyCDN Configuration
+  const BUNNY_API_KEY = env.BUNNY_API_KEY;
+  const BUNNY_STORAGE_ZONE_NAME = env.BUNNY_STORAGE_ZONE_NAME;
+  const BUNNY_PULL_ZONE = env.BUNNY_PULL_ZONE; // hostname like "cdn.testfest.dev" or "myzone.b-cdn.net"
+  // Region usually defaults to 'de' (Falkenstein), or 'ny' (New York), 'la' (Los Angeles), 'sg' (Singapore), 'syd' (Sydney)
+  // Storage usage: https://{region}.storage.bunnycdn.com/{storageZoneName}/{filename}
+  const BUNNY_REGION = env.BUNNY_REGION || '';
+
+  const bunnyConfigured = [BUNNY_API_KEY, BUNNY_STORAGE_ZONE_NAME, BUNNY_PULL_ZONE].filter(Boolean).length;
+  if (bunnyConfigured > 0 && bunnyConfigured < 3) {
+    warnings.push('BunnyCDN is partially configured. Set all of: BUNNY_API_KEY, BUNNY_STORAGE_ZONE_NAME, BUNNY_PULL_ZONE');
+  }
+
   // Print warnings
   if (warnings.length > 0) {
     console.warn('\n⚠️  Configuration Warnings:');
@@ -112,6 +125,10 @@ function validateConfig(env = process.env, exitFn = process.exit) {
     JIRA_API_TOKEN,
     JIRA_PROJECT_KEY,
     JIRA_ISSUE_TYPE: env.JIRA_ISSUE_TYPE || 'Bug',
+    BUNNY_API_KEY,
+    BUNNY_STORAGE_ZONE_NAME,
+    BUNNY_PULL_ZONE,
+    BUNNY_REGION,
   };
 }
 

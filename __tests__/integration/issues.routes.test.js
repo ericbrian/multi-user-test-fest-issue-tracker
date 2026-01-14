@@ -496,11 +496,12 @@ describe("Issues API Integration Tests", () => {
         room_id: "room-1",
         created_by: "user-1",
         jira_key: null,
+        room: { name: "Test Room" }
       });
       mockPrisma.roomMember.findUnique.mockResolvedValue({ is_groupier: true });
       mockPrisma.room.findUnique.mockResolvedValue({
         id: "room-1",
-        name: "Room Name",
+        name: "Test Room",
       });
 
       const registerIssueRoutes = require("../../src/routes/issues");
@@ -533,6 +534,10 @@ describe("Issues API Integration Tests", () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty("jira_key", "PROJ-1");
+      expect(mockJiraServiceInstance.createIssue).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "issue-1" }),
+        "Test Room"
+      );
     });
 
     test("creates jira issue for creator", async () => {

@@ -229,6 +229,78 @@ function registerRoomRoutes(router, deps) {
 
   /**
    * @openapi
+   * /api/rooms/{roomId}/ownership:
+   *   post:
+   *     tags:
+   *       - Rooms
+   *     summary: Transfer room ownership
+   *     description: Transfers the room ownership (and groupier status) to another member. Only the current creator can do this.
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: roomId
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: Room ID
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - newOwnerId
+   *             properties:
+   *               newOwnerId:
+   *                 type: string
+   *                 format: uuid
+   *                 description: The user ID to transfer ownership to
+   *     responses:
+   *       200:
+   *         description: Ownership transferred successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 ok:
+   *                   type: boolean
+   *       403:
+   *         description: Forbidden - Not the room creator
+   *       500:
+   *         description: Server error
+   */
+  router.post('/api/rooms/:roomId/ownership', requireAuth, async (req, res) => {
+    try {
+      const { roomId } = req.params;
+      const { newOwnerId } = req.body;
+      const currentUserId = req.user.id;
+
+      if (!newOwnerId) return ApiError.missingField(res, 'newOwnerId');
+
+      await roomService.transferOwnership(roomId, currentUserId, newOwnerId);
+
+      // Invalidate cache
+      await cache.del('rooms_all');
+
+      res.json({ ok: true });
+    } catch (error) {
+      console.error('Error transferring ownership:', error);
+      if (error.message.includes('Only the room creator')) {
+        return ApiError.forbidden(res, error.message);
+      }
+      if (error.message.includes('New owner must be')) {
+        return ApiError.badRequest(res, error.message);
+      }
+      return ApiError.internal(res, 'Failed to transfer ownership', error.message);
+    }
+  });
+
+  /**
+   * @openapi
    * /api/rooms/{roomId}/test-script-lines:
    *   get:
    *     tags:

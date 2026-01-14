@@ -8,9 +8,10 @@ const fs = require('fs');
 const path = require('path');
 
 class IssueService {
-  constructor(prisma, uploadsDir) {
+  constructor(prisma, uploadsDir, bunnyService = null) {
     this.prisma = prisma;
     this.uploadsDir = uploadsDir;
+    this.bunnyService = bunnyService;
   }
 
   /**
@@ -179,22 +180,30 @@ class IssueService {
    */
   async deleteIssue(issueId) {
     const issue = await this.prisma.issue.findUnique({ where: { id: issueId } });
-    
+
     if (!issue) {
       throw new Error('Issue not found');
     }
 
-    // Delete uploaded images from disk (best effort)
+    // Delete uploaded images
     try {
       const images = Array.isArray(issue.images) ? issue.images : [];
-      images.forEach((imagePath) => {
-        if (typeof imagePath === 'string' && imagePath.startsWith('/uploads/')) {
-          const fullPath = path.join(this.uploadsDir, path.basename(imagePath));
-          fs.unlink(fullPath, (err) => {
-            if (err && err.code !== 'ENOENT') {
-              console.error('Error deleting file:', err);
-            }
-          });
+      images.forEach(async (imagePath) => { // Async for proper handling inside loop if possible, but map is better
+        if (typeof imagePath === 'string') {
+           if (imagePath.startsWith('/uploads/')) {
+              // Local file
+              const fullPath = path.join(this.uploadsDir, path.basename(imagePath));
+              fs.unlink(fullPath, (err) => {
+                if (err && err.code !== 'ENOENT') {
+                  console.error('Error deleting file:', err);
+                }
+              });
+           } else if (this.bunnyService && this.bunnyService.isConfigured() && imagePath.includes(this.bunnyService.pullZone)) {
+              // BunnyCDN file
+              // Extract filename from URL
+              const filename = path.basename(imagePath);
+              this.bunnyService.deleteFile(filename);
+           }
         }
       });
     } catch (error) {

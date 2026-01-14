@@ -40,6 +40,12 @@ class JiraService {
    * @returns {Promise<string>} - Jira issue key
    */
   async createIssue(issue, roomName = '') {
+    // Ensure roomName is a string to prevent "[object Object]" in text/labels
+    if (typeof roomName !== 'string') {
+      console.warn('JiraService.createIssue received non-string roomName, falling back to default.');
+      roomName = String(roomName?.name || 'Unknown Room');
+    }
+
     if (!this.isConfigured()) {
       throw new Error('Jira is not configured');
     }
@@ -180,11 +186,25 @@ class JiraService {
     console.log(`Attempting to upload ${images.length} attachments for issue ${jiraKey}`);
     for (const imagePath of images) {
       try {
-        const fullPath = path.join(this.uploadsDir, path.basename(imagePath));
-        if (fs.existsSync(fullPath)) {
-          console.log(`Uploading attachment: ${fullPath}`);
+        let fileStream;
+
+        if (imagePath.startsWith('http')) {
+           // Fetch from URL (CDN)
+           console.log(`Downloading attachment from URL: ${imagePath}`);
+           const response = await axios.get(imagePath, { responseType: 'stream' });
+           fileStream = response.data;
+        } else {
+           // Local file
+           const fullPath = path.join(this.uploadsDir, path.basename(imagePath));
+           if (fs.existsSync(fullPath)) {
+             console.log(`Uploading attachment: ${fullPath}`);
+             fileStream = fs.createReadStream(fullPath);
+           }
+        }
+
+        if (fileStream) {
           const form = new FormData();
-          form.append('file', fs.createReadStream(fullPath));
+          form.append('file', fileStream);
 
           await axios.post(
             `${this.baseUrl.replace(/\/$/, '')}/rest/api/3/issue/${jiraKey}/attachments`,
@@ -202,7 +222,7 @@ class JiraService {
           );
           console.log(`Successfully uploaded: ${path.basename(imagePath)}`);
         } else {
-          console.warn(`Attachment file not found: ${fullPath}`);
+          console.warn(`Attachment file not found: ${imagePath}`);
         }
       } catch (error) {
         console.error(`Failed to upload attachment ${imagePath}:`, error.message);

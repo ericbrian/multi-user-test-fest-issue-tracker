@@ -180,6 +180,40 @@ class RoomService {
   }
 
   /**
+   * Transfer room ownership to another user
+   * @param {string} roomId
+   * @param {string} currentOwnerId
+   * @param {string} newOwnerId
+   */
+  async transferOwnership(roomId, currentOwnerId, newOwnerId) {
+    const room = await this.prisma.room.findUnique({ where: { id: roomId } });
+    if (!room) throw new Error('Room not found');
+    if (room.created_by !== currentOwnerId) {
+      throw new Error('Only the room creator can transfer ownership');
+    }
+
+    const newOwnerMember = await this.prisma.roomMember.findUnique({
+      where: { room_id_user_id: { room_id: roomId, user_id: newOwnerId } }
+    });
+    if (!newOwnerMember) throw new Error('New owner must be a member of the room');
+
+    return this.prisma.$transaction([
+      this.prisma.room.update({
+        where: { id: roomId },
+        data: { created_by: newOwnerId }
+      }),
+      this.prisma.roomMember.update({
+        where: { room_id_user_id: { room_id: roomId, user_id: currentOwnerId } },
+        data: { is_groupier: false }
+      }),
+      this.prisma.roomMember.update({
+        where: { room_id_user_id: { room_id: roomId, user_id: newOwnerId } },
+        data: { is_groupier: true }
+      })
+    ]);
+  }
+
+  /**
    * Get all active scripts from the library
    * @returns {Promise<Array>} - Array of scripts with line counts
    */

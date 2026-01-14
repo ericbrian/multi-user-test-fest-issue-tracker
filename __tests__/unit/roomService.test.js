@@ -40,7 +40,8 @@ describe('RoomService', () => {
       scriptTemplate: {
         findUnique: jest.fn(),
         findMany: jest.fn(),
-      }
+      },
+      $transaction: jest.fn(async (ops) => Promise.all(ops)),
     };
     roomService = new RoomService(prismaMock);
   });
@@ -160,15 +161,15 @@ describe('RoomService', () => {
   describe('getTestScriptLines', () => {
     test('should return lines with user progress mapped to is_checked', async () => {
       prismaMock.roomScriptLine.findMany.mockResolvedValue([
-        { 
-          id: 'l1', 
-          test_script_line_id: 1, 
-          progress: [{ is_checked: true, notes: 'done' }] 
+        {
+          id: 'l1',
+          test_script_line_id: 1,
+          progress: [{ is_checked: true, notes: 'done' }]
         },
-        { 
-          id: 'l2', 
-          test_script_line_id: 2, 
-          progress: [] 
+        {
+          id: 'l2',
+          test_script_line_id: 2,
+          progress: []
         }
       ]);
 
@@ -229,6 +230,48 @@ describe('RoomService', () => {
 
       expect(prismaMock.roomScriptLineProgress.update).toHaveBeenCalled();
       expect(prismaMock.roomScriptLineProgress.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('transferOwnership', () => {
+    test('should transfer ownership correctly', async () => {
+      prismaMock.room.findUnique.mockResolvedValue({ id: 'room-1', created_by: 'old-owner' });
+      // room.update is needed
+      prismaMock.room.update = jest.fn();
+      // roomMember check
+      prismaMock.roomMember.findUnique.mockResolvedValue({ room_id: 'room-1', user_id: 'new-owner', is_groupier: false });
+      // roomMember.update is needed
+      prismaMock.roomMember.update = jest.fn();
+
+      await roomService.transferOwnership('room-1', 'old-owner', 'new-owner');
+
+      expect(prismaMock.room.update).toHaveBeenCalledWith({
+        where: { id: 'room-1' },
+        data: { created_by: 'new-owner' }
+      });
+      expect(prismaMock.roomMember.update).toHaveBeenCalledWith({
+        where: { room_id_user_id: { room_id: 'room-1', user_id: 'old-owner' } },
+        data: { is_groupier: false }
+      });
+      expect(prismaMock.roomMember.update).toHaveBeenCalledWith({
+        where: { room_id_user_id: { room_id: 'room-1', user_id: 'new-owner' } },
+        data: { is_groupier: true }
+      });
+    });
+
+    test('should fail if caller is not the owner', async () => {
+      prismaMock.room.findUnique.mockResolvedValue({ id: 'room-1', created_by: 'real-owner' });
+
+      await expect(roomService.transferOwnership('room-1', 'imposter', 'new-owner'))
+        .rejects.toThrow('Only the room creator can transfer ownership');
+    });
+
+    test('should fail if new owner is not a member', async () => {
+      prismaMock.room.findUnique.mockResolvedValue({ id: 'room-1', created_by: 'old-owner' });
+      prismaMock.roomMember.findUnique.mockResolvedValue(null);
+
+      await expect(roomService.transferOwnership('room-1', 'old-owner', 'outsider'))
+        .rejects.toThrow('New owner must be a member of the room');
     });
   });
 });

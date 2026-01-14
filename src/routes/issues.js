@@ -9,6 +9,7 @@ const { requireAuth, requireGroupierByRoom, requireMembership, requireIssueAndMe
 const { issueCreationLimiter, uploadLimiter } = require('../rateLimiter');
 const { IssueService } = require('../services/issueService');
 const { JiraService } = require('../services/jiraService');
+const { BunnyService } = require('../services/bunnyService');
 const { ApiError } = require('../utils/apiResponse');
 const { createNoopCache } = require('../cache');
 
@@ -24,12 +25,23 @@ function registerIssueRoutes(router, deps) {
     JIRA_PROJECT_KEY,
     JIRA_ISSUE_TYPE,
     cache: providedCache,
+    BUNNY_API_KEY,
+    BUNNY_STORAGE_ZONE_NAME,
+    BUNNY_PULL_ZONE,
+    BUNNY_REGION,
   } = deps;
 
   const cache = providedCache || createNoopCache();
 
   const prisma = getPrisma();
-  const issueService = new IssueService(prisma, uploadsDir);
+  const bunnyService = new BunnyService({
+    apiKey: BUNNY_API_KEY,
+    storageZoneName: BUNNY_STORAGE_ZONE_NAME,
+    pullZone: BUNNY_PULL_ZONE,
+    region: BUNNY_REGION,
+  });
+
+  const issueService = new IssueService(prisma, uploadsDir, bunnyService);
   const jiraService = new JiraService({
     JIRA_BASE_URL,
     JIRA_EMAIL,
@@ -244,7 +256,31 @@ function registerIssueRoutes(router, deps) {
       const isAnnoyance = body.is_annoyance === 'on' || body.is_annoyance === 'true' || body.is_annoyance === true;
       const isExistingUpper = body.is_existing_upper_env === 'on' || body.is_existing_upper_env === 'true' || body.is_existing_upper_env === true;
       const isNotSureHowToTest = body.is_not_sure_how_to_test === 'on' || body.is_not_sure_how_to_test === 'true' || body.is_not_sure_how_to_test === true;
-      const files = (req.files || []).map((f) => `/uploads/${path.basename(f.path)}`);
+
+      let files = [];
+      const uploadedFiles = req.files || [];
+
+      if (bunnyService.isConfigured()) {
+        try {
+          files = await Promise.all(uploadedFiles.map(async (f) => {
+            const filename = path.basename(f.path);
+            const url = await bunnyService.uploadFile(f.path, filename);
+            // Delete local file after upload
+            fs.unlink(f.path, (err) => {
+               if (err) console.error('Error deleting local file after CDN upload:', err);
+            });
+            return url;
+          }));
+        } catch (err) {
+           console.error('BunnyCDN upload failed, falling back to local files or failing:', err);
+           // If upload fails, we should probably fail the request or fallback?
+           // For now, let's fail to ensure data consistency
+           throw new Error('Failed to upload images to CDN');
+        }
+      } else {
+        files = uploadedFiles.map((f) => `/uploads/${path.basename(f.path)}`);
+      }
+
       const userId = req.user.id;
 
       const issueOut = await issueService.createIssue({

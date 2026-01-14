@@ -25,6 +25,10 @@ beforeEach(() => {
   mockRoomServiceInstance = {
     getAllRooms: jest.fn().mockResolvedValue([{ id: 'room-1', name: 'Cached Room' }]),
     createRoom: jest.fn().mockResolvedValue({ id: 'room-2', name: 'New Room', created_by: 'user-1' }),
+    transferOwnership: jest.fn().mockResolvedValue({ ok: true }),
+    getTestScriptLines: jest.fn().mockResolvedValue([]),
+    updateTestScriptLineProgress: jest.fn().mockResolvedValue({ progress: {}, roomId: 'room-1' }),
+    joinRoom: jest.fn().mockResolvedValue({ ok: true, isGroupier: false }),
   };
   RoomService.mockImplementation(() => mockRoomServiceInstance);
 });
@@ -177,6 +181,44 @@ describe('Rooms API Integration Tests', () => {
 
       const res = await request(app).post('/api/test-script-lines/l1/progress').send({ is_checked: true });
       expect(res.status).toBe(403);
+    });
+  });
+
+  describe('POST /api/rooms/:roomId/ownership', () => {
+    test('transfers ownership successfully', async () => {
+      const app = express();
+      app.use(express.json());
+      app.use((req, _res, next) => { req.user = { id: 'old-owner' }; next(); });
+      const router = express.Router();
+      registerRoomRoutes(router, { cache: createMemoryCache() });
+      app.use(router);
+
+      const res = await request(app)
+        .post('/api/rooms/room-1/ownership')
+        .send({ newOwnerId: 'new-owner' });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ ok: true });
+      expect(mockRoomServiceInstance.transferOwnership)
+        .toHaveBeenCalledWith('room-1', 'old-owner', 'new-owner');
+    });
+
+    test('returns 403 if service throws forbidden error', async () => {
+      mockRoomServiceInstance.transferOwnership.mockRejectedValue(new Error('Only the room creator can transfer ownership'));
+
+      const app = express();
+      app.use(express.json());
+      app.use((req, _res, next) => { req.user = { id: 'imposter' }; next(); });
+      const router = express.Router();
+      registerRoomRoutes(router, { cache: createMemoryCache() });
+      app.use(router);
+
+      const res = await request(app)
+        .post('/api/rooms/room-1/ownership')
+        .send({ newOwnerId: 'new-owner' });
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toContain('Only the room creator');
     });
   });
 

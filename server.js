@@ -41,6 +41,10 @@ const {
   JIRA_API_TOKEN,
   JIRA_PROJECT_KEY,
   JIRA_ISSUE_TYPE,
+  BUNNY_API_KEY,
+  BUNNY_STORAGE_ZONE_NAME,
+  BUNNY_PULL_ZONE,
+  BUNNY_REGION,
 } = config;
 
 // DB setup
@@ -359,6 +363,10 @@ registerRoutes(app, {
   uiIndexPath,
   cache,
   ENTRA_REDIRECT_URI,
+  BUNNY_API_KEY,
+  BUNNY_STORAGE_ZONE_NAME,
+  BUNNY_PULL_ZONE,
+  BUNNY_REGION,
 });
 
 // CSRF Error Handler
