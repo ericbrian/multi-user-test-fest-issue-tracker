@@ -1239,12 +1239,48 @@ export function renderActiveUsers() {
     const isMe = store.state.me && user.id === store.state.me.id;
     const displayName = user.name || user.email || 'Unknown';
     const initial = (displayName.replace(/[^a-zA-Z0-9]/g, '')).charAt(0).toUpperCase() || '?';
-    
+
+    // Check if current user is Groupier and can transfer to this user (not self)
+    const canTransfer = store.state.isGroupier && !isMe;
+    const transferBtn = canTransfer
+      ? `<button type="button" class="transfer-btn" data-user-id="${user.id}" title="Make Groupier">👑</button>`
+      : '';
+
     return `
       <div class="user-chip ${isMe ? 'is-me' : ''}" title="${displayName}">
         <div class="user-avatar">${initial}</div>
         <span class="user-name">${displayName}</span>
+        ${transferBtn}
       </div>
     `;
   }).join('');
 }
+
+// Add global listener for transfer buttons (event delegation)
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.transfer-btn');
+  if (!btn) return;
+
+  const userId = btn.dataset.userId;
+  if (!userId) return;
+
+  // Find user name for confirmation
+  const userChip = btn.closest('.user-chip');
+  const userName = userChip ? userChip.querySelector('.user-name').textContent : 'this user';
+
+  if (!confirm(`Are you sure you want to transfer Groupier ownership to ${userName}? You will lose Groupier privileges.`)) {
+    return;
+  }
+
+  try {
+    const roomId = store.state.currentRoomId;
+    if (!roomId) throw new Error("No current room set");
+
+    await api.transferOwnershipApi(roomId, userId);
+    toast("Ownership transferred successfully. Reloading...");
+    setTimeout(() => window.location.reload(), 1000);
+  } catch (err) {
+    console.error(err);
+    toast(err.message, 'error');
+  }
+});

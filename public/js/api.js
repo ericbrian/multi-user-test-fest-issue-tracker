@@ -172,3 +172,19 @@ export async function logout() {
     }
   });
 }
+
+export async function transferOwnershipApi(roomId, newOwnerId) {
+  const res = await fetch(`/api/rooms/${roomId}/ownership`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-XSRF-TOKEN': getCsrfToken()
+    },
+    body: JSON.stringify({ newOwnerId })
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(errorText || "Failed to transfer ownership");
+  }
+  return await res.json();
+}

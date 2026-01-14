@@ -1548,3 +1548,22 @@ input[type="submit"]:focus,
   background: rgba(124, 58, 237, 0.15);
   border-color: var(--accent);
 }
+
+/* Transfer Ownership Button */
+.transfer-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 1.2em;
+  opacity: 0.5;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+  filter: grayscale(100%);
+}
+
+.transfer-btn:hover {
+  opacity: 1;
+  filter: grayscale(0%);
+  transform: scale(1.1);
+}
