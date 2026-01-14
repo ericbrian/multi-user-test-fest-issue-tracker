@@ -1556,14 +1556,18 @@ input[type="submit"]:focus,
   cursor: pointer;
   padding: 0 4px;
   font-size: 1.2em;
-  opacity: 0.5;
+  opacity: 1;
   transition: all 0.2s ease;
   margin-left: 8px;
-  filter: grayscale(100%);
+  filter: none;
 }
 
 .transfer-btn:hover {
-  opacity: 1;
-  filter: grayscale(0%);
   transform: scale(1.1);
+}
+
+.groupier-indicator {
+    margin-left: 8px;
+    font-size: 1.2em;
+    cursor: help;
 }

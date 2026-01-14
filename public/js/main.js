@@ -215,8 +215,6 @@ async function joinRoom(roomId) {
     localStorage.setItem(LS_KEY_LAST_ROOM, roomId);
   } catch (_) { }
 
-  socket.initSocket(roomId);
-
   try {
     const [issues, testScriptLines, joinData] = await Promise.all([
       api.fetchIssues(roomId),
@@ -230,8 +228,11 @@ async function joinRoom(roomId) {
     ui.renderIssues(issues);
     ui.renderTestScriptLines(true);
 
-    store.setState({ isGroupier: !!(joinData && joinData.isGroupier) });
+    const isGroupier = !!(joinData && joinData.isGroupier);
+    store.setState({ isGroupier });
     ui.updateUserInfoDisplay();
+
+    socket.initSocket(roomId, isGroupier);
   } catch (error) {
     console.error("Error joining room:", error);
   }

@@ -169,23 +169,10 @@ export function updateUserInfoDisplay() {
   }
 
   const userName = store.state.me.name || store.state.me.email || "User";
-
-  if (store.state.isGroupier) {
-    elements.userInfoHeader.innerHTML = `<span class="groupier-bubble" id="groupierBubble" role="button" tabindex="0" title="Click to learn what this means">You are the Groupier</span> &nbsp; ${userName}`;
-
-    // Add click listener for explanation
-    setTimeout(() => {
-      const bubble = document.getElementById('groupierBubble');
-      if (bubble) {
-        bubble.addEventListener('click', showGroupierExplanationDialog);
-      }
-    }, 0);
-  } else {
-    elements.userInfoHeader.textContent = userName;
-  }
+  elements.userInfoHeader.textContent = userName;
 }
 
-function showGroupierExplanationDialog() {
+export function showGroupierExplanationDialog() {
   const modalHtml = `
     <div class="room-modal-overlay">
       <div class="room-modal">
@@ -272,8 +259,6 @@ export function populateRoomSelect(rooms) {
     }
   }
 }
-
-
 
 export function renderTestScriptLines(shouldAutoScroll = false) {
   let container = document.getElementById('testScriptLinesContainer');
@@ -1184,7 +1169,6 @@ function enableImageDragDrop() {
 // Initialize drag & drop wiring after module load
 enableImageDragDrop();
 
-
 // Wire issues filter select (All / Mine / Theirs)
 (() => {
   const select = elements.issuesFilter || document.getElementById('issuesFilter');
@@ -1240,6 +1224,12 @@ export function renderActiveUsers() {
     const displayName = user.name || user.email || 'Unknown';
     const initial = (displayName.replace(/[^a-zA-Z0-9]/g, '')).charAt(0).toUpperCase() || '?';
 
+    // Show static crown if this user is the groupier
+    const isUserGroupier = user.isGroupier;
+    const crownHtml = isUserGroupier
+      ? `<span class="groupier-indicator" title="Click to learn about Groupier role" role="button">👑</span>`
+      : '';
+
     // Check if current user is Groupier and can transfer to this user (not self)
     const canTransfer = store.state.isGroupier && !isMe;
     const transferBtn = canTransfer
@@ -1250,6 +1240,7 @@ export function renderActiveUsers() {
       <div class="user-chip ${isMe ? 'is-me' : ''}" title="${displayName}">
         <div class="user-avatar">${initial}</div>
         <span class="user-name">${displayName}</span>
+        ${crownHtml}
         ${transferBtn}
       </div>
     `;
@@ -1258,6 +1249,12 @@ export function renderActiveUsers() {
 
 // Add global listener for transfer buttons (event delegation)
 document.addEventListener('click', async (e) => {
+  // Handle Groupier explanation popup
+  if (e.target.closest('.groupier-indicator')) {
+    showGroupierExplanationDialog();
+    return;
+  }
+
   const btn = e.target.closest('.transfer-btn');
   if (!btn) return;
 

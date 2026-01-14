@@ -3,7 +3,7 @@ import * as ui from './ui.js';
 import * as api from './api.js';
 import { showNotification } from './notifications.js';
 
-export function initSocket(roomId) {
+export function initSocket(roomId, isGroupier = false) {
   if (store.state.socket) {
     store.state.socket.disconnect();
   }
@@ -15,7 +15,7 @@ export function initSocket(roomId) {
   const socket = io();
   store.setState({ socket });
 
-  const user = store.state.me;
+  const user = { ...store.state.me, isGroupier };
   store.state.socket.emit("room:join", { roomId, user });
 
   store.state.socket.on("room:users", (users) => {
