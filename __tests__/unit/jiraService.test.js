@@ -69,7 +69,7 @@ describe('JiraService', () => {
   describe('createIssue', () => {
     test('should throw error if not configured', async () => {
       jiraService.baseUrl = null;
-      
+
       const issue = {
         script_id: 1,
         description: 'Test issue',
@@ -145,6 +145,94 @@ describe('JiraService', () => {
       const header = jiraService.getAuthHeader();
       expect(header).toContain('Basic ');
       expect(header).toBe('Basic ' + Buffer.from('test@example.com:test-token').toString('base64'));
+    });
+  });
+
+  describe('getAccountIdByEmail', () => {
+    test('should return account ID when user is found', async () => {
+      const mockResponse = {
+        data: [
+          {
+            accountId: '5b10ac8d82e05b22cc7d4ef5',
+            emailAddress: 'user@example.com',
+            displayName: 'Test User',
+          },
+        ],
+      };
+      axios.get.mockResolvedValueOnce(mockResponse);
+
+      const accountId = await jiraService.getAccountIdByEmail('user@example.com');
+
+      expect(accountId).toBe('5b10ac8d82e05b22cc7d4ef5');
+      expect(axios.get).toHaveBeenCalledWith(
+        'https://test.atlassian.net/rest/api/3/user/search?query=user%40example.com',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: expect.stringContaining('Basic'),
+          }),
+        })
+      );
+    });
+
+    test('should return null when user is not found', async () => {
+      axios.get.mockResolvedValueOnce({ data: [] });
+
+      const accountId = await jiraService.getAccountIdByEmail('nonexistent@example.com');
+
+      expect(accountId).toBeNull();
+    });
+
+    test('should return null when email is not provided', async () => {
+      const accountId = await jiraService.getAccountIdByEmail('');
+
+      expect(accountId).toBeNull();
+      expect(axios.get).not.toHaveBeenCalled();
+    });
+
+    test('should return null when Jira is not configured', async () => {
+      jiraService.baseUrl = null;
+
+      const accountId = await jiraService.getAccountIdByEmail('user@example.com');
+
+      expect(accountId).toBeNull();
+      expect(axios.get).not.toHaveBeenCalled();
+    });
+
+    test('should return null and log warning when API call fails', async () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      axios.get.mockRejectedValueOnce(new Error('Network error'));
+
+      const accountId = await jiraService.getAccountIdByEmail('user@example.com');
+
+      expect(accountId).toBeNull();
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to lookup Jira user for email user@example.com'),
+        expect.any(String)
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    test('should handle multiple users returned and pick first match', async () => {
+      const mockResponse = {
+        data: [
+          {
+            accountId: '5b10ac8d82e05b22cc7d4ef5',
+            emailAddress: 'user@example.com',
+            displayName: 'Test User',
+          },
+          {
+            accountId: 'another-account-id',
+            emailAddress: 'user@example.com',
+            displayName: 'Test User 2',
+          },
+        ],
+      };
+      axios.get.mockResolvedValueOnce(mockResponse);
+
+      const accountId = await jiraService.getAccountIdByEmail('user@example.com');
+
+      expect(accountId).toBe('5b10ac8d82e05b22cc7d4ef5');
     });
   });
 });

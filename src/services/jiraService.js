@@ -34,6 +34,37 @@ class JiraService {
   }
 
   /**
+   * Get Jira account ID by email
+   * @param {string} email - User's email address
+   * @returns {Promise<string|null>} - Jira account ID or null if not found
+   */
+  async getAccountIdByEmail(email) {
+    if (!this.isConfigured() || !email) {
+      return null;
+    }
+
+    try {
+      const url = `${this.baseUrl.replace(/\/$/, '')}/rest/api/3/user/search?query=${encodeURIComponent(email)}`;
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: this.getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000,
+      });
+
+      // Return the first matching user's account ID
+      if (response.data && response.data.length > 0) {
+        return response.data[0].accountId;
+      }
+      return null;
+    } catch (error) {
+      console.warn(`Failed to lookup Jira user for email ${email}:`, error.message);
+      return null;
+    }
+  }
+
+  /**
    * Create a Jira issue from an internal issue
    * @param {Object} issue - The issue object from database
    * @param {string} roomName - Name of the room for labeling
@@ -54,6 +85,18 @@ class JiraService {
     const summary = `[Test Fest] Script ${issue.script_id || '?'} - ${issue.description?.slice(0, 80) || 'Issue'}`.slice(0, 255);
 
     const reporterName = issue.createdBy?.name || issue.createdBy?.email || 'Unknown User';
+    const reporterEmail = issue.createdBy?.email;
+
+    // Try to get Jira account ID for the reporter
+    let reporterAccountId = null;
+    if (reporterEmail) {
+      reporterAccountId = await this.getAccountIdByEmail(reporterEmail);
+      if (reporterAccountId) {
+        console.log(`Found Jira account ID for ${reporterEmail}: ${reporterAccountId}`);
+      } else {
+        console.log(`No Jira account found for ${reporterEmail}, will use API token user as reporter`);
+      }
+    }
 
     // Construct ADF content
     const content = [];
@@ -144,6 +187,11 @@ class JiraService {
         labels: [roomLabel],
       },
     };
+
+    // Add reporter if we found a Jira account ID
+    if (reporterAccountId) {
+      payload.fields.reporter = { accountId: reporterAccountId };
+    }
 
     try {
       // Create issue
