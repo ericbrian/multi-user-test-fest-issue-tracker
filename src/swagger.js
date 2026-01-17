@@ -120,6 +120,16 @@ const options = {
                             type: 'string',
                             description: 'Issue description (sanitized)',
                         },
+                        browser: {
+                            type: 'string',
+                            nullable: true,
+                            description: 'Browser the tester is using',
+                        },
+                        os: {
+                            type: 'string',
+                            nullable: true,
+                            description: 'Operating system the tester is using',
+                        },
                         is_issue: {
                             type: 'boolean',
                             description: 'Whether this is marked as an issue',

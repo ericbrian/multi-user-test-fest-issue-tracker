@@ -81,6 +81,8 @@ model Issue {
   created_by              String?  @db.Uuid
   script_id               Int?
   description             String?
+  browser                 String?
+  os                      String?
   images                  Json?
   is_issue                Boolean  @default(false)
   is_annoyance            Boolean  @default(false)

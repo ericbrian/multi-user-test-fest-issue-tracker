@@ -138,6 +138,20 @@ class JiraService {
       content: [{ type: 'paragraph', content: [{ type: 'text', text: `Reported By: ${reporterName}` }] }]
     });
 
+    if (issue.browser) {
+      contextItems.push({
+        type: 'listItem',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: `Browser: ${String(issue.browser)}` }] }]
+      });
+    }
+
+    if (issue.os) {
+      contextItems.push({
+        type: 'listItem',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: `OS: ${String(issue.os)}` }] }]
+      });
+    }
+
     content.push({
       type: 'bulletList',
       content: contextItems

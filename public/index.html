@@ -96,6 +96,35 @@
           <label>Images</label>
           <div id="imagesDropzone" class="images-dropzone" tabindex="0" role="button" aria-label="Drop images here or click to browse">Drop images here or click to browse</div>
           <input id="images" name="images" type="file" accept="image/*" multiple style="display:none" />
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+            <div>
+              <label for="browserSelect">Browser</label>
+              <select id="browserSelect" name="browser" aria-label="Select browser">
+                <option value="">Select browser...</option>
+                <option value="Chrome">Chrome</option>
+                <option value="Firefox">Firefox</option>
+                <option value="Safari">Safari</option>
+                <option value="Edge">Edge</option>
+                <option value="Opera">Opera</option>
+                <option value="Brave">Brave</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label for="osSelect">Operating System</label>
+              <select id="osSelect" name="os" aria-label="Select operating system">
+                <option value="">Select OS...</option>
+                <option value="Windows">Windows</option>
+                <option value="macOS">macOS</option>
+                <option value="Linux">Linux</option>
+                <option value="iOS">iOS</option>
+                <option value="Android">Android</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
           <div class="form-actions">
             <button type="submit">Save Issue</button>
           </div>

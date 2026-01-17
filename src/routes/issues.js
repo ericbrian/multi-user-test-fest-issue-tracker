@@ -181,6 +181,14 @@ function registerIssueRoutes(router, deps) {
    *                 type: integer
    *                 description: Test script ID number
    *                 example: 42
+  *               browser:
+  *                 type: string
+  *                 description: Browser the tester is using
+  *                 example: "Chrome"
+  *               os:
+  *                 type: string
+  *                 description: Operating system the tester is using
+  *                 example: "macOS"
    *               description:
    *                 type: string
    *                 description: Issue description (will be sanitized for XSS)
@@ -243,6 +251,10 @@ function registerIssueRoutes(router, deps) {
       // Sanitize description to prevent XSS using xss library
       const description = body.description ? xss(String(body.description).trim()) : '';
 
+      // Optional tester environment fields
+      const browser = body.browser ? xss(String(body.browser).trim()).slice(0, 64) : null;
+      const os = body.os ? xss(String(body.os).trim()).slice(0, 64) : null;
+
       if (!scriptId || !/^\d+$/.test(String(scriptId))) {
         return ApiError.invalidInput(res, 'Script ID is required and must be numeric', { field: 'scriptId' });
       }
@@ -296,6 +308,8 @@ function registerIssueRoutes(router, deps) {
         userId,
         scriptId: scriptNum,
         description,
+        browser,
+        os,
         isIssue,
         isAnnoyance,
         isExistingUpper,

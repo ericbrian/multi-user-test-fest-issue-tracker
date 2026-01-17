@@ -720,6 +720,13 @@ export function addOrUpdateIssue(issue, isInitial = false) {
       .join("")}</span></div>`
     : "";
 
+  const envTags = [];
+  if (issue.browser) envTags.push(`<span class="tag">Browser: ${escapeHtml(String(issue.browser))}</span>`);
+  if (issue.os) envTags.push(`<span class="tag">OS: ${escapeHtml(String(issue.os))}</span>`);
+  const envHtml = envTags.length
+    ? `<div class="dimmable" style="margin-top:6px;"><span class="footer-label">Environment:</span> <span class="tags">${envTags.join('')}</span></div>`
+    : "";
+
   el.innerHTML = `
     <div style="display:flex; justify-content: space-between; align-items:center; gap: 10px;">
       <div class="dimmable" style="flex: 1 1 auto;"><strong>Test Script ID:</strong> ${issue.script_id || ""} ${statusTag} ${jiraTag}</div>
@@ -729,6 +736,7 @@ export function addOrUpdateIssue(issue, isInitial = false) {
     </div>
     <div class="dimmable" style="margin-top:6px;">${issue.description || ""}</div>
     ${reasonsHtml}
+    ${envHtml}
     <div class="images dimmable">${imgs}</div>
     ${store.state.me ? renderActionBar(issue) : ""}
   `;
