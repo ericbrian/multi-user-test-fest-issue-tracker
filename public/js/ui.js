@@ -1005,6 +1005,51 @@ if (elements.issueForm) {
 // Allows users to drag images onto the `#images` file input to add files.
 let _selectedFiles = [];
 
+const MAX_IMAGE_FILES = 5;
+const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024; // 5MB (matches backend)
+const ALLOWED_IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif']);
+
+function isAllowedImageFile(file) {
+  if (!file) return false;
+  if (file.type && file.type.startsWith('image/')) return true;
+  const name = String(file.name || '').toLowerCase();
+  const dotIdx = name.lastIndexOf('.');
+  if (dotIdx === -1) return false;
+  return ALLOWED_IMAGE_EXTENSIONS.has(name.slice(dotIdx));
+}
+
+function addImageFiles(newFiles) {
+  const startingCount = _selectedFiles.length;
+  const incoming = Array.from(newFiles || []).filter(isAllowedImageFile);
+  if (incoming.length === 0) return;
+
+  const tooLarge = incoming.filter(f => typeof f.size === 'number' && f.size > MAX_IMAGE_FILE_SIZE);
+  if (tooLarge.length > 0) {
+    toast.warn(`Some images exceed 5MB and were skipped (${tooLarge.length})`);
+  }
+
+  const valid = incoming.filter(f => !(typeof f.size === 'number' && f.size > MAX_IMAGE_FILE_SIZE));
+
+  let attemptedUnique = 0;
+  let addedCount = 0;
+  valid.forEach(f => {
+    const exists = _selectedFiles.some(sf => sf.name === f.name && sf.size === f.size && sf.lastModified === f.lastModified);
+    if (exists) return;
+    attemptedUnique += 1;
+    if (_selectedFiles.length < MAX_IMAGE_FILES) {
+      _selectedFiles.push(f);
+      addedCount += 1;
+    }
+  });
+
+  const ignoredForCap = Math.max(0, attemptedUnique - addedCount);
+  if (ignoredForCap > 0 && startingCount >= MAX_IMAGE_FILES) {
+    toast.warn(`You already have ${MAX_IMAGE_FILES} images selected. Remove one to add more.`);
+  } else if (ignoredForCap > 0) {
+    toast.warn(`You can upload up to ${MAX_IMAGE_FILES} images. Extra images were ignored.`);
+  }
+}
+
 function syncInputFiles() {
   const input = elements.imagesInput || document.getElementById('images');
   if (!input) return;
@@ -1136,15 +1181,7 @@ function enableImageDragDrop() {
     const dt = e.dataTransfer;
     if (!dt || !dt.files || dt.files.length === 0) return;
 
-    // Filter to images only
-    const files = Array.from(dt.files).filter(f => f.type && f.type.startsWith('image/'));
-    if (files.length === 0) return;
-
-    // Append (deduplicating by name+size)
-    files.forEach(f => {
-      const exists = _selectedFiles.some(sf => sf.name === f.name && sf.size === f.size && sf.lastModified === f.lastModified);
-      if (!exists) _selectedFiles.push(f);
-    });
+    addImageFiles(dt.files);
 
     syncInputFiles();
     updateImagesPreview();
@@ -1152,10 +1189,7 @@ function enableImageDragDrop() {
 
   // When user uses the file picker, merge new selections
   input.addEventListener('change', (e) => {
-    const picked = Array.from(input.files || []);
-    // Replace _selectedFiles with picked (user intent) but keep uniqueness
-    _selectedFiles = [];
-    picked.forEach(f => _selectedFiles.push(f));
+    addImageFiles(input.files);
     syncInputFiles();
     updateImagesPreview();
   });
