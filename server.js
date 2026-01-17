@@ -221,13 +221,15 @@ app.use('/api/', apiLimiter);
 app.set('trust proxy', 1);
 app.use(
   session({
+    // Tests should not require native sqlite bindings.
+    // Use the built-in MemoryStore for NODE_ENV=test.
     store: process.env.NODE_ENV === 'test'
-      ? new (require('connect-sqlite3')(session))({ db: 'test-session.sqlite', dir: '.' })
+      ? new session.MemoryStore()
       : new pgSession({
-        pool,
-        tableName: 'session',
-        createTableIfMissing: true,
-      }),
+          pool,
+          tableName: 'session',
+          createTableIfMissing: true,
+        }),
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,

@@ -10,6 +10,11 @@
     "**/__tests__/**/*.js",
     "**/?(*.)+(spec|test).js"
   ],
+  "testPathIgnorePatterns": [
+    "<rootDir>/tests/e2e/",
+    "<rootDir>/playwright-report/",
+    "<rootDir>/test-results/"
+  ],
   "coverageThreshold": {
     "global": {
       "branches": 35,
